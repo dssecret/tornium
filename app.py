@@ -32,7 +32,7 @@ settings.initialize()
 
 logger = logging.getLogger('server')
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='server.log', encoding='utf-8', mode='a')
+handler = logging.FileHandler(filename=f'{settings.settingsdir()}server.log', encoding='utf-8', mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
