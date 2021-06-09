@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% include 'navbar.html' %}
+
+{% include 'faction/navbar.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-center">
+  <table class="table" style="max-width: 75%;">
+    <thead>
+      <tr>
+        <th scope="col">Username</th>
+        <th scope="col">Status</th>
+        <th scope="col">Last Action</th>
+        <th scope="col">Level</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for member in members %}
+      <tr>
+        <td>{{ member.name }} [{{ member.tid }}]</td>
+        <td>{{ member.status }}</td>
+        <td>{{ member.last_action }}</td>
+        <td>{{ member.level }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

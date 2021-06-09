@@ -1,0 +1,5 @@
+flask == 2.0.1
+flask-login == 0.5.0
+flask-migrate == 3.0.0
+flask-sqlalchemy == 2.5.1
+is-safe-url == 1.0
