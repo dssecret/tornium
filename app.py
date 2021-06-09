@@ -43,7 +43,7 @@ login_manager.init_app(app)
 login_manager.login_view = 'authroutes.login'
 login_manager.session_protection = 'strong'
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{settings.settingsdir()}data.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 userdb.init_app(app)
 factiondb.init_app(app)
