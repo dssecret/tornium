@@ -14,6 +14,7 @@
 # along with torn-command.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+import os
 
 import flask
 from flask_login import LoginManager
@@ -43,7 +44,7 @@ login_manager.init_app(app)
 login_manager.login_view = 'authroutes.login'
 login_manager.session_protection = 'strong'
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{settings.settingsdir()}data.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(settings.settingsdir(), "data.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 userdb.init_app(app)
 factiondb.init_app(app)
