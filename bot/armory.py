@@ -92,7 +92,6 @@ class Armory(commands.Cog):
                              f'{items_added} actions added.')
 
     @commands.command()
-    @commands.cooldown(1, 10, commands.BucketType.user)
     async def search(self, ctx, start, stop="now", item="Xanax"):
         if not check_admin(ctx.message.author) and dbutils.get_superuser() != ctx.message.author.id:
             embed = discord.Embed()

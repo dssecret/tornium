@@ -55,7 +55,7 @@ def text_to_num(text):
 
 
 def check_admin(member):
-    return True if member.guild_permissions.administrator else False
+    return member.guild_permissions.administrator and dbutils.get_superuser() != member.id
 
 
 def remove_torn_id(name):

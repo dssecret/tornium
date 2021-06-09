@@ -27,13 +27,12 @@ class Admin(commands.Cog):
         self.client = client
 
     @commands.command()
-    @commands.cooldown(1, 5, commands.BucketType.user)
     async def config(self, ctx, arg=None, value=None):
         '''
         Returns the current configuration of the bot
         '''
 
-        if not check_admin(ctx.message.author) and dbutils.get_superuser() != ctx.message.author.id:
+        if not check_admin(ctx.message.author):
             embed = discord.Embed()
             embed.title = "Permission Denied"
             embed.description = f'This command requires {ctx.message.author.name} to be an Administrator. ' \
@@ -58,9 +57,13 @@ class Admin(commands.Cog):
                 title="Configuration: Vault",
                 description=f'''Vault Channel: {dbutils.read("vault")[str(ctx.guild.id)]["channel"]}
                 Vault Channel 2: {dbutils.read("vault")[str(ctx.guild.id)]["channel2"]}
+                Vault Channel 3: {dbutils.read("vault")[str(ctx.guild.id)]["channel3"]}
                 Vault Role: {dbutils.read("vault")[str(ctx.guild.id)]["role"]}
                 Vault Role 2: {dbutils.read("vault")[str(ctx.guild.id)]["role2"]}
-                Banking Channel: {dbutils.read("vault")[str(ctx.guild.id)]["banking"]}'''
+                Vault Role 3: {dbutils.read("vault")[str(ctx.guild.id)]["role3"]}
+                Banking Channel: {dbutils.read("vault")[str(ctx.guild.id)]["banking"]}
+                Banking Channel 2: {dbutils.read("vault")[str(ctx.guild.id)]["banking2"]}
+                Banking Channel 3: {dbutils.read("vault")[str(ctx.guild.id)]["banking3"]}'''
             ).set_footer(text="Page 2/2")
 
             pages = [page1, page2]
