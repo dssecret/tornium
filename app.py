@@ -25,6 +25,7 @@ from controllers.devroutes import mod as dev_mod
 from controllers.authroutes import mod as auth_mod
 from controllers.factionroutes import mod as faction_mod
 from controllers.botroutes import mod as bot_mod
+from controllers.errors import mod as error_mod
 from models import settingsmodel as settings
 from models.usermodel import db as userdb
 from models.factionmodel import db as factiondb
@@ -68,6 +69,7 @@ if settings.get("settings", "dev") and __name__ == "__main__":
     app.register_blueprint(auth_mod)
     app.register_blueprint(faction_mod)
     app.register_blueprint(bot_mod)
+    app.register_blueprint(error_mod)
     app.run('localhost', 8000, debug=True)
 
 if not settings.get("settings", "dev"):
@@ -75,3 +77,4 @@ if not settings.get("settings", "dev"):
     app.register_blueprint(auth_mod)
     app.register_blueprint(faction_mod)
     app.register_blueprint(bot_mod)
+    app.register_blueprint(error_mod)
