@@ -17,23 +17,12 @@ import json
 import os
 
 
-def settingsdir(file=None):
-    """
-    Gets the file's base folder depending on the settings directory stored in the system variables. Additionally, joins
-    the path of the directory with the file if a file is passed.
-    """
-
-    if file is None:
-        return os.getenv('SETTINGSDIR')
-    return os.path.join(os.getenv('SETTINGSDIR'), f'{file}.json')
-
-
 def _read(file: str):
     """
     Reads the JSON file using _settingsfile as the root directory of the file
     """
 
-    with open(settingsdir(file), 'r') as file:
+    with open(f'{file}.json', 'r') as file:
         return json.load(file)
 
 
@@ -45,7 +34,7 @@ def _write(file: str, data):
     :param data: The JSON formatted data to be written to the specified file
     """
 
-    with open(settingsdir(file), 'w') as file:
+    with open(f'{file}.json', 'w') as file:
         json.dump(data, file, indent=4)
 
 
@@ -55,7 +44,7 @@ def initialize():
     """
 
     try:
-        file = open(settingsdir('settings'))
+        file = open('settings.json')
         file.close()
     except FileNotFoundError:
         data = {
