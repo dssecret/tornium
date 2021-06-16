@@ -6,5 +6,29 @@
 {% include 'faction/navbar.html' %}
 
 {% block content %}
-
+<div class="container h-100">
+    <div class="py-3">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-list-ul"></i>
+                Features
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        Members List (Requires Reimplmentation for Speed) - a faction utility list members and shows their various stats
+                    </li>
+                    <li class="list-group-item">
+                        Banking (Requires Migration) - a faction utility for requesting money from the faction vault
+                    </li>
+                    <li class="list-group-item">
+                        Armory Logger (Requires Migration) - a faction utility to log all armory item usage
+                    </li>
+                </ul>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

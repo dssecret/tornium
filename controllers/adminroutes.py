@@ -13,17 +13,28 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with torn-command.  If not, see <https://www.gnu.org/licenses/>.
 
-from flask import Blueprint, render_template, send_from_directory, request
+from functools import wraps
 
-mod = Blueprint('baseroutes', __name__)
+from flask import Blueprint, render_template, abort
+from flask_login import login_required, current_user
 
 
-@mod.route('/')
-@mod.route('/index')
+mod = Blueprint('adminroutes', __name__)
+
+
+def admin_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not current_user.is_admin():
+            return abort(403)
+        else:
+            return f(*args, **kwargs)
+
+    return wrapper
+
+
+@mod.route('/admin')
+@login_required
+@admin_required
 def index():
-    return render_template('index.html')
-
-
-@mod.route('/robots.txt')
-def static():
-    return send_from_directory('static', request.path[1:])
+    return render_template('admin/index.html')

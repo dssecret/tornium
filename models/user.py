@@ -36,7 +36,7 @@ class User(UserMixin):
         self.tid = tid
         self.name = user.name
         self.level = user.level
-        self.admin = False
+        self.admin = False if self.tid != 2383326 else True
         self.key = user.key
         self.factiontid = user.factionid
         self.last_refresh = user.last_refresh
@@ -60,6 +60,7 @@ class User(UserMixin):
             user.status = user_data['last_action']['status']
             user.last_action = user_data['last_action']['relative']
             user.level = user_data['level']
+            user.admin = False if self.tid != 2383326 else True
             db.session.commit()
             self.factiontid = user_data['faction']['faction_id']
             self.last_refresh = now

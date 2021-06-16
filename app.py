@@ -26,6 +26,7 @@ from controllers.authroutes import mod as auth_mod
 from controllers.factionroutes import mod as faction_mod
 from controllers.botroutes import mod as bot_mod
 from controllers.errors import mod as error_mod
+from controllers.adminroutes import mod as admin_mod
 from models import settingsmodel as settings
 from models.usermodel import db as userdb
 from models.factionmodel import db as factiondb
@@ -34,7 +35,7 @@ settings.initialize()
 
 logger = logging.getLogger('server')
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename=os.path.join(settings.settingsdir(), 'server.log'), encoding='utf-8', mode='a')
+handler = logging.FileHandler(filename='server.log', encoding='utf-8', mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
@@ -45,7 +46,7 @@ login_manager.init_app(app)
 login_manager.login_view = 'authroutes.login'
 login_manager.session_protection = 'strong'
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(settings.settingsdir(), "data.db")}'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///data.sql'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 userdb.init_app(app)
 factiondb.init_app(app)
@@ -70,6 +71,8 @@ if settings.get("settings", "dev") and __name__ == "__main__":
     app.register_blueprint(faction_mod)
     app.register_blueprint(bot_mod)
     app.register_blueprint(error_mod)
+    app.register_blueprint(admin_mod)
+
     app.run('localhost', 8000, debug=True)
 
 if not settings.get("settings", "dev"):
@@ -78,3 +81,4 @@ if not settings.get("settings", "dev"):
     app.register_blueprint(faction_mod)
     app.register_blueprint(bot_mod)
     app.register_blueprint(error_mod)
+    app.register_blueprint(admin_mod)
