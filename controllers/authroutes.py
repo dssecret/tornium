@@ -44,7 +44,7 @@ def login():
         user.set_key(request.form['key'])
     next = request.args.get('next')
     if not get('settings', 'dev'):
-        if not is_safe_url(next, {'deek.sh'}):
+        if not is_safe_url(next, {'torn.deek.sh'}):
             abort(400)
     return redirect(next or url_for('baseroutes.index'))
 
