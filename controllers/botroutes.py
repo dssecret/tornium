@@ -45,7 +45,7 @@ def hosting():
         abort(503)
 
 
-@mod.route('/bot/dashbaord')
+@mod.route('/bot/dashboard')
 @login_required
 def dashboard():
     if is_dev():  # TODO: Remove once dashboard is completed
