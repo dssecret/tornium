@@ -84,3 +84,13 @@ def error501(e):
 
     return render_template('/errors/501.html'), 501
 
+
+@mod.app_errorhandler(503)
+def error503(e):
+    """
+    Returns the 503 error page
+
+    :param e: HTTP error
+    """
+
+    return render_template('/errors/503.html'), 503
