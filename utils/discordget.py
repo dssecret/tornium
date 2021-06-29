@@ -15,24 +15,27 @@
 
 import requests
 
+from models import settingsmodel
 import utils
 
 
-def tornget(endpoint, key, tots=0, fromts=0):
-    url = f'https://api.torn.com/{endpoint}&key={key}&comment=TornComm{"" if fromts == 0 else f"&from={fromts}"}' \
-          f'{"" if tots == 0 else f"&to={tots}"}'
-    request = requests.get(url)
+def discordget(endpoint):
+    url = f'https://discord.com/api/v9/{endpoint}'
+    request = requests.get(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}'})
 
     if request.status_code != 200:
-        utils.get_logger().warning(f'The Torn API has responded with status code {request.status_code} to endpoint '
+        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
                                    f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
 
     request = request.json()
 
-    if 'error' in request:
-        utils.get_logger().info(f'The Torn API has responded with error code {request["error"]["code"]} '
-                                f'({request["error"]["error"]}) to {endpoint}).')
-        raise utils.TornError(request["error"]["code"])
+    if 'errors' in request:
+        # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
+        # explanations
+
+        utils.get_logger().info(f'The Discord API has responded with error code {request["code"]} '
+                                f'({request["message"]}) to {url}).')
+        raise utils.DiscordError(request["code"])
 
     return request

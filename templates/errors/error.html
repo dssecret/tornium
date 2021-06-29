@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Error</title>
+  <title>Error | {% block title %}{% endblock %}</title>
 
   <style type="text/css">
     body {
@@ -74,7 +74,7 @@
 </head>
 <body>
 
-<div class="container"><h2>Error</h2>
+<div class="container"><h2>{{ title }}</h2>
   <h1>Something has gone wrong.</h1>
 
   <p>{{ error }}</p>

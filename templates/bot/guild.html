@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% include 'navbar.html' %}
+{% include 'footer.html' %}
+
+{% include 'bot/navbar.html' %}
+
+{% block content %}
+<div class="py-3 px-3">
+  <div class="card min-w-25 max-w-50">
+    <div class="card-body">
+      <h5 class="card-title">Factions</h5>
+      <p class="card-text">
+        The factions located in the particular Discord guild.
+      </p>
+
+      <div class="col-sm-12 col-md-8 col-lg-4">
+        <form method="POST" action="/bot/dashboard/{{ server.sid }}">
+          <div class="form-floating">
+            <input class="form-control" id="factionid" name="factionid" placeholder="Enter the Torn Faction ID">
+            <label for="factionid">Faction ID</label>
+          </div>
+
+          <button class="btn btn-lg btn-primary" type="submit">Add</button>
+        </form>
+      </div>
+
+      <div class="col-sm-12 col-md-8 col-lg-4">
+        <ul class="list-group">
+          {% for faction in factions %}
+          <li class="list-group-item d-flex">
+            <p class="px-1 my-2">
+              {{ faction.name }}
+
+              {% if server.sid == faction.guild %}
+              <i class="far fa-check-circle" data-bs-toggle="tooltip" data-bs-placement="top"
+                 title="{{ faction.name }} has been properly set up in {{ server.name }}."></i>
+              {% else %}
+              <i class="far fa-times-circle" data-bs-toggle="tooltip" data-bs-placement="top"
+                 title="{{ faction.name }} has not been properly set up in {{ server.name }}. Make sure that the faction is set in the server and the server is set in the faction."></i>
+              {% endif %}
+            </p>
+            <div class="px-5 float-end">
+              <form method="POST" action="/bot/dashboard/{{ server.sid }}/{{ faction.tid }}">
+                <button type="submit" class="btn btn-outline-danger">Remove</button>
+              </form>
+            </div>
+            {% if current_user.factiontid == faction.tid %}
+            <div class="px-2 float-end">
+              <a href="/faction/bot">
+                <button class="btn btn-outline-success">Edit</button>
+              </a>
+            </div>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" crossorigin="anonymous"></script>
+<script>
+  $(document).ready(function(){
+    $('[data-bs-toggle="tooltip"]').tooltip({
+      container: '.list-group'
+    });
+  });
+</script>
+{% endblock %}

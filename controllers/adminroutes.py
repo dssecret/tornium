@@ -15,8 +15,10 @@
 
 from functools import wraps
 
-from flask import Blueprint, render_template, abort
+from flask import Blueprint, render_template, abort, request
 from flask_login import login_required, current_user
+
+from models import settingsmodel
 
 
 mod = Blueprint('adminroutes', __name__)
@@ -25,7 +27,7 @@ mod = Blueprint('adminroutes', __name__)
 def admin_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if not current_user.is_admin():
+        if (not current_user.is_authenticated or not current_user.is_admin()) and not settingsmodel.is_dev():
             return abort(403)
         else:
             return f(*args, **kwargs)
@@ -38,3 +40,21 @@ def admin_required(f):
 @admin_required
 def index():
     return render_template('admin/index.html')
+
+
+@mod.route('/admin/dashboard')
+@login_required
+@admin_required
+def dashboard():
+    return render_template('admin/dashboard.html')
+
+
+@mod.route('/admin/bot', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def bot():
+    if request.method == 'POST':
+        if request.form.get('bottoken') is not None:
+            settingsmodel.update('settings', 'bottoken', request.form.get('bottoken'))
+
+    return render_template('admin/bot.html', bottoken=settingsmodel.get('settings', 'bottoken'))

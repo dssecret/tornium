@@ -13,22 +13,34 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with torn-command.  If not, see <https://www.gnu.org/licenses/>.
 
-import requests
-import discord
-
 import datetime
 from decimal import Decimal
 import re
+import sys
 
-import dbutils
+import discord
+import requests
+
+sys.path.append('..')
 
 
-def get_size(bytes, suffix="B"):
-    factor = 1024
-    for unit in ["", "K", "M", "G", "T", "P"]:
-        if bytes < factor:
-            return f"{bytes:.2f}{unit}{suffix}"
-        bytes /= factor
+def get_prefix(bot, message):
+    from models.server import Server
+    return Server(message.guild.id).prefix
+
+
+def text_to_num(text):
+    text = text.upper().replace(",", "")
+    numbers = re.sub(f'[a-z]', '', text.lower())
+
+    if "K" in text:
+        return int(Decimal(numbers) * 1000)
+    elif "M" in text:
+        return int(Decimal(numbers) * 1000000)
+    elif "B" in text:
+        return int(Decimal(numbers) * 1000000000)
+    else:
+        return int(Decimal(numbers))
 
 
 def num_to_text(num):
@@ -40,55 +52,13 @@ def num_to_text(num):
     return '{}{}'.format('{:f}'.format(num).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
 
 
-def text_to_num(text):
-    text = text.upper().replace(",", "")
-    numbers = re.sub(f'[a-z]', '', text.lower())
-
-    if "K" in text:
-        return Decimal(numbers) * 1000
-    elif "M" in text:
-        return Decimal(numbers) * 1000000
-    elif "B" in text:
-        return Decimal(numbers) * 1000000000
-    else:
-        return Decimal(numbers)
-
-
-def check_admin(member):
-    return member.guild_permissions.administrator and dbutils.get_superuser() != member.id
-
-
-def remove_torn_id(name):
-    return re.sub("[[].*?[]]", "", name)[:-1]
-
-
-def get_torn_id(name):
-    return re.compile(r"\[(\d+)\]").findall(name)[0]
-
-
 def commas(number):
     return "{:,}".format(number)
 
 
-def get_prefix(bot, message):
-    for guild in dbutils.read("guilds")["guilds"]:
-        if guild["id"] == str(message.guild.id):
-            return guild["prefix"]
-
-
-async def tornget(ctx, url, logger, guildkey=1, key=None):
-    if key is not None:
-        apikey = key
-    elif guildkey == 1:
-        apikey = dbutils.get_guild(ctx.guild.id, "tornapikey")
-    elif guildkey == 2:
-        apikey = dbutils.get_guild(ctx.guild.id, "tornapikey2")
-    elif guildkey == 3:
-        apikey = dbutils.get_guild(ctx.guild.id, "tornapikey3")
-    else:
-        raise ValueError()
-
-    request = requests.get(f'{url}{apikey}&comment=TornBot')
+async def tornget(ctx, logger, endpoint, key):
+    request = requests.get(f'https://api.torn.com/{endpoint}&key={key}&comment=TornComm')
+    print(f'https://api.torn.com/{endpoint}&key={key}&comment=TornComm')
 
     if request.status_code != 200:
         embed = discord.Embed()
@@ -97,7 +67,7 @@ async def tornget(ctx, url, logger, guildkey=1, key=None):
                             f'HTTP status code {request.status_code} has been given at ' \
                             f'{datetime.datetime.now()}.'
         await ctx.send(embed=embed)
-        logger.error(f'The Torn API (Key {guildkey}) has responded with HTTP status code {request.status_code}.')
+        logger.error(f'The Torn API has responded with HTTP status code {request.status_code}.')
         return Exception
 
     if 'error' in request.json():
@@ -108,7 +78,7 @@ async def tornget(ctx, url, logger, guildkey=1, key=None):
                             f'{error["code"]} ({error["error"]}). Visit the [Torn API documentation]' \
                             f'(https://api.torn.com/) to see why the error was raised.'
         await ctx.send(embed=embed)
-        logger.error(f'The Torn API (Key {guildkey}) has responded with error code {error["code"]}.')
+        logger.error(f'The Torn API has responded with error code {error["code"]}.')
         raise Exception
 
     return request.json()

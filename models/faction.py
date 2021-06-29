@@ -13,27 +13,32 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with torn-command.  If not, see <https://www.gnu.org/licenses/>.
 
-import ast
+import json
 import random
 
 from flask_login import current_user
 
-from models.factionmodel import FactionModel, db
+from database import session_local
+from models.factionmodel import FactionModel
+from models.server import Server
 from models.user import User
 import utils
+from utils.tornget import tornget
 
 
 class Faction:
-    def __init__(self, tid):
+    def __init__(self, tid, key=""):
         """
         Retrieves the faction from the database.
 
         :param tid: Torn faction ID
+        :param key: Torn API Key to be utilized (uses current user's key if not passed)
         """
 
-        faction = FactionModel.query.filter_by(tid=tid).first()
+        session = session_local()
+        faction = session.query(FactionModel).filter_by(tid=tid).first()
         if faction is None:
-            faction_data = utils.tornget('/faction/?selections=basic,positions', current_user.key)
+            faction_data = tornget(f'faction/{tid}?selections=basic', key if key != "" else current_user.key)
             now = utils.now()
 
             faction = FactionModel(
@@ -42,21 +47,32 @@ class Faction:
                 respect=faction_data['respect'],
                 capacity=faction_data['capacity'],
                 keys='[]',
-                last_members=now
+                last_members=now,
+                withdrawals='[]',
+                guild=0,
+                vaultconfig='{"banking": 0, "banker": 0}'
             )
 
-            position = faction_data['members'][str(current_user.get_id())]['position']
-            if faction_data['positions'][position]['canAccessFactionApi'] == 1:
-                faction.keys = str(ast.literal_eval(faction.keys).append(current_user.get_key()))
+            try:
+                tornget(f'faction/{tid}?selections=positions', key if key != "" else current_user.key)
+                keys = json.loads(faction.keys)
+                keys.append(key if key != "" else current_user.key)
+                keys = json.dumps(keys)
+                faction.keys = keys
+            except utils.TornError:
+                pass
 
-            db.session.add(faction)
+            session.add(faction)
 
         self.tid = tid
         self.name = faction.name
         self.respect = faction.respect
         self.capacity = faction.capacity
-        self.keys = ast.literal_eval(faction.keys)
+        self.keys = json.loads(faction.keys)
         self.last_members = faction.last_members
+        self.withdrawals = json.loads(faction.withdrawals)
+        self.guild = faction.guild
+        self.vault_config = json.loads(faction.vaultconfig)
 
     def get_tid(self):
         """
@@ -67,8 +83,10 @@ class Faction:
     def get_keys(self):
         return self.keys
 
-    def update_members(self, force=False, key=None):
+    def rand_key(self):
+        return random.choice(self.keys)
 
+    def update_members(self, force=False, key=None):
         now = utils.now()
 
         if not force and (now - self.last_members) < 1800:
@@ -79,7 +97,7 @@ class Faction:
         if key is None:
             key = random.choice(self.get_keys())
 
-        factionmembers = utils.tornget('faction/?selections=', key)
+        factionmembers = tornget('faction/?selections=', key)
 
         for memberid, member in factionmembers['members'].values():
             user = User(memberid)
@@ -87,4 +105,14 @@ class Faction:
             if key is None:
                 key = random.choice(self.get_keys())
             user.refresh(key, force)
+
+    def get_vault_config(self):
+        if self.guild == 0:
+            return {}
+
+        server = Server(self.guild)
+        if self.tid not in server.factions:
+            raise Exception  # TODO: Make exception more descriptive
+
+        return self.vault_config
 

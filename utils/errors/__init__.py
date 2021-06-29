@@ -22,3 +22,7 @@ class NetworkingError(Exception):
 
 class TornError(Exception):
     pass
+
+
+class DiscordError(Exception):
+    pass

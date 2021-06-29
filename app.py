@@ -14,11 +14,9 @@
 # along with torn-command.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-import os
 
 import flask
 from flask_login import LoginManager
-from flask_migrate import Migrate
 
 from controllers import mod as base_mod
 from controllers.devroutes import mod as dev_mod
@@ -28,8 +26,6 @@ from controllers.botroutes import mod as bot_mod
 from controllers.errors import mod as error_mod
 from controllers.adminroutes import mod as admin_mod
 from models import settingsmodel as settings
-from models.usermodel import db as userdb
-from models.factionmodel import db as factiondb
 
 settings.initialize()
 
@@ -45,17 +41,6 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'authroutes.login'
 login_manager.session_protection = 'strong'
-
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///data.sql'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-userdb.init_app(app)
-factiondb.init_app(app)
-usermigrate = Migrate(app, userdb)
-factionmigrate = Migrate(app, factiondb)
-
-with app.app_context():
-    userdb.create_all()
-    factiondb.create_all()
 
 
 @login_manager.user_loader

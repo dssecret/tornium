@@ -52,6 +52,7 @@ def initialize():
             'dev': False,
             'banlist': [],
             'useragentlist': [],
+            'bottoken': '',
             'secret': str(os.urandom(32))
         }
         _write('settings', data)

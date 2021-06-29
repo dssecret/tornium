@@ -13,14 +13,22 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with torn-command.  If not, see <https://www.gnu.org/licenses/>.
 
+import asyncio
+import json
+import sys
+import time
+
 import discord
 from discord.ext import commands
 
-from required import *
-import dbutils
+sys.path.append('..')
 
-import time
-import asyncio
+from bot import botutils
+from database import session_local
+from models.faction import Faction
+from models.factionmodel import FactionModel
+from models.user import User
+from models.usermodel import UserDiscordModel
 
 
 class Vault(commands.Cog):
@@ -30,488 +38,223 @@ class Vault(commands.Cog):
 
     @commands.command(aliases=["req", "with", "w"])
     async def withdraw(self, ctx, arg):
-        '''
-        Sends a message to faction leadership (assuming you have enough funds in the vault and you are a member of the
-        specific faction)
-        '''
-
         await ctx.message.delete()
 
-        if ctx.message.author.nick is None:
-            sender = ctx.message.author.name
-        else:
-            sender = ctx.message.author.nick
+        session = session_local()
+        user = session.query(UserDiscordModel).filter_by(discord_id=ctx.message.author.id).first()
 
-        senderid = get_torn_id(sender)
-        sender = remove_torn_id(sender)
+        if user is None:
+            embed = discord.Embed()
+            embed.title = 'Requires Verification'
+            embed.description = 'You are required to be verified officially through the ' \
+                                '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
+                                'utilize the banking features of this bot. If you have recently verified, please ' \
+                                'wait for a minute or two before trying again.'
+            await ctx.send(embed=embed)
+            return None
 
-        if dbutils.get_user(ctx.message.author.id, "tornid") == "":
-            verification = await tornget(ctx, f'https://api.torn.com/user/{senderid}?selections=discord&key=',
-                                         self.logger)
+        cash = botutils.text_to_num(arg)
+        user = User(user.tid)
+        faction = Faction(user.factiontid)
+        vault_config = faction.get_vault_config()
 
-            if verification["discord"]["discordID"] != str(ctx.message.author.id) and \
-                    verification["discord"]["discordID"] != "":
+        if vault_config == {} or vault_config.get('banking') is None or vault_config.get('banker') is None \
+                or vault_config.get('withdrawal') is None:
+            embed = discord.Embed()
+            embed.title = 'Server Configuration Required'
+            embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
+                                f'the server. Please contact the server administrators to do this via ' \
+                                f'[the dashboard](https://torn.deek.sh/].'
+            await ctx.send(embed=embed)
+            return None
+
+        vault_balances = await botutils.tornget(ctx, self.logger, f'faction/?selections=donations', faction.rand_key())
+
+        if str(user.tid) in vault_balances:
+            if cash > vault_balances['donations'][str(user.tid)]['money_balance']:
                 embed = discord.Embed()
-                embed.title = "Permission Denied"
-                embed.description = f'The nickname of {ctx.message.author.nick} in {ctx.guild.name} does not reflect ' \
-                                    f'the Torn ID and username. Please update the nickname (i.e. through YATA) or add' \
-                                    f' your ID to the database via the `?addid` or `addkey` commands (NOTE: the ' \
-                                    f'`?addkey` command requires your Torn API key). This interaction has been logged.'
-                await ctx.send(embed=embed)
-                self.logger.warning(f'{ctx.message.author.id} (known as {ctx.message.author.name} does not have an '
-                                    f'accurate nickname, and attempted to withdraw some money from the faction vault.')
+                embed.title = 'Not Enough Money'
+                embed.description = f'You have requested {arg}, but only have ' \
+                                    f'{botutils.commas(vault_balances["donations"][str(user.tid)]["money_balance"])} ' \
+                                    f'in the vault.'
+                message = await ctx.send(embed=embed)
+                await asyncio.sleep(30)
+                await message.delete()
                 return None
-            else:
-                senderid = verification["discord"]["userID"]
 
-        value = text_to_num(arg)
-        self.logger.info(f'{sender} has submitted a request for {arg}.')
-
-        primary_faction = await tornget(ctx, "https://api.torn.com/faction/?selections=donations&key=", self.logger)
-
-        secondary_faction = None
-        if dbutils.get_guild(ctx.guild.id, "tornapikey2") != "":
-            secondary_faction = await tornget(ctx, "https://api.torn.com/faction/?selections=donations&key=",
-                                              self.logger, 2)
-
-        tertiary_faction = None
-        if dbutils.get_guild(ctx.guild.id, "tornapikey3") != "":
-            tertiary_faction = await tornget(ctx, "https://api.torn.com/faction/?selections=donations&key=",
-                                             self.logger, 3)
-
-        if str(senderid) in primary_faction["donations"]:
-            if int(value) > primary_faction["donations"][str(senderid)]["money_balance"]:
-                self.logger.warning(f'{sender} has requested {arg}, but only has '
-                                    f'{primary_faction["donations"][str(senderid)]["money_balance"]} in the vault.')
-                await ctx.send(f'You do not have {arg} in the faction vault.')
-                return None
-            else:
-                channel = discord.utils.get(ctx.guild.channels, name=dbutils.get_vault(ctx.guild.id, "channel"))
-
-                self.logger.info(f'{sender} has successfully requested {arg} from the faction vault.')
-
-                requestid = dbutils.read("requests")["nextrequest"]
-
-                embed = discord.Embed()
-                embed.title = f'Money Request #{dbutils.read("requests")["nextrequest"]}'
-                embed.description = "Your request has been forwarded to the faction leadership."
-                original = await ctx.send(embed=embed)
-
-                embed = discord.Embed()
-                embed.title = f'Money Request #{dbutils.read("requests")["nextrequest"]}'
-                embed.description = f'{sender} is requesting {arg} from the faction vault. To fulfill this request, ' \
-                                    f'enter `?f {requestid}` in this channel.'
-                message = await channel.send(dbutils.get_vault(ctx.guild.id, "role"), embed=embed)
-
-                data = dbutils.read("requests")
-                data["nextrequest"] += 1
-                data[requestid] = {
-                    "requester": ctx.message.author.id,
-                    "timerequested": time.ctime(),
-                    "fulfiller": None,
-                    "timefulfilled": "",
-                    "requestmessage": original.id,
-                    "withdrawmessage": message.id,
-                    "fulfilled": False,
-                    "faction": 1
-                }
-                dbutils.write("requests", data)
-
-        elif str(senderid) in secondary_faction["donations"]:
-            if int(value) > secondary_faction["donations"][str(senderid)]["money_balance"]:
-                self.logger.warning(f'{sender} has requested {arg}, but only has '
-                                    f'{secondary_faction["donations"][str(senderid)]["money_balance"]} in the vault.')
-                await ctx.send(f'You do not have {arg} in the faction vault.')
-                return None
-            else:
-                channel = discord.utils.get(ctx.guild.channels, name=dbutils.get_vault(ctx.guild.id, "channel2"))
-
-                self.logger.info(f'{sender} has successfully requested {arg} from the faction vault.')
-
-                requestid = dbutils.read("requests")["nextrequest"]
-
-                embed = discord.Embed()
-                embed.title = f'Money Request #{dbutils.read("requests")["nextrequest"]}'
-                embed.description = "Your request has been forwarded to the faction leadership."
-                original = await ctx.send(embed=embed)
-
-                embed = discord.Embed()
-                embed.title = f'Money Request #{dbutils.read("requests")["nextrequest"]}'
-                embed.description = f'{sender} is requesting {arg} from the faction vault. To fulfill this request, ' \
-                                    f'enter `?f {requestid}` in this channel.'
-                message = await channel.send(dbutils.get_vault(ctx.guild.id, "role2"), embed=embed)
-
-                data = dbutils.read("requests")
-                data["nextrequest"] += 1
-                data[requestid] = {
-                    "requester": ctx.message.author.id,
-                    "timerequested": time.ctime(),
-                    "fulfiller": None,
-                    "timefulfilled": "",
-                    "requestmessage": original.id,
-                    "withdrawmessage": message.id,
-                    "fulfilled": False,
-                    "faction": 2
-                }
-                dbutils.write("requests", data)
-        elif str(senderid) in tertiary_faction["donations"]:
-            if int(value) > tertiary_faction["donations"][str(senderid)]["money_balance"]:
-                self.logger.warning(f'{sender} has requested {arg}, but only has '
-                                    f'{tertiary_faction["donations"][str(senderid)]["money_balance"]} in the vault.')
-                await ctx.send(f'You do not have {arg} in the faction vault.')
-                return None
-            else:
-                channel = discord.utils.get(ctx.guild.channels, name=dbutils.get_vault(ctx.guild.id, "channel3"))
-
-                self.logger.info(f'{sender} has successfully requested {arg} from the faction vault.')
-
-                requestid = dbutils.read("requests")["nextrequest"]
-
-                embed = discord.Embed()
-                embed.title = f'Money Request #{dbutils.read("requests")["nextrequest"]}'
-                embed.description = "Your request has been forwarded to the faction leadership."
-                original = await ctx.send(embed=embed)
-
-                embed = discord.Embed()
-                embed.title = f'Money Request #{dbutils.read("requests")["nextrequest"]}'
-                embed.description = f'{sender} is requesting {arg} from the faction vault. To fulfill this request, ' \
-                                    f'enter `?f {requestid}` in this channel.'
-                message = await channel.send(dbutils.get_vault(ctx.guild.id, "role3"), embed=embed)
-
-                data = dbutils.read("requests")
-                data["nextrequest"] += 1
-                data[requestid] = {
-                    "requester": ctx.message.author.id,
-                    "timerequested": time.ctime(),
-                    "fulfiller": None,
-                    "timefulfilled": "",
-                    "requestmessage": original.id,
-                    "withdrawmessage": message.id,
-                    "fulfilled": False,
-                    "faction": 3
-                }
-                dbutils.write("requests", data)
-        else:
-            self.logger.warning(f'{sender} who is not a member of stored factions has requested {arg}.')
+            channel = discord.utils.get(ctx.guild.channels, id=vault_config['banking'])
+            request_id = len(faction.withdrawals) + 1
 
             embed = discord.Embed()
-            embed.title = "Money Request"
-            embed.description = f'{sender} is not a member of stored factions has requested {arg}.'
-            await ctx.send(embed=embed)
+            embed.title = f'Vault Request #{request_id}'
+            embed.description = 'Your request has been forwarded to the faction leadership.'
+            original = await ctx.send(embed=embed)
+
+            embed = discord.Embed()
+            embed.title = f'Vault Request #{request_id}'
+            embed.description = f'{user.name} is requesting {arg} from the faction vault. To fulfill this request, ' \
+                                f'enter `?f {request_id}` in this channel.'
+            message = await channel.send(vault_config['banker'], embed=embed)
+
+            faction.withdrawals.append({
+                'id': request_id,
+                'requester': user.tid,
+                'fulfilled': False,
+                'timerequested': time.ctime(),
+                'fulfiller': 0,
+                'timefulfilled': 0,
+                'requestmessage': original.id,
+                'withdrawalmessage': message.id
+            })
+            dbfaction = session.query(FactionModel).filter_by(tid=faction.tid).first()
+            dbfaction.withdrawals = json.dumps(faction.withdrawals)
+            session.flush()
+        else:
+            embed = discord.Embed()
+            embed.title = 'Money Request Failed'
+            embed.description = 'You are not a member of any stored factions. This requires your faction leadership ' \
+                                'to set up banking.'
+            message = await ctx.send(embed=embed)
+            await asyncio.sleep(30)
+            await message.delete()
             return None
 
     @commands.command(aliases=['f'])
     async def fulfill(self, ctx, request):
-        '''
-        Indicates the fulfillment of the specified request
-        '''
+        await ctx.message.delete()
 
-        if dbutils.read("requests")[request]["fulfilled"]:
+        session = session_local()
+        user = session.query(UserDiscordModel).filter_by(discord_id=ctx.message.author.id).first()
+
+        if user is None:
             embed = discord.Embed()
-            embed.title = "Request Already Fulfilled"
-            embed.description = f'Request #{request} has already been fulfilled by ' \
-                                f'{ctx.guild.get_member(dbutils.read("requests")[request]["fulfiller"]).name} ' \
-                                f'at {dbutils.read("requests")[request]["timefulfilled"]}.'
+            embed.title = 'Requires Verification'
+            embed.description = 'You are required to be verified officially through the ' \
+                                '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
+                                'utilize the banking features of this bot. If you have recently verified, please ' \
+                                'wait for a minute or two before trying again.'
             await ctx.send(embed=embed)
             return None
 
-        await ctx.message.delete()
+        faction = Faction(user.tid)
+        vault_config = faction.get_vault_config()
 
-        if dbutils.read("requests")[request]["faction"] == 1:
-            channel = discord.utils.get(ctx.guild.channels, id=int(dbutils.get_vault(ctx.guild.id, "banking")))
-        elif dbutils.read("requests")[request]["faction"] == 2:
-            channel = discord.utils.get(ctx.guild.channels, id=int(dbutils.get_vault(ctx.guild.id, "banking2")))
-        else:
-            channel = discord.utils.get(ctx.guild.channels, id=int(dbutils.get_vault(ctx.guild.id, "banking3")))
-        original = await channel.fetch_message(int(dbutils.read("requests")[request]["requestmessage"]))
+        if vault_config == {} or vault_config.get('banking') is None or vault_config.get('banker') is None \
+                or vault_config.get('withdrawal') is None:
+            embed = discord.Embed()
+            embed.title = 'Server Configuration Required'
+            embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
+                                f'the server. Please contact the server administrators to do this via ' \
+                                f'[the dashboard](https://torn.deek.sh/].'
+            await ctx.send(embed=embed)
+            return None
+
+        withdrawal_channel = discord.utils.get(ctx.guild.channels, id=vault_config['withdrawal'])
+        banking_channel = discord.utils.get(ctx.guild.channels, id=vault_config['banking'])
+        withdrawal = faction.withdrawals[int(request)]
+        # Message posted in banking channel
+        withdrawal_message = await banking_channel.fetch_message(withdrawal['withdrawalmessage'])
+        # Message posted in withdrawal channel
+        original_message = await withdrawal_channel.fetch_message(withdrawal['requestmessage'])
 
         embed = discord.Embed()
-        embed.title = original.embeds[0].title
+        embed.title = withdrawal_message.embeds[0].title
+        embed.add_field(name='Original Message', value=withdrawal_message.embeds[0].description.split('.')[0])
+        embed.description = f'This request has been fulfilled by {ctx.message.author.name} at {time.ctime()}.'
+        await withdrawal_message.edit(embed=embed)
 
-        if dbutils.read("requests")[request]["faction"] == 1:
-            channel = discord.utils.get(ctx.guild.channels, name=dbutils.get_vault(ctx.guild.id, "channel"))
-        elif dbutils.read("requests")[request]["faction"] == 2:
-            channel = discord.utils.get(ctx.guild.channels, name=dbutils.get_vault(ctx.guild.id, "channel2"))
-        else:
-            channel = discord.utils.get(ctx.guild.channels, name=dbutils.get_vault(ctx.guild.id, "channel3"))
-        message = await channel.fetch_message(int(dbutils.read("requests")[request]["withdrawmessage"]))
-
-        embed.add_field(name='Original Message', value=message.embeds[0].description.split(".")[0])
-        embed.description = f'The request has been fulfilled by {ctx.message.author.name} at {time.ctime()}.'
-        await message.edit(embed=embed)
-
-        embed.description = f'The request has been fulfilled by {ctx.message.author.name} at {time.ctime()}.'
         embed.clear_fields()
-        await original.edit(embed=embed)
+        await original_message.edit(embed=embed)
 
-        data = dbutils.read("requests")
-        data[request]["fulfiller"] = ctx.message.author.id
-        data[request]["fulfilled"] = True
-        data[request]["timefulfilled"] = time.ctime(),
-        dbutils.write("requests", data)
+        faction.withdrawals[int(request)]['fulfilled'] = True
+        faction.withdrawals[int(request)]['fulfiller'] = user.tid
+        faction.timefulfilled = time.ctime()
+        dbfaction = session.query(FactionModel).filter_by(tid=faction.tid).first()
+        dbfaction.withdrawals = json.dumps(faction.withdrawals)
+        session.flush()
 
         await asyncio.sleep(60)
-        await original.delete()
+        await original_message.delete()
 
-    @commands.command(pass_context=True)
-    async def b(self, ctx):
-        '''
-        Returns a simplified version of the balance of your funds in the vault (assuming you are a member of the
-        specific faction)
-        '''
-
+    @commands.command(pass_context=True, aliases=['balance', 'bal'])
+    async def fullbalance(self, ctx):
         await ctx.message.delete()
 
-        sender = None
-        message = None
-        if ctx.message.author.nick is None:
-            sender = ctx.message.author.name
-        else:
-            sender = ctx.message.author.nick
+        session = session_local()
+        user = session.query(UserDiscordModel).filter_by(discord_id=ctx.message.author.id).first()
 
-        senderid = get_torn_id(sender)
-        sender = remove_torn_id(sender)
-
-        if dbutils.get_user(ctx.message.author.id, "tornid") == "":
-            verification = await tornget(ctx, f'https://api.torn.com/user/{senderid}?selections=discord&key=',
-                                         self.logger)
-            if verification["discord"]["discordID"] != str(ctx.message.author.id) and \
-                    verification["discord"]["discordID"] != "":
-                embed = discord.Embed()
-                embed.title = "Permission Denied"
-                embed.description = f'The nickname of {ctx.message.author.name} in {ctx.guild.name} does not reflect ' \
-                                    f'the Torn ID and username. Please update the nickname (i.e. through YATA) or add' \
-                                    f' your ID to the database via the `?addid` or `addkey` commands (NOTE: the ' \
-                                    f'`?addkey` command requires your Torn API key). This interaction has been logged.'
-                await ctx.send(embed=embed)
-                self.logger.warning(
-                    f'{ctx.message.author.id} does not have an accurate nickname, and attempted to withdraw'
-                    f' some money from the faction vault.')
-                return None
-
-        self.logger.info(f'{sender} is checking their balance in the faction vault.')
-
-        response = await tornget(ctx, "https://api.torn.com/faction/?selections=donations&key=", self.logger)
-        response = response["donations"]
-
-        primary_balance = 0
-        secondary_balance = 0
-        tertiary_balance = 0
-        member = False
-
-        for user in response:
-            if response[user]["name"] == sender:
-                self.logger.info(f'{sender} has {num_to_text(response[user]["money_balance"])} in the faction vault.')
-
-                primary_balance = response[user]["money_balance"]
-                member = True
-                break
-
-        if dbutils.get_guild(ctx.guild.id, "tornapikey2") == "" and member:
+        if user is None:
             embed = discord.Embed()
-            embed.title = f'Vault Balance for {sender}'
-            embed.description = f'Faction vault balance: {num_to_text(primary_balance)}'
-            message = await ctx.send(embed=embed)
-            await asyncio.sleep(30)
-            await message.delete()
+            embed.title = 'Requires Verification'
+            embed.description = 'You are required to be verified officially through the ' \
+                                '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
+                                'utilize the banking features of this bot. If you have recently verified, please ' \
+                                'wait for a minute or two before trying again.'
+            await ctx.send(embed=embed)
             return None
-        elif dbutils.get_guild(ctx.guild.id, "tornapikey2") == "" and not member:
-            self.logger.log(
-                f'{sender} who is not a member of any of the stored factions has requested their vault balance.')
 
+        user = User(user.tid)
+        faction = Faction(user.factiontid, user.key)
+
+        faction_balances = (await botutils.tornget(ctx, self.logger,
+                                                   'faction/?selections=donations',
+                                                   faction.rand_key()))['donations']
+
+        if str(user.tid) not in faction_balances:
             embed = discord.Embed()
-            embed.title = "Vault Balance for " + sender
-            embed.description = f'{sender} is not a member of any of the stored factions.'
-            message = await ctx.send(embed=embed)
-            await asyncio.sleep(30)
-            await message.delete()
-
-        response = await tornget(ctx, "https://api.torn.com/faction/?selections=donations&key=", self.logger, 2)
-        response = response['donations']
-
-        for user in response:
-            if response[user]["name"] == sender:
-                self.logger.info(f'{sender} has {num_to_text(response[user]["money_balance"])} in the secondary faction'
-                                 f' vault.')
-                secondary_balance = response[user]["money_balance"]
-                member = True
-
-        if dbutils.get_guild(ctx.guild.id, "tornapikey3") == "" and member:
-            embed = discord.Embed()
-            embed.title = f'Vault Balance for {sender}'
-            embed.description = f'Faction vault balance: {num_to_text(primary_balance)}'
-            message = await ctx.send(embed=embed)
-            await asyncio.sleep(30)
-            await message.delete()
+            embed.title = 'Error'
+            embed.description = f'{user.name} is not in {faction.name}\'s donations list according to the Torn API. ' \
+                                f'If you think that this is an error, please report this to the devlopers of this bot.'
+            await ctx.send(embed=embed)
             return None
-        elif dbutils.get_guild(ctx.guild.id, "tornapikey3") == "" and not member:
-            self.logger.log(
-                f'{sender} who is not a member of any of the stored factions has requested their vault balance.')
 
-            embed = discord.Embed()
-            embed.title = "Vault Balance for " + sender
-            embed.description = f'{sender} is not a member of any of the stored factions.'
-            message = await ctx.send(embed=embed)
-            await asyncio.sleep(30)
-            await message.delete()
+        embed = discord.Embed()
+        embed.title = f'Value Balance of {user.name if user.name != "" else ctx.message.author.name}'
+        embed.description = f'{user.name if user.name != "" else ctx.message.author.name} has ' \
+                            f'{botutils.commas(faction_balances[str(user.tid)]["money_balance"])} in ' \
+                            f'{faction.name}\'s vault.'
+        message = await ctx.send(embed=embed)
+        await asyncio.sleep(30)
+        await message.delete()
 
-        response = await tornget(ctx, "https://api.torn.com/faction/?selections=donations&key=", self.logger, 3)
-        response = response['donations']
-
-        for user in response:
-            if response[user]["name"] == sender:
-                self.logger.info(f'{sender} has {num_to_text(response[user]["money_balance"])} in the teritary faction'
-                                 f' vault.')
-                tertiary_balance = response[user]["money_balance"]
-                member = True
-
-        if not member:
-            self.logger.log(
-                f'{sender} who is not a member of any of the stored factions has requested their vault balance.')
-
-            embed = discord.Embed()
-            embed.title = "Vault Balance for " + sender
-            embed.description = f'{sender} is not a member of any of the stored factions.'
-            message = await ctx.send(embed=embed)
-            await asyncio.sleep(30)
-            await message.delete()
-        else:
-            embed = discord.Embed()
-            embed.title = f'Vault Balance for {sender}'
-            embed.description = f'Primary faction vault balance: {num_to_text(primary_balance)}\nSecondary ' \
-                                f'faction vault balance: {num_to_text(secondary_balance)}\nTertiary faction vault ' \
-                                f'balance: {num_to_text(tertiary_balance)}'
-            message = await ctx.send(embed=embed)
-            await asyncio.sleep(30)
-            await message.delete()
-
-    @commands.command(aliases=["balance"], pass_context=True)
-    async def bal(self, ctx):
-        '''
-        Returns the exact balance of your funds in the vault (assuming you are a member of the specific faction)
-        '''
-
+    @commands.command(pass_context=True, aliases=['b'])
+    async def simplebalance(self, ctx):
         await ctx.message.delete()
 
-        sender = None
-        message = None
-        if ctx.message.author.nick is None:
-            sender = ctx.message.author.name
-        else:
-            sender = ctx.message.author.nick
+        session = session_local()
+        user = session.query(UserDiscordModel).filter_by(discord_id=ctx.message.author.id).first()
 
-        senderid = get_torn_id(sender)
-        sender = remove_torn_id(sender)
-
-        if dbutils.get_user(ctx.message.author.id, "tornid") == "":
-            verification = await tornget(ctx, f'https://api.torn.com/user/{senderid}?selections=discord&key=',
-                                         self.logger)
-            if verification["discord"]["discordID"] != str(ctx.message.author.id) and \
-                    verification["discord"]["discordID"] != "":
-                embed = discord.Embed()
-                embed.title = "Permission Denied"
-                embed.description = f'The nickname of {ctx.message.author.name} in {ctx.guild.name} does not reflect ' \
-                                    f'the Torn ID and username. Please update the nickname (i.e. through YATA) or add' \
-                                    f' your ID to the database via the `?addid` or `addkey` commands (NOTE: the ' \
-                                    f'`?addkey` command requires your Torn API key). This interaction has been logged.'
-                await ctx.send(embed=embed)
-                self.logger.warning(
-                    f'{ctx.message.author.id} does not have an accurate nickname, and attempted to withdraw'
-                    f' some money from the faction vault.')
-                return None
-
-        self.logger.info(f'{sender} is checking their balance in the faction vault.')
-
-        response = await tornget(ctx, "https://api.torn.com/faction/?selections=donations&key=", self.logger)
-        response = response["donations"]
-
-        primary_balance = 0
-        secondary_balance = 0
-        tertiary_balance = 0
-        member = False
-
-        for user in response:
-            if response[user]["name"] == sender:
-                self.logger.info(f'{sender} has {num_to_text(response[user]["money_balance"])} in the faction vault.')
-
-                primary_balance = response[user]["money_balance"]
-                member = True
-                break
-
-        if dbutils.get_guild(ctx.guild.id, "tornapikey2") == "" and member:
+        if user is None:
             embed = discord.Embed()
-            embed.title = f'Vault Balance for {sender}'
-            embed.description = f'Faction vault balance: {commas(primary_balance)}'
-            message = await ctx.send(embed=embed)
-            await asyncio.sleep(30)
-            await message.delete()
+            embed.title = 'Requires Verification'
+            embed.description = 'You are required to be verified officially through the ' \
+                                '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
+                                'utilize the banking features of this bot. If you have recently verified, please ' \
+                                'wait for a minute or two before trying again.'
+            await ctx.send(embed=embed)
             return None
-        elif dbutils.get_guild(ctx.guild.id, "tornapikey2") == "" and not member:
-            self.logger.log(
-                f'{sender} who is not a member of any of the stored factions has requested their vault balance.')
 
+        user = User(user.tid)
+        faction = Faction(user.factiontid, user.key)
+
+        faction_balances = (await botutils.tornget(ctx, self.logger,
+                                                   'faction/?selections=donations',
+                                                   faction.rand_key()))['donations']
+
+        if str(user.tid) not in faction_balances:
             embed = discord.Embed()
-            embed.title = "Vault Balance for " + sender
-            embed.description = f'{sender} is not a member of any of the stored factions.'
-            message = await ctx.send(embed=embed)
-            await asyncio.sleep(30)
-            await message.delete()
-
-        response = await tornget(ctx, "https://api.torn.com/faction/?selections=donations&key=", self.logger, 2)
-        response = response['donations']
-
-        for user in response:
-            if response[user]["name"] == sender:
-                self.logger.info(f'{sender} has {num_to_text(response[user]["money_balance"])} in the secondary faction'
-                                 f' vault.')
-                secondary_balance = response[user]["money_balance"]
-                member = True
-
-        if dbutils.get_guild(ctx.guild.id, "tornapikey3") == "" and member:
-            embed = discord.Embed()
-            embed.title = f'Vault Balance for {sender}'
-            embed.description = f'Faction vault balance: {commas(primary_balance)}'
-            message = await ctx.send(embed=embed)
-            await asyncio.sleep(30)
-            await message.delete()
+            embed.title = 'Error'
+            embed.description = f'{user.name} is not in {faction.name}\'s donations list according to the Torn API. ' \
+                                f'If you think that this is an error, please report this to the devlopers of this bot.'
+            await ctx.send(embed=embed)
             return None
-        elif dbutils.get_guild(ctx.guild.id, "tornapikey3") == "" and not member:
-            self.logger.log(
-                f'{sender} who is not a member of any of the stored factions has requested their vault balance.')
 
-            embed = discord.Embed()
-            embed.title = "Vault Balance for " + sender
-            embed.description = f'{sender} is not a member of any of the stored factions.'
-            message = await ctx.send(embed=embed)
-            await asyncio.sleep(30)
-            await message.delete()
+        embed = discord.Embed()
+        embed.title = f'Value Balance of {user.name if user.name != "" else ctx.message.author.name}'
 
-        response = await tornget(ctx, "https://api.torn.com/faction/?selections=donations&key=", self.logger, 3)
-        response = response['donations']
-
-        for user in response:
-            if response[user]["name"] == sender:
-                self.logger.info(f'{sender} has {num_to_text(response[user]["money_balance"])} in the teritary faction'
-                                 f' vault.')
-                tertiary_balance = response[user]["money_balance"]
-                member = True
-
-        if not member:
-            self.logger.log(
-                f'{sender} who is not a member of any of the stored factions has requested their vault balance.')
-
-            embed = discord.Embed()
-            embed.title = "Vault Balance for " + sender
-            embed.description = f'{sender} is not a member of any of the stored factions.'
-            message = await ctx.send(embed=embed)
-            await asyncio.sleep(30)
-            await message.delete()
-        else:
-            embed = discord.Embed()
-            embed.title = f'Vault Balance for {sender}'
-            embed.description = f'Primary faction vault balance: {commas(primary_balance)}\nSecondary ' \
-                                f'faction vault balance: {commas(secondary_balance)}\nTertiary faction vault ' \
-                                f'balance: {commas(tertiary_balance)}'
-            message = await ctx.send(embed=embed)
-            await asyncio.sleep(30)
-            await message.delete()
+        embed.description = f'{user.name if user.name != "" else ctx.message.author.name} has ' \
+                            f'{botutils.num_to_text(faction_balances[str(user.tid)]["money_balance"])} in ' \
+                            f'{faction.name}\'s vault.'
+        message = await ctx.send(embed=embed)
+        await asyncio.sleep(30)
+        await message.delete()

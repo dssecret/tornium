@@ -13,23 +13,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with torn-command.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, Integer, String
-from database import base
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
+engine = create_engine('sqlite+pysqlite:///data.sql', connect_args={'check_same_thread': False})
+session_local = sessionmaker(autocommit=True, autoflush=False, bind=engine)
+base = declarative_base()
 
-class FactionModel(base):
-    __tablename__ = 'Factions'
+from models.factionmodel import FactionModel
+from models.servermodel import ServerModel
+from models.usermodel import UserModel
 
-    tid = Column(Integer, primary_key=True)
-    name = Column(String)
-    respect = Column(Integer)
-    capacity = Column(Integer)
-
-    keys = Column(String)  # String of list of keys
-
-    last_members = Column(Integer)  # Time of last members update
-
-    withdrawals = Column(String)  # String of list of dictionary of requests
-
-    guild = Column(Integer)  # Guild ID of the faction's guild
-    vaultconfig = Column(String)  # String of dictionary of vault configuration
+base.metadata.create_all(engine)

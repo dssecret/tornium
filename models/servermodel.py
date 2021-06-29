@@ -13,32 +13,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with torn-command.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String
 from database import base
 
 
-class UserModel(base):
-    __tablename__ = 'Users'
+class ServerModel(base):
+    __tablename__ = 'Servers'
 
-    tid = Column(Integer, primary_key=True)
+    sid = Column(Integer, primary_key=True)
     name = Column(String)
-    level = Column(Integer)
-    last_refresh = Column(Integer)
-    admin = Column(Boolean)
-    key = Column(String(16))
+    admins = Column(String)  # String of list of admin ids
+    prefix = Column(String)
 
-    discord_id = Column(Integer)
-    servers = Column(String)  # String of list of discord servers where user is admin
-
-    factionid = Column(Integer)
-    factionaa = Column(Boolean)
-
-    status = Column(String)
-    last_action = Column(String)
-
-
-class UserDiscordModel(base):
-    __tablename__ = 'DiscordUsers'
-
-    discord_id = Column(Integer, primary_key=True)
-    tid = Column(Integer)
+    factions = Column(String)  # String of list of factions in server

@@ -20,6 +20,7 @@ from is_safe_url import is_safe_url
 from models.user import User
 from models.settingsmodel import get
 import utils
+from utils.tornget import tornget
 
 
 mod = Blueprint('authroutes', __name__)
@@ -28,20 +29,24 @@ mod = Blueprint('authroutes', __name__)
 @mod.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
-        return render_template('login.html')  # TODO: Bug in getting key from login page not header login
+        return render_template('login.html')
 
     global torn_user
 
     try:
-        torn_user = utils.tornget(endpoint='user/?selections=', key=request.form['key'])
+        torn_user = tornget(endpoint='user/?selections=', key=request.form['key'])
     except utils.TornError as e:
         error_code = int(str(e))
         return utils.handle_torn_error(error_code)
 
     user = User(torn_user['player_id'])
-    login_user(user)
+
     if user.get_key() != request.form['key']:
         user.set_key(request.form['key'])
+
+    user.discord_refresh()
+    user.faction_refresh()
+    login_user(user)
     next = request.args.get('next')
     if not get('settings', 'dev'):
         if not is_safe_url(next, {'torn.deek.sh'}):

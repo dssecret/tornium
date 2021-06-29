@@ -20,6 +20,7 @@ from flask import render_template
 
 from utils.errors import *
 from utils.tornget import *
+from utils.discordget import *
 
 
 def get_logger():
@@ -64,6 +65,44 @@ def handle_torn_error(error: int):
     else:
         return render_template('/errors/error.html', title='Miscellaneous Error',
                                error=f'The Torn API has responded with error code {error}')
+
+
+def handle_discord_error(error: int):
+    if error == 0:
+        return render_template('/errors/error.html', title='General Error',
+                               error=f'The Discord API has returned a general error.')
+    elif error == 10003:
+        return render_template('/errors/error.html', title='Unknown Channel',
+                               error='The passed guild channel could not be found.')
+    elif error == 10004:
+        return render_template('/errors/error.html', title='Unknown Guild', 
+                               error='The passed guild could not be found.')
+    elif error == 10007:
+        return render_template('/errors/error.html', title='Unknown Member', 
+                               error='The passed guild member could not be found.')
+    elif error == 10008:
+        return render_template('/errors/error.html', title='Unknown Message', 
+                               error='The passed message could not be found.')
+    elif error == 10011:
+        return render_template('/errors/error.html', title='Unknown Role',
+                               error='The passed guild role could not be found.')
+    elif error == 10012:
+        return render_template('/errors/error.html', title='Unknown Token',
+                               error='The passed bot token is not correct. Please immediately contact the bot/app '
+                                     'hoster in order for the bot token to be replaced.')
+    elif error == 10013:
+        return render_template('/errors/error.html', title='Unknown User',
+                               error='The passed Discord user could not be found.')
+    elif error == 40001:
+        return render_template('/errors/error.html', title='Unauthorized',
+                               error='The passed bot token is not valid. Please immediately contact the bot/app '
+                                     'hoster in order for the bot token to be replaced.')
+    else:
+        return render_template('/errors/error.html', title='Miscellaneous Error',
+                               error=f'The Discord API has responded with error code {error} that is not currently in '
+                                     f'the handled list of Discord API errors. Please report this error to the '
+                                     f'developer(s). A full list of Discord API errors can be found at '
+                                     f'https://discord.com/developers/docs/topics/opcodes-and-status-codes#json')
 
 
 def now():
