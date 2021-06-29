@@ -2,7 +2,5 @@ discord.py == 1.7.2
 flask == 2.0.1
 flask-login == 0.5.0
 is-safe-url == 1.0
-discord.py == 1.7.2
-psutil == 5.8.0
 requests == 2.25.1
 sqlalchemy == 1.4.19
