@@ -74,8 +74,8 @@ async def help(ctx):
     embed.title = "Bot Help"
     embed.description = "Take a look at the [documentation](https://torn.deek.sh/bot/documentation) if you need any " \
                         "help."
-    embed.add_field(name="General Information", value="[Torn Command](https://torn.deek.sh/) | "
-                                                      "[Torn Command Bot](https://torn.deek.sh/bot)")
+    embed.add_field(name="General Information", value="[Tornium](https://torn.deek.sh/) | "
+                                                      "[Tornium Bot](https://torn.deek.sh/bot)")
     embed.add_field(name="Support Server", value="[tiksan](https://discordapp.com/users/695828257949352028)")
     await ctx.send(embed=embed)
 
