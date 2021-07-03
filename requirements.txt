@@ -1,3 +1,4 @@
+alembic==1.6.5
 discord.py == 1.7.2
 flask == 2.0.1
 flask-login == 0.5.0
