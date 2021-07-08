@@ -1,0 +1,5 @@
+*.sql
+*.log
+settings.json
+venv/
+.idea/
