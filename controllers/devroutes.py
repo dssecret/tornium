@@ -58,9 +58,12 @@ def user(id):
 @admin_required
 def edit_user(id, key, value):
     session = session_local()
-    usermodel = session.query(UserModel).filter_by(tid=id)
+    usermodel = session.query(UserModel).filter_by(tid=id).first()
 
-    if key == "servers":
+    if key == "name":
+        usermodel.name = value
+        session.flush()
+    elif key == "servers":
         usermodel.servers = value
         session.flush()
     else:
@@ -120,5 +123,10 @@ def edit_server(id, key, value):
     session = session_local()
     servermodel = session.query(ServerModel).filter_by(sid=id).first()
 
-    if key == "factions":
-        pass
+    if key == "admins":
+        servermodel.admins = value
+        session.flush()
+    else:
+        raise NotImplementedError
+
+    return redirect(f'/server/{id}')

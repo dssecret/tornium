@@ -63,6 +63,7 @@ class Faction:
                 pass
 
             session.add(faction)
+            session.flush()
 
         self.tid = tid
         self.name = faction.name

@@ -40,6 +40,7 @@ class Server:
                 factions='[]'
             )
             session.add(server)
+            session.flush()
 
         self.sid = sid
         self.name = server.name

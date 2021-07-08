@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% include 'navbar.html' %}
+
+{% include 'faction/navbar.html' %}
+
+{% block content %}
+<div class="row px-3 py-3">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Setup Instructions</h5>
+        <p class="card-text">
+          In order to utilize faction banking, please contact an administrator on the faction Discord server and
+          request that the faction is added to the list of the server's factions (at
+          <a href="/bot/dashboard">the Bot Dashboard</a>). Then, a faction member with AA (API Access) will need to
+          setup the faction's Discord banking setup at <a href="/faction/bot">the Faction Bot Dashboard</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row px-3">
+  <div class="col-xs-12 col-lg-6 col-xl-4 mb-3">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">List of Bankers</h5>
+        <p class="card-text">NYI</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xs-12 col-lg-6 col-xl-8">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">All Withdrawals</h5>
+
+        {% if lastpage != 1 %}
+        <nav aria-label="Withdrawals Pages">
+          <ul class="pagination">
+            {% for page in range(1, lastpage + 1) %}
+            <li class="page-item">
+              <a class="page-link" href="?{{ page }}">{{ page }}</a>
+            </li>
+            {% endfor %}
+          </ul>
+        </nav>
+        {% endif %}
+
+        <table data-toggle="table">
+          <thead>
+            <tr>
+              <th>Request ID</th>
+              <th>Amount Requested</th>
+              <th>Requester</th>
+              <th>Time Requested</th>
+              <th>Fulfiller</th>
+              <th>Time Fulfilled</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for request in requests %}
+            <tr>
+              <td>{{ request.id }}</td>
+              <td>${{ request.amount }}</td>
+              <td>{{ request.requester }}</td>
+              <td>{{ request.timerequested }}</td>
+              {% if request.timefulfilled == 0 %}
+              <td></td>
+              <td></td>
+              {% else %}
+              <td>{{ request.fulfiller }}</td>
+              <td>{{ request.timefulfilled }}</td>
+              {% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

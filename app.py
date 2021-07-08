@@ -17,6 +17,7 @@ import logging
 
 import flask
 from flask_login import LoginManager
+from sqlalchemy.orm import scoped_session
 
 from controllers import mod as base_mod
 from controllers.devroutes import mod as dev_mod
@@ -25,6 +26,7 @@ from controllers.factionroutes import mod as faction_mod
 from controllers.botroutes import mod as bot_mod
 from controllers.errors import mod as error_mod
 from controllers.adminroutes import mod as admin_mod
+from database import session_local
 from models import settingsmodel as settings
 
 settings.initialize()
@@ -37,6 +39,8 @@ logger.addHandler(handler)
 
 app = flask.Flask(__name__)
 app.secret_key = settings.get("settings", "secret")
+app.session = scoped_session(session_local, scopefunc=flask._app_ctx_stack.__ident_func__)
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'authroutes.login'

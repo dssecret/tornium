@@ -15,10 +15,10 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 engine = create_engine('sqlite+pysqlite:///data.sql', connect_args={'check_same_thread': False})
-session_local = sessionmaker(autocommit=True, autoflush=False, bind=engine)
+session_local = scoped_session(sessionmaker(autocommit=True, autoflush=False, bind=engine))
 base = declarative_base()
 
 from models.factionmodel import FactionModel

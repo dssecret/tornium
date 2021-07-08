@@ -57,8 +57,7 @@ def commas(number):
 
 
 async def tornget(ctx, logger, endpoint, key):
-    request = requests.get(f'https://api.torn.com/{endpoint}&key={key}&comment=TornComm')
-    print(f'https://api.torn.com/{endpoint}&key={key}&comment=TornComm')
+    request = requests.get(f'https://api.torn.com/{endpoint}&key={key}&comment=Tornium')
 
     if request.status_code != 200:
         embed = discord.Embed()

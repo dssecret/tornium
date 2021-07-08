@@ -15,6 +15,7 @@
 
 import asyncio
 import json
+import random
 import sys
 import time
 
@@ -27,8 +28,8 @@ from bot import botutils
 from database import session_local
 from models.faction import Faction
 from models.factionmodel import FactionModel
-from models.user import User
-from models.usermodel import UserDiscordModel
+from models.server import Server
+from models.user import User, DiscordUser
 
 
 class Vault(commands.Cog):
@@ -41,9 +42,10 @@ class Vault(commands.Cog):
         await ctx.message.delete()
 
         session = session_local()
-        user = session.query(UserDiscordModel).filter_by(discord_id=ctx.message.author.id).first()
+        server = Server(ctx.message.guild.id)
+        user = DiscordUser(ctx.message.author.id, User(random.choice(server.admins)).key)
 
-        if user is None:
+        if user.tid == 0:
             embed = discord.Embed()
             embed.title = 'Requires Verification'
             embed.description = 'You are required to be verified officially through the ' \
@@ -58,8 +60,7 @@ class Vault(commands.Cog):
         faction = Faction(user.factiontid)
         vault_config = faction.get_vault_config()
 
-        if vault_config == {} or vault_config.get('banking') is None or vault_config.get('banker') is None \
-                or vault_config.get('withdrawal') is None:
+        if vault_config == {} or vault_config.get('banking') is None or vault_config.get('banker') is None:
             embed = discord.Embed()
             embed.title = 'Server Configuration Required'
             embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
@@ -70,7 +71,7 @@ class Vault(commands.Cog):
 
         vault_balances = await botutils.tornget(ctx, self.logger, f'faction/?selections=donations', faction.rand_key())
 
-        if str(user.tid) in vault_balances:
+        if str(user.tid) in vault_balances['donations']:
             if cash > vault_balances['donations'][str(user.tid)]['money_balance']:
                 embed = discord.Embed()
                 embed.title = 'Not Enough Money'
@@ -98,17 +99,20 @@ class Vault(commands.Cog):
 
             faction.withdrawals.append({
                 'id': request_id,
+                "amount": cash,
                 'requester': user.tid,
                 'fulfilled': False,
                 'timerequested': time.ctime(),
                 'fulfiller': 0,
                 'timefulfilled': 0,
-                'requestmessage': original.id,
                 'withdrawalmessage': message.id
             })
             dbfaction = session.query(FactionModel).filter_by(tid=faction.tid).first()
             dbfaction.withdrawals = json.dumps(faction.withdrawals)
             session.flush()
+
+            await asyncio.sleep(30)
+            await original.delete()
         else:
             embed = discord.Embed()
             embed.title = 'Money Request Failed'
@@ -117,16 +121,16 @@ class Vault(commands.Cog):
             message = await ctx.send(embed=embed)
             await asyncio.sleep(30)
             await message.delete()
-            return None
 
     @commands.command(aliases=['f'])
     async def fulfill(self, ctx, request):
         await ctx.message.delete()
 
         session = session_local()
-        user = session.query(UserDiscordModel).filter_by(discord_id=ctx.message.author.id).first()
+        server = Server(ctx.message.guild.id)
+        user = DiscordUser(ctx.message.author.id, User(random.choice(server.admins)).key)
 
-        if user is None:
+        if user.tid == 0:
             embed = discord.Embed()
             embed.title = 'Requires Verification'
             embed.description = 'You are required to be verified officially through the ' \
@@ -136,26 +140,23 @@ class Vault(commands.Cog):
             await ctx.send(embed=embed)
             return None
 
-        faction = Faction(user.tid)
+        user = User(user.tid)
+        faction = Faction(user.factiontid, key=user.key)
         vault_config = faction.get_vault_config()
 
-        if vault_config == {} or vault_config.get('banking') is None or vault_config.get('banker') is None \
-                or vault_config.get('withdrawal') is None:
+        if vault_config == {} or vault_config.get('banking') is None or vault_config.get('banker') is None:
             embed = discord.Embed()
             embed.title = 'Server Configuration Required'
             embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
                                 f'the server. Please contact the server administrators to do this via ' \
-                                f'[the dashboard](https://torn.deek.sh/].'
+                                f'[the dashboard](https://torn.deek.sh/).'
             await ctx.send(embed=embed)
             return None
 
-        withdrawal_channel = discord.utils.get(ctx.guild.channels, id=vault_config['withdrawal'])
         banking_channel = discord.utils.get(ctx.guild.channels, id=vault_config['banking'])
-        withdrawal = faction.withdrawals[int(request)]
+        withdrawal = faction.withdrawals[int(request) - 1]
         # Message posted in banking channel
         withdrawal_message = await banking_channel.fetch_message(withdrawal['withdrawalmessage'])
-        # Message posted in withdrawal channel
-        original_message = await withdrawal_channel.fetch_message(withdrawal['requestmessage'])
 
         embed = discord.Embed()
         embed.title = withdrawal_message.embeds[0].title
@@ -163,27 +164,21 @@ class Vault(commands.Cog):
         embed.description = f'This request has been fulfilled by {ctx.message.author.name} at {time.ctime()}.'
         await withdrawal_message.edit(embed=embed)
 
-        embed.clear_fields()
-        await original_message.edit(embed=embed)
-
-        faction.withdrawals[int(request)]['fulfilled'] = True
-        faction.withdrawals[int(request)]['fulfiller'] = user.tid
-        faction.timefulfilled = time.ctime()
+        faction.withdrawals[int(request) - 1]['fulfilled'] = True
+        faction.withdrawals[int(request) - 1]['fulfiller'] = user.tid
+        faction.withdrawals[int(request) - 1]['timefulfilled'] = time.ctime()
         dbfaction = session.query(FactionModel).filter_by(tid=faction.tid).first()
         dbfaction.withdrawals = json.dumps(faction.withdrawals)
         session.flush()
-
-        await asyncio.sleep(60)
-        await original_message.delete()
 
     @commands.command(pass_context=True, aliases=['balance', 'bal'])
     async def fullbalance(self, ctx):
         await ctx.message.delete()
 
-        session = session_local()
-        user = session.query(UserDiscordModel).filter_by(discord_id=ctx.message.author.id).first()
+        server = Server(ctx.message.guild.id)
+        user = DiscordUser(ctx.message.author.id, User(random.choice(server.admins)).key)
 
-        if user is None:
+        if user.tid == 0:
             embed = discord.Embed()
             embed.title = 'Requires Verification'
             embed.description = 'You are required to be verified officially through the ' \
@@ -204,7 +199,7 @@ class Vault(commands.Cog):
             embed = discord.Embed()
             embed.title = 'Error'
             embed.description = f'{user.name} is not in {faction.name}\'s donations list according to the Torn API. ' \
-                                f'If you think that this is an error, please report this to the devlopers of this bot.'
+                                f'If you think that this is an error, please report this to the developers of this bot.'
             await ctx.send(embed=embed)
             return None
 
@@ -221,10 +216,10 @@ class Vault(commands.Cog):
     async def simplebalance(self, ctx):
         await ctx.message.delete()
 
-        session = session_local()
-        user = session.query(UserDiscordModel).filter_by(discord_id=ctx.message.author.id).first()
+        server = Server(ctx.message.guild.id)
+        user = DiscordUser(ctx.message.author.id, User(random.choice(server.admins)).key)
 
-        if user is None:
+        if user.tid == 0:
             embed = discord.Embed()
             embed.title = 'Requires Verification'
             embed.description = 'You are required to be verified officially through the ' \
@@ -245,7 +240,7 @@ class Vault(commands.Cog):
             embed = discord.Embed()
             embed.title = 'Error'
             embed.description = f'{user.name} is not in {faction.name}\'s donations list according to the Torn API. ' \
-                                f'If you think that this is an error, please report this to the devlopers of this bot.'
+                                f'If you think that this is an error, please report this to the developers of this bot.'
             await ctx.send(embed=embed)
             return None
 

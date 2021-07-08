@@ -18,9 +18,36 @@ import json
 from flask_login import UserMixin, current_user
 
 from database import session_local
+from models.server import Server
+from models.servermodel import ServerModel
 from models.usermodel import UserModel, UserDiscordModel
 import utils
 from utils.tornget import tornget
+
+
+class DiscordUser:
+    def __init__(self, did, key):
+        """
+        Retrieves the DiscordUser from the database
+
+        :param did: Discord User ID
+        """
+
+        session = session_local()
+        user = session.query(UserDiscordModel).filter_by(discord_id=did).first()
+
+        if user is None:
+            torn_user = tornget(f'user/{did}?selections=discord', key)
+
+            user = UserDiscordModel(
+                discord_id=did,
+                tid=torn_user['userID'] if torn_user['userID'] != '' else 0
+            )
+            session.add(user)
+            session.flush()
+
+        self.did = did
+        self.tid = user.tid
 
 
 class User(UserMixin):
@@ -32,13 +59,12 @@ class User(UserMixin):
         """
 
         session = session_local()
-        print(session.query(UserModel).all())
         user = session.query(UserModel).filter_by(tid=tid).first()
         now = utils.now()
         if user is None:
             user = UserModel(
                 tid=tid,
-                name="",
+                name='',
                 level=0,
                 admin=False if tid != 2383326 else True,
                 key=key,
@@ -135,6 +161,14 @@ class User(UserMixin):
         user.servers = json.dumps(servers)
         session.flush()
 
+        for sid in self.servers:
+            server = Server(sid)
+            server_model = session.query(ServerModel).filter_by(sid=sid).first()
+
+            server.admins.append(self.tid)
+            server_model.admins = json.dumps(server.admins)
+            session.flush()
+
     def faction_refresh(self):
         session = session_local()
         user = session.query(UserModel).filter_by(tid=self.tid).first()
@@ -188,7 +222,6 @@ class User(UserMixin):
 
         session = session_local()
         user = session.query(UserModel).filter_by(tid=self.tid).first()
-        print(user)
         user.key = key
         self.key = key
         session.flush()

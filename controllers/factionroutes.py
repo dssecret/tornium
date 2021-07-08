@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+from math import ceil
 from functools import wraps
 import json
 
@@ -124,3 +125,20 @@ def bot():
                     session.flush()
 
     return render_template('faction/bot.html', guildid=faction.guild, vault_config=faction.get_vault_config())
+
+
+@mod.route('/faction/banking')
+@mod.route('/faction/banking?<int:page>')
+@aa_required
+@login_required
+def banking(page=1):
+    faction = Faction(current_user.factiontid)
+    requests = faction.withdrawals[(10 * (page - 1)):(10 * page)]
+
+    for request_index in range(len(requests)):
+        requests[request_index]['requester'] = f'{User(requests[request_index]["requester"]).name} [{requests[request_index]["requester"]}]'
+        requests[request_index]['fulfiller'] = f'{User(requests[request_index]["fulfiller"]).name} [{requests[request_index]["fulfiller"]}]'
+
+    return render_template('faction/banking.html',
+                           requests=requests,
+                           lastpage=int(ceil(len(faction.withdrawals) / 10)))
