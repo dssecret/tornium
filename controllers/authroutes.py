@@ -48,6 +48,10 @@ def login():
     user.faction_refresh()
     login_user(user)
     next = request.args.get('next')
+
+    if next == 'None':
+        return redirect(url_for('baseroutes.index'))
+
     if not get('settings', 'dev'):
         if not is_safe_url(next, {'torn.deek.sh'}):
             abort(400)
