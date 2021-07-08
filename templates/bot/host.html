@@ -7,7 +7,37 @@
 {% block content %}
 <div class="px-3 py-3">
     <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Basic Hosting Instructions</h5>
+            <p class="card-text">
+                In order to host the Tornium Bot on your Discord server, first invite the bot to your server through
+                <a href="https://discord.com/api/oauth2/authorize?client_id=862748725574762526&permissions=201337904&scope=bot">this link</a>
+                (or <a href="https://discord.com/api/oauth2/authorize?client_id=862748725574762526&permissions=8&scope=bot">this link</a>
+                for administrator permissions). If the first link is chosen, there may be issues in the future with
+                additional permission needing to be given to the bot.
+            </p>
 
+            <p class="card-text">
+                For a full list of commands and instructions, please check out <a href="/bot/documentation">the documentation</a>.
+            </p>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Faction Hosting Instructions</h5>
+            <p class="card-text">
+                To setup the Tornium Bot's faction features, go to <a href="/bot/dashboard">the bot dashboard</a> and
+                select the Discord server which you are setting up (if the Discord server does not show up, please try
+                logging out and logging back in). Once you access the bot dashboard for the server, add the faction ID
+                for a Torn faction that'll be in the Discord server. Once the faction has been added, initially there
+                will be an x next no the faction's name; this indicates that the faction has not set up your Discord
+                server as the location of the faction's Discord features. A faction AA member will be required to visit
+                the <a href="/faction/bot">faction's bot dashboard</a> and add the Discord server's ID to the faction.
+                Once this is done, under the server's bot dashboard, the faction will have a check next to the name
+                indicating that the faction has been added.
+            </p>
+        </div>
     </div>
 </div>
 {% endblock %}
