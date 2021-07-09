@@ -14,20 +14,10 @@
                 The Bot Token of the Discord bot. Can be found under the application of the bot at
                 <a href="https://discord.com/developers/applications">Discord Applications</a>.
             </p>
-            <form method="POST" action="/admin/bot">
-                <input class="form-control" id="bottoken" name="bottoken" placeholder="{{ bottoken }}">
+            <form class="form-floating" method="POST" action="/admin/bot">
+                <input class="form-control" id="bottoken" name="bottoken" value="{{ bottoken }}">
+                <label for="bottoken">Bot Token</label>
             </form>
         </div>
     </div>
 </div>
-    {# <div class="row py-3 px-3">
-    <div class="col-xs-12 col-sm-8 col-md-6 col-lg-3 mb-3">
-        <div class="card" style="width: 18rem">
-            <div class="card-body">
-                <h5 class="card-title">Bot Token</h5>
-                <input class="form-control" id="bottoken">
-            </div>
-        </div>
-    </div>
-</div> #}
-    {% endblock %}
