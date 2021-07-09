@@ -37,6 +37,16 @@
                     <input class="form-control" id="banker" name="banker" value="{{ vault_config['banker'] }}">
                     <label for="banker">Banker Role</label>
                 </form>
+
+                <form method="POST" action="/faction/bot">
+                    {% if config['vault'] == 0 %}
+                    <input type="submit" class="btn btn-primary" id="enabled" name="enabled" value="Enabled">
+                    <input type="submit" class="btn btn-primary active" disabled id="disabled" name="disabled" value="Disabled">
+                    {% else %}
+                    <input type="submit" class="btn btn-primary active" disabled     id="enabled" name="enabled" value="Enabled">
+                    <input type="submit" class="btn btn-primary" id="disabled" name="disabled" value="Disabled">
+                    {% endif %}
+                </form>
             </p>
         </div>
     </div>

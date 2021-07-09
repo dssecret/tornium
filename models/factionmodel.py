@@ -32,4 +32,5 @@ class FactionModel(base):
     withdrawals = Column(String)  # String of list of dictionary of requests
 
     guild = Column(Integer)  # Guild ID of the faction's guild
+    config = Column(String)  # String of dictionary of faction's bot configuration
     vaultconfig = Column(String)  # String of dictionary of vault configuration

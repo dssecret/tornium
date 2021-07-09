@@ -85,6 +85,7 @@ def faction(id):
         last_members=faction.last_members,
         withdrawals=faction.withdrawals,
         guild=faction.guild,
+        config=faction.config,
         vault_config=faction.vault_config
     )
 

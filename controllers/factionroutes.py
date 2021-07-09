@@ -123,8 +123,19 @@ def bot():
                     vault_config['banker'] = int(request.form.get('banker'))
                     faction_model.vaultconfig = json.dumps(vault_config)
                     session.flush()
+        elif (request.form.get('enabled') is not None) ^ (request.form.get('disabled') is not None):
+            config = faction.get_config()
 
-    return render_template('faction/bot.html', guildid=faction.guild, vault_config=faction.get_vault_config())
+            if request.form.get('enabled') is not None:
+                config['vault'] = 1
+                faction_model.config = json.dumps(config)
+            else:
+                config['vault'] = 0
+                faction_model.config = json.dumps(config)
+
+            session.flush()
+
+    return render_template('faction/bot.html', guildid=faction.guild, vault_config=faction.get_vault_config(), config=faction.get_config())
 
 
 @mod.route('/faction/banking')

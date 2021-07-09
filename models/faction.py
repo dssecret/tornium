@@ -50,6 +50,7 @@ class Faction:
                 last_members=now,
                 withdrawals='[]',
                 guild=0,
+                config='{"vault": 0}',
                 vaultconfig='{"banking": 0, "banker": 0}'
             )
 
@@ -73,6 +74,7 @@ class Faction:
         self.last_members = faction.last_members
         self.withdrawals = json.loads(faction.withdrawals)
         self.guild = faction.guild
+        self.config = json.loads(faction.config)
         self.vault_config = json.loads(faction.vaultconfig)
 
     def get_tid(self):
@@ -116,4 +118,14 @@ class Faction:
             raise Exception  # TODO: Make exception more descriptive
 
         return self.vault_config
+
+    def get_config(self):
+        if self.guild == 0:
+            return {}
+
+        server = Server(self.guild)
+        if self.tid not in server.factions:
+            raise Exception  # TODO: Make exception more descriptive
+
+        return self.config
 

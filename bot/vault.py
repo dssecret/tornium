@@ -59,8 +59,9 @@ class Vault(commands.Cog):
         user = User(user.tid)
         faction = Faction(user.factiontid)
         vault_config = faction.get_vault_config()
+        config = faction.get_config()
 
-        if vault_config == {} or vault_config.get('banking') is None or vault_config.get('banker') is None:
+        if vault_config.get('banking') is None or vault_config.get('banker') is None or config.get('vault') == 0:
             embed = discord.Embed()
             embed.title = 'Server Configuration Required'
             embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
@@ -143,8 +144,9 @@ class Vault(commands.Cog):
         user = User(user.tid)
         faction = Faction(user.factiontid, key=user.key)
         vault_config = faction.get_vault_config()
+        config = faction.get_config()
 
-        if vault_config == {} or vault_config.get('banking') is None or vault_config.get('banker') is None:
+        if vault_config.get('banking') is None or vault_config.get('banker') is None or config.get('vault') == 0:
             embed = discord.Embed()
             embed.title = 'Server Configuration Required'
             embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
@@ -190,6 +192,16 @@ class Vault(commands.Cog):
 
         user = User(user.tid)
         faction = Faction(user.factiontid, user.key)
+        config = faction.get_config()
+
+        if config.get('vault') == 0:
+            embed = discord.Embed()
+            embed.title = 'Server Configuration Required'
+            embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
+                                f'the server. Please contact the server administrators to do this via ' \
+                                f'[the dashboard](https://torn.deek.sh/).'
+            await ctx.send(embed=embed)
+            return None
 
         faction_balances = (await botutils.tornget(ctx, self.logger,
                                                    'faction/?selections=donations',
@@ -231,6 +243,16 @@ class Vault(commands.Cog):
 
         user = User(user.tid)
         faction = Faction(user.factiontid, user.key)
+        config = faction.get_config()
+
+        if config.get('vault') == 0:
+            embed = discord.Embed()
+            embed.title = 'Server Configuration Required'
+            embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
+                                f'the server. Please contact the server administrators to do this via ' \
+                                f'[the dashboard](https://torn.deek.sh/).'
+            await ctx.send(embed=embed)
+            return None
 
         faction_balances = (await botutils.tornget(ctx, self.logger,
                                                    'faction/?selections=donations',
