@@ -49,7 +49,7 @@ def login():
     login_user(user)
     next = request.args.get('next')
 
-    if next == 'None':
+    if next is None:
         return redirect(url_for('baseroutes.index'))
 
     if not get('settings', 'dev'):
