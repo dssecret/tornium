@@ -142,8 +142,18 @@ class User(UserMixin):
         servers = []
 
         for guild in utils.discordget('users/@me/guilds'):
-            member = utils.discordget(f'guilds/{guild["id"]}/members/{self.discord_id}')
-            guild = utils.discordget(f'guilds/{guild["id"]}')
+            try:
+                member = utils.discordget(f'guilds/{guild["id"]}/members/{self.discord_id}')
+            except utils.DiscordError as e:
+                if int(str(e)) == 10007:
+                    break
+                else:
+                    return utils.handle_discord_error(int(str(e)))
+
+            try:
+                guild = utils.discordget(f'guilds/{guild["id"]}')
+            except utils.DiscordError as e:
+                return utils.handle_discord_error(int(str(e)))
             is_admin = False
 
             for role in member['roles']:

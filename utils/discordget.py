@@ -23,19 +23,19 @@ def discordget(endpoint):
     url = f'https://discord.com/api/v9/{endpoint}'
     request = requests.get(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}'})
 
+    request_json = request.json()
+
+    if 'code' in request_json:
+        # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
+        # explanations
+
+        utils.get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
+                                f'({request_json["message"]}) to {url}).')
+        raise utils.DiscordError(request_json["code"])
+
     if request.status_code != 200:
         utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
                                    f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
 
-    request = request.json()
-
-    if 'errors' in request:
-        # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
-        # explanations
-
-        utils.get_logger().info(f'The Discord API has responded with error code {request["code"]} '
-                                f'({request["message"]}) to {url}).')
-        raise utils.DiscordError(request["code"])
-
-    return request
+    return request_json
