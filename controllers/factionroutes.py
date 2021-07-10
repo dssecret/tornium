@@ -33,7 +33,7 @@ mod = Blueprint('factionroutes', __name__)
 def aa_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if not current_user.is_authenticated or not current_user.is_admin():
+        if not current_user.is_authenticated or not current_user.aa:
             return abort(403)
         else:
             return f(*args, **kwargs)
