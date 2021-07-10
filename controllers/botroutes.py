@@ -15,7 +15,7 @@
 
 import json
 
-from flask import Blueprint, render_template, abort, request, redirect
+from flask import Blueprint, render_template, abort, request, redirect, flash
 from flask_login import current_user, login_required
 
 from database import session_local
@@ -58,6 +58,9 @@ def dashboard():
 @mod.route('/bot/dashboard/<int:guildid>', methods=['GET', 'POST'])
 @login_required
 def guild_dashboard(guildid: int):  # TODO: Add check to see if user is guild admin
+    if guildid not in current_user.servers:
+        abort(403)
+
     session = session_local()
     server = Server(guildid)
     factions = []
@@ -67,6 +70,15 @@ def guild_dashboard(guildid: int):  # TODO: Add check to see if user is guild ad
             server.factions.append(int(request.form.get('factionid')))
             server_model = session.query(ServerModel).filter_by(sid=guildid).first()
             server_model.factions = json.dumps(server.factions)
+            session.flush()
+        elif request.form.get('prefix') is not None:  # TODO: Check if prefix is valid character
+            if len(request.form.get('prefix')) != 1:
+                flash('The length of the bot prefix must be one character long.')
+                return render_template('bot/guild.html', server=server, factions=factions)
+
+            server.prefix = request.form.get('prefix')
+            server_model = session.query(ServerModel).filter_by(sid=guildid).first()
+            server_model.prefix = request.form.get('prefix')
             session.flush()
 
     for faction in server.factions:

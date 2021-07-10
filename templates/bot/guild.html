@@ -6,7 +6,23 @@
 
 {% block content %}
 <div class="py-3 px-3">
-    <div class="card min-w-25 max-w-50">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Basic Setup</h5>
+            <p class="card-text">
+                Various basic settings (such as the prefix) that can be changed for this particular Discord guild.
+            </p>
+
+            <div class="col-sm-12 col-md-8 col-lg-4">
+                <form class="form-floating" method="POST" action="/bot/dashboard/{{ server.sid }}">
+                    <input class="form-control" id="prefix" name="prefix" value="{{ server.prefix }}">
+                    <label for="prefix">Prefix</label>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
         <div class="card-body">
             <h5 class="card-title">Factions</h5>
             <p class="card-text">
@@ -14,12 +30,9 @@
             </p>
 
             <div class="col-sm-12 col-md-8 col-lg-4">
-                <form method="POST" action="/bot/dashboard/{{ server.sid }}">
-                    <div class="form-floating">
-                        <input class="form-control" id="factionid" name="factionid" placeholder="Enter the Torn Faction ID">
-                        <label for="factionid">Faction ID</label>
-                    </div>
-
+                <form class="form-floating" method="POST" action="/bot/dashboard/{{ server.sid }}">
+                    <input class="form-control" id="factionid" name="factionid" placeholder="Enter the Torn Faction ID">
+                    <label for="factionid">Faction ID</label>
                     <button class="btn btn-lg btn-primary" type="submit">Add</button>
                 </form>
             </div>
