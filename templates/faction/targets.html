@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% include 'navbar.html' %}
+
+{% include 'faction/navbar.html' %}
+
+{% block content %}
+<div class="px-3 py-3">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Faction Targets</h5>
+
+            <div class="row">
+                <div class="col-sm-12 col-md-8 col-lg-4 my-2">
+                    <form class="form-floating" method="POST" action="/faction/targets">
+                        <input class="form-control" id="targetid" name="targetid">
+                        <label for="targetid">Torn Target User ID</label>
+                        <div class="form-text">
+                            Please enter the user ID of the Torn user to be added to the faction's target
+                            list. This action can only be done by an AA member.
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <table data-toggle="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Level</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for target_id, target in targets.items() %}
+                    <tr>
+                        <td>{{ target['name'] }} [{{ target_id }}]</td>
+                        <td>{{ target['level'] }}</td>
+                        <td>
+                            <a class="mx-1" href="/faction/targets/{{ target_id }}/remove">
+                                <i class="fas fa-trash-alt"></i>
+                            </a>
+                            <a class="mx-1" href="https://www.torn.com/loader.php?sid=attack&user2ID={{ target_id }}">
+                                <i class="fas fa-crosshairs"></i>
+                            </a>
+                            <a class="mx-1" href="/faction/targets/{{ target_id }}/refresh">
+                                <i class="fas fa-sync"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

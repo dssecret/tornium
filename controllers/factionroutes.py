@@ -17,7 +17,7 @@ from math import ceil
 from functools import wraps
 import json
 
-from flask import Blueprint, render_template, abort, request
+from flask import Blueprint, render_template, abort, request, flash, redirect
 from flask_login import login_required, current_user
 
 from database import session_local
@@ -65,6 +65,68 @@ def members():
         members.append(user)
 
     return render_template('faction/members.html', members=members)
+
+
+@mod.route('/faction/targets', methods=['GET', 'POST'])
+@login_required
+def targets():
+    faction = Faction(current_user.factiontid)
+
+    print(faction.targets)
+
+    if request.method == 'POST':
+        if not current_user.is_aa():
+            flash('This action requires the user to be an AA user.', category='warning')
+            return render_template('faction/targets.html', targets=faction.targets)
+
+        session = session_local()
+        faction_model = session.query(FactionModel).filter_by(tid=current_user.factiontid).first()
+
+        if request.form.get('targetid') is not None:
+            if int(request.form.get('targetid')) in faction.targets:
+                flash('The user attempted to be targeted is already being targeted.')
+                return render_template('faction/targets.html', targets=faction.targets)
+
+            try:
+                torn_user = utils.tornget('user/?selections=', current_user.key)
+            except utils.TornError as e:
+                flash(f'The Torn API has returned error code {e}.', category='error')
+                return render_template('faction/targets.html', targets=faction.targets)
+            except utils.NetworkingError as e:
+                flash(f'The Torn API has had a networking error and has returned HTTP {e}', category='error')
+                return render_template('faction/targets.html', targets=faction.targets)
+
+            faction.targets[int(torn_user['player_id'])] = {
+                'name': torn_user['name'],
+                'level': torn_user['level']
+            }
+
+            faction_model.targets = json.dumps(faction.targets)
+            session.flush()
+
+    return render_template('faction/targets.html', targets=faction.targets)
+
+
+@mod.route('/faction/targets/<int:tid>/remove')
+@login_required
+@aa_required
+def remove_target(tid):
+    faction = Faction(current_user.factiontid)
+
+    if not current_user.is_aa():
+        flash('This action requires the user to be an AA user.', category='warning')
+        return redirect('/faction/targets')
+    elif tid in faction.targets:
+        flash('The user attempted to be targeted is already being targeted.')
+        return redirect('/faction/targets')
+
+    session = session_local()
+    faction_model = session.query(FactionModel).filter_by(tid=current_user.factiontid).first()
+    faction.targets.pop(tid)
+    faction_model.targets = json.dumps(faction.targets)
+    session.flush()
+
+    return redirect('/faction/targets')
 
 
 @mod.route('/faction/bot', methods=['GET', 'POST'])

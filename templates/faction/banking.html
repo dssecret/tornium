@@ -50,31 +50,31 @@
 
                 <table data-toggle="table">
                     <thead>
-                    <tr>
-                        <th>Request ID</th>
-                        <th>Amount Requested</th>
-                        <th>Requester</th>
-                        <th>Time Requested</th>
-                        <th>Fulfiller</th>
-                        <th>Time Fulfilled</th>
-                    </tr>
+                       <tr>
+                            <th>Request ID</th>
+                            <th>Amount Requested</th>
+                            <th>Requester</th>
+                            <th>Time Requested</th>
+                            <th>Fulfiller</th>
+                            <th>Time Fulfilled</th>
+                        </tr>
                     </thead>
                     <tbody>
-                    {% for request in requests %}
-                    <tr>
-                        <td>{{ request.id }}</td>
-                        <td>${{ request.amount }}</td>
-                        <td>{{ request.requester }}</td>
-                        <td>{{ request.timerequested }}</td>
-                        {% if request.timefulfilled == 0 %}
-                        <td></td>
-                        <td></td>
-                        {% else %}
-                        <td>{{ request.fulfiller }}</td>
-                        <td>{{ request.timefulfilled }}</td>
-                        {% endif %}
-                    </tr>
-                    {% endfor %}
+                        {% for request in requests %}
+                        <tr>
+                            <td>{{ request.id }}</td>
+                            <td>${{ request.amount }}</td>
+                            <td>{{ request.requester }}</td>
+                            <td>{{ request.timerequested }}</td>
+                            {% if request.timefulfilled == 0 %}
+                            <td></td>
+                            <td></td>
+                            {% else %}
+                            <td>{{ request.fulfiller }}</td>
+                            <td>{{ request.timefulfilled }}</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>

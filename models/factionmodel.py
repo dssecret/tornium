@@ -34,3 +34,5 @@ class FactionModel(base):
     guild = Column(Integer)  # Guild ID of the faction's guild
     config = Column(String)  # String of dictionary of faction's bot configuration
     vaultconfig = Column(String)  # String of dictionary of vault configuration
+
+    targets = Column(String)  # String of dictionary of targets

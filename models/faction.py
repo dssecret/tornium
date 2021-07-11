@@ -51,7 +51,8 @@ class Faction:
                 withdrawals='[]',
                 guild=0,
                 config='{"vault": 0}',
-                vaultconfig='{"banking": 0, "banker": 0}'
+                vaultconfig='{"banking": 0, "banker": 0}',
+                targets='{}'
             )
 
             try:
@@ -70,12 +71,18 @@ class Faction:
         self.name = faction.name
         self.respect = faction.respect
         self.capacity = faction.capacity
+
         self.keys = json.loads(faction.keys)
+
         self.last_members = faction.last_members
+
         self.withdrawals = json.loads(faction.withdrawals)
+
         self.guild = faction.guild
         self.config = json.loads(faction.config)
         self.vault_config = json.loads(faction.vaultconfig)
+
+        self.targets = json.loads(faction.targets)
 
     def get_tid(self):
         """
@@ -128,4 +135,3 @@ class Faction:
             raise Exception  # TODO: Make exception more descriptive
 
         return self.config
-

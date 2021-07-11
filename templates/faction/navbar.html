@@ -19,6 +19,12 @@
                         Armory
                     </a> <!-- TODO: Remove disabled once armory is fixed -->
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" aria-current="page" href="/faction/targets">
+                        <i class="fas fa-bullseye"></i>
+                        Targets
+                    </a><!-- TODO: Remove disabled once targets is implemented -->
+                </li>
                 {% if current_user.is_authenticated and current_user.is_aa() %}
                 <li class="nav-item">
                     <a class="nav-link" aria-current="page" href="/faction/banking">

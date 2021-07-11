@@ -21,6 +21,7 @@ import utils
 def tornget(endpoint, key, tots=0, fromts=0):
     url = f'https://api.torn.com/{endpoint}&key={key}&comment=Tornium{"" if fromts == 0 else f"&from={fromts}"}' \
           f'{"" if tots == 0 else f"&to={tots}"}'
+    print(url)
     request = requests.get(url)
 
     if request.status_code != 200:
