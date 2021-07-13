@@ -83,12 +83,12 @@ def targets():
         faction_model = session.query(FactionModel).filter_by(tid=current_user.factiontid).first()
 
         if request.form.get('targetid') is not None:
-            if int(request.form.get('targetid')) in faction.targets:
-                flash('The user attempted to be targeted is already being targeted.')
+            if request.form.get('targetid') in faction.targets:
+                flash('The user attempted to be targeted is already being targeted.', category='warning')
                 return render_template('faction/targets.html', targets=faction.targets)
 
             try:
-                torn_user = utils.tornget('user/?selections=', current_user.key)
+                torn_user = utils.tornget(f'user/{request.form.get("targetid")}?selections=', current_user.key)
             except utils.TornError as e:
                 flash(f'The Torn API has returned error code {e}.', category='error')
                 return render_template('faction/targets.html', targets=faction.targets)
@@ -96,7 +96,8 @@ def targets():
                 flash(f'The Torn API has had a networking error and has returned HTTP {e}', category='error')
                 return render_template('faction/targets.html', targets=faction.targets)
 
-            faction.targets[int(torn_user['player_id'])] = {
+            faction.targets[torn_user['player_id']] = {
+                'last_update': utils.now(),
                 'name': torn_user['name'],
                 'level': torn_user['level']
             }
@@ -116,13 +117,36 @@ def remove_target(tid):
     if not current_user.is_aa():
         flash('This action requires the user to be an AA user.', category='warning')
         return redirect('/faction/targets')
-    elif tid in faction.targets:
-        flash('The user attempted to be targeted is already being targeted.')
-        return redirect('/faction/targets')
 
     session = session_local()
     faction_model = session.query(FactionModel).filter_by(tid=current_user.factiontid).first()
-    faction.targets.pop(tid)
+    faction.targets.pop(str(tid))
+    faction_model.targets = json.dumps(faction.targets)
+    session.flush()
+
+    return redirect('/faction/targets')
+
+
+@mod.route('/faction/targets/<int:tid>/refresh')
+@login_required
+def refresh_target(tid):
+    faction = Faction(current_user.factiontid)
+
+    try:
+        torn_user = utils.tornget(f'user/{tid}?selections=', current_user.key)
+    except utils.TornError as e:
+        flash(f'The Torn API has returned error code {e}.', category='error')
+        return render_template('faction/targets.html', targets=faction.targets)
+    except utils.NetworkingError as e:
+        flash(f'The Torn API has had a networking error and has returned HTTP {e}', category='error')
+        return render_template('faction/targets.html', targets=faction.targets)
+
+    faction.targets[str(torn_user['player_id'])]['name'] = torn_user['name']
+    faction.targets[str(torn_user['player_id'])]['level'] = torn_user['level']
+    faction.targets[str(torn_user['player_id'])]['last_update'] = utils.now()
+
+    session = session_local()
+    faction_model = session.query(FactionModel).filter_by(tid=current_user.factiontid).first()
     faction_model.targets = json.dumps(faction.targets)
     session.flush()
 

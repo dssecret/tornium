@@ -107,3 +107,20 @@ def handle_discord_error(error: int):
 
 def now():
     return int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds())
+
+
+def rel_time(time):
+    delta = now() - int(time.timestamp())
+
+    if delta < 0:
+        raise Exception  # TODO: Make error descriptive
+    if delta < 60:
+        return 'Now'
+    elif delta < 3600:
+        return f'{int(round(delta/60))} minutes ago'
+    elif delta < 5400:
+        return 'One hour ago'
+    elif delta < 86400:
+        return f'{int(round(delta/3600))} hours ago'
+    else:
+        return 'A long time ago'

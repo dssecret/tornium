@@ -28,6 +28,7 @@
                     <tr>
                         <th>Name</th>
                         <th>Level</th>
+                        <th>Last Update</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -37,11 +38,12 @@
                     <tr>
                         <td>{{ target['name'] }} [{{ target_id }}]</td>
                         <td>{{ target['level'] }}</td>
+                        <td>{{ target['last_update'] | reltime }}</td>
                         <td>
                             <a class="mx-1" href="/faction/targets/{{ target_id }}/remove">
                                 <i class="fas fa-trash-alt"></i>
                             </a>
-                            <a class="mx-1" href="https://www.torn.com/loader.php?sid=attack&user2ID={{ target_id }}">
+                            <a class="mx-1" href="https://www.torn.com/loader.php?sid=attack&user2ID={{ target_id }}" target="_blank" rel="noopener noreferrer">
                                 <i class="fas fa-crosshairs"></i>
                             </a>
                             <a class="mx-1" href="/faction/targets/{{ target_id }}/refresh">

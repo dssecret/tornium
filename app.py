@@ -12,7 +12,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
-
+import datetime
 import logging
 
 import flask
@@ -28,6 +28,7 @@ from controllers.errors import mod as error_mod
 from controllers.adminroutes import mod as admin_mod
 from database import session_local
 from models import settingsmodel as settings
+import utils
 
 settings.initialize()
 
@@ -51,6 +52,11 @@ login_manager.session_protection = 'strong'
 def load_user(user_id):
     from models.user import User
     return User(user_id)
+
+
+@app.template_filter('reltime')
+def relative_time(s):
+    return utils.rel_time(datetime.datetime.fromtimestamp(s))
 
 
 if settings.get("settings", "dev") and __name__ == "__main__":
