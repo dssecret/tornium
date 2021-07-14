@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+import json
+
 from flask import Blueprint, render_template, jsonify, redirect
 from flask_login import login_required
 
@@ -102,12 +104,12 @@ def edit_faction(id, key, value):
     elif key == "banker":
         faction = Faction(id)
         faction.vault_config['banker'] = value
-        factionmodel.vaultconfig = faction.vault_config
+        factionmodel.vaultconfig = json.dumps(faction.vault_config)
         session.flush()
     elif key == "banking":
         faction = Faction(id)
         faction.vault_config['banking'] = value
-        factionmodel.vaultconfig = faction.vault_config
+        factionmodel.vaultconfig = json.dumps(faction.vault_config)
         session.flush()
 
     else:
