@@ -99,6 +99,17 @@ def edit_faction(id, key, value):
     if key == "keys":
         factionmodel.keys = value
         session.flush()
+    elif key == "banker":
+        faction = Faction(id)
+        faction.vault_config['banker'] = value
+        factionmodel.vaultconfig = faction.vault_config
+        session.flush()
+    elif key == "banking":
+        faction = Faction(id)
+        faction.vault_config['banking'] = value
+        factionmodel.vaultconfig = faction.vault_config
+        session.flush()
+
     else:
         raise NotImplementedError
 
