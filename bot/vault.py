@@ -66,7 +66,7 @@ class Vault(commands.Cog):
             embed.title = 'Server Configuration Required'
             embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
                                 f'the server. Please contact the server administrators to do this via ' \
-                                f'[the dashboard](https://torn.deek.sh/].'
+                                f'[the dashboard](https://torn.deek.sh/).'
             await ctx.send(embed=embed)
             return None
 
@@ -94,9 +94,10 @@ class Vault(commands.Cog):
 
             embed = discord.Embed()
             embed.title = f'Vault Request #{request_id}'
-            embed.description = f'{user.name} is requesting {arg} from the faction vault. To fulfill this request, ' \
+            embed.description = f'{user.name if user.name != "" else ctx.message.author.nick} is requesting {arg} ' \
+                                f'from the faction vault. To fulfill this request, ' \
                                 f'enter `?f {request_id}` in this channel.'
-            message = await channel.send(vault_config['banker'], embed=embed)
+            message = await channel.send(f'<@&{vault_config["banker"]}>', embed=embed)
 
             faction.withdrawals.append({
                 'id': request_id,
