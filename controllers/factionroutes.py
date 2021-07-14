@@ -72,8 +72,6 @@ def members():
 def targets():
     faction = Faction(current_user.factiontid)
 
-    print(faction.targets)
-
     if request.method == 'POST':
         if not current_user.is_aa():
             flash('This action requires the user to be an AA user.', category='warning')
