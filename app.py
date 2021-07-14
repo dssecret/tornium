@@ -77,3 +77,4 @@ if not settings.get("settings", "dev"):
     app.register_blueprint(bot_mod)
     app.register_blueprint(error_mod)
     app.register_blueprint(admin_mod)
+    app.register_blueprint(dev_mod)
