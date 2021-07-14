@@ -127,6 +127,9 @@ def edit_server(id, key, value):
     if key == "admins":
         servermodel.admins = value
         session.flush()
+    if key == "factions":
+        servermodel.factions = value
+        session.flush()
     else:
         raise NotImplementedError
 
