@@ -103,12 +103,12 @@ def edit_faction(id, key, value):
         session.flush()
     elif key == "banker":
         faction = Faction(id)
-        faction.vault_config['banker'] = value
+        faction.vault_config['banker'] = int(value)
         factionmodel.vaultconfig = json.dumps(faction.vault_config)
         session.flush()
     elif key == "banking":
         faction = Faction(id)
-        faction.vault_config['banking'] = value
+        faction.vault_config['banking'] = int(value)
         factionmodel.vaultconfig = json.dumps(faction.vault_config)
         session.flush()
     elif key == "vault":
