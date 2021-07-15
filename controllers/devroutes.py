@@ -116,6 +116,11 @@ def edit_faction(id, key, value):
         faction.config['vault'] = int(value)
         factionmodel.config = json.dumps(faction.config)
         session.flush()
+    elif key == "guild":
+        faction = Faction(id)
+        faction.guild = int(value)
+        factionmodel.guild = faction.guild
+        session.flush()
     else:
         raise NotImplementedError
 
