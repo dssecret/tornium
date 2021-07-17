@@ -58,7 +58,7 @@ def dashboard():
 @mod.route('/bot/dashboard/<int:guildid>', methods=['GET', 'POST'])
 @login_required
 def guild_dashboard(guildid: int):  # TODO: Add check to see if user is guild admin
-    if str(guildid) not in current_user.servers and not current_user.is_admin():
+    if str(guildid) not in current_user.servers or not current_user.is_admin():
         abort(403)
 
     session = session_local()
