@@ -58,7 +58,7 @@ def dashboard():
 @mod.route('/bot/dashboard/<int:guildid>', methods=['GET', 'POST'])
 @login_required
 def guild_dashboard(guildid: int):  # TODO: Add check to see if user is guild admin
-    if guildid not in current_user.servers or not current_user.is_admin():
+    if guildid not in current_user.servers:
         abort(403)
 
     session = session_local()
@@ -90,7 +90,7 @@ def guild_dashboard(guildid: int):  # TODO: Add check to see if user is guild ad
 @mod.route('/bot/dashboard/<int:guildid>/<int:factiontid>', methods=['POST'])
 @login_required
 def update_guild(guildid: int, factiontid: int):  # TODO: Add check to see if user is guild admin
-    if guildid not in current_user.servers or not current_user.is_admin():
+    if guildid not in current_user.servers:
         abort(403)
 
     session = session_local()
