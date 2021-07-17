@@ -55,11 +55,16 @@ class Vault(commands.Cog):
             await ctx.send(embed=embed)
             return None
 
+        self.logger.info(f'{user.tid} is withdrawing cash')
+
         cash = botutils.text_to_num(arg)
         user = User(user.tid)
         faction = Faction(user.factiontid)
+        self.logger.info(f'User is in {faction.name}')
         vault_config = faction.get_vault_config()
+        self.logger.info(str(vault_config))
         config = faction.get_config()
+        self.logger.info(str(config))
 
         if vault_config.get('banking') is None or vault_config.get('banker') is None or config.get('vault') == 0:
             embed = discord.Embed()
@@ -71,6 +76,7 @@ class Vault(commands.Cog):
             return None
 
         vault_balances = await botutils.tornget(ctx, self.logger, f'faction/?selections=donations', faction.rand_key())
+        self.logger.info(str(vault_balances))
 
         if str(user.tid) in vault_balances['donations']:
             if cash > vault_balances['donations'][str(user.tid)]['money_balance']:
@@ -85,7 +91,9 @@ class Vault(commands.Cog):
                 return None
 
             channel = discord.utils.get(ctx.guild.channels, id=vault_config['banking'])
+            self.logger.info(channel)
             request_id = len(faction.withdrawals) + 1
+            self.logger.info(f'Request #{request_id}')
 
             embed = discord.Embed()
             embed.title = f'Vault Request #{request_id}'
@@ -109,9 +117,11 @@ class Vault(commands.Cog):
                 'timefulfilled': 0,
                 'withdrawalmessage': message.id
             })
+            self.logger.info(json.dumps(faction.withdrawals))
             dbfaction = session.query(FactionModel).filter_by(tid=faction.tid).first()
             dbfaction.withdrawals = json.dumps(faction.withdrawals)
             session.flush()
+            self.logger.info('Database updated.')
 
             await asyncio.sleep(30)
             await original.delete()
