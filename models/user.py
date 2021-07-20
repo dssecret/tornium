@@ -41,7 +41,7 @@ class DiscordUser:
 
             user = UserDiscordModel(
                 discord_id=did,
-                tid=torn_user['userID'] if torn_user['userID'] != '' else 0
+                tid=torn_user['discord']['userID'] if torn_user['discord']['userID'] != '' else 0
             )
             session.add(user)
             session.flush()
