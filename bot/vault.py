@@ -57,7 +57,7 @@ class Vault(commands.Cog):
 
         cash = botutils.text_to_num(arg)
         user = User(user.tid)
-        faction = Faction(user.factiontid)
+        faction = Faction(user.factiontid, key=User(random.choice(server.admins)).key)
         vault_config = faction.get_vault_config()
         config = faction.get_config()
 
@@ -143,7 +143,7 @@ class Vault(commands.Cog):
             return None
 
         user = User(user.tid)
-        faction = Faction(user.factiontid, key=user.key)
+        faction = Faction(user.factiontid, key=User(random.choice(server.admins)).key)
         vault_config = faction.get_vault_config()
         config = faction.get_config()
 
@@ -192,7 +192,7 @@ class Vault(commands.Cog):
             return None
 
         user = User(user.tid)
-        faction = Faction(user.factiontid, user.key)
+        faction = Faction(user.factiontid, key=User(random.choice(server.admins)).key)
         config = faction.get_config()
 
         if config.get('vault') == 0:
@@ -243,7 +243,7 @@ class Vault(commands.Cog):
             return None
 
         user = User(user.tid)
-        faction = Faction(user.factiontid, user.key)
+        faction = Faction(user.factiontid, key=User(random.choice(server.admins)).key)
         config = faction.get_config()
 
         if config.get('vault') == 0:
