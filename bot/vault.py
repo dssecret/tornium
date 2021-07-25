@@ -144,11 +144,12 @@ class Vault(commands.Cog):
             return None
 
         user = User(user.tid)
+        user.refresh(key=User(random.choice(server.admins)).key)
         faction = Faction(user.factiontid, key=User(random.choice(server.admins)).key)
         vault_config = faction.get_vault_config()
         config = faction.get_config()
 
-        if vault_config.get('banking') is None or vault_config.get('banker') is None or config.get('vault') == 0:
+        if vault_config.get('banking') == 0 or vault_config.get('banker') == 0 or config.get('vault') == 0:
             embed = discord.Embed()
             embed.title = 'Server Configuration Required'
             embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
@@ -193,6 +194,7 @@ class Vault(commands.Cog):
             return None
 
         user = User(user.tid)
+        user.refresh(key=User(random.choice(server.admins)).key)
         faction = Faction(user.factiontid, key=User(random.choice(server.admins)).key)
         config = faction.get_config()
 
@@ -244,6 +246,7 @@ class Vault(commands.Cog):
             return None
 
         user = User(user.tid)
+        user.refresh(key=User(random.choice(server.admins)).key)
         faction = Faction(user.factiontid, key=User(random.choice(server.admins)).key)
         config = faction.get_config()
 
