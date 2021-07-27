@@ -201,7 +201,7 @@ def bot():
                 return render_template('errors/error.html', title='Discord Networking Error',
                                        error=f'The Discord API has responded with HTTP error code {error_code}.')
 
-            for role in roles:
+            for role in roles:  # TODO: Add error message for role not found in server
                 if role['id'] == request.form.get('banker'):
                     vault_config = faction.get_vault_config()
                     vault_config['banker'] = int(request.form.get('banker'))

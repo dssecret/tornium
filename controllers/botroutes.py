@@ -55,9 +55,9 @@ def dashboard():
     return render_template('bot/dashboard.html', servers=servers)
 
 
-@mod.route('/bot/dashboard/<int:guildid>', methods=['GET', 'POST'])
+@mod.route('/bot/dashboard/<string:guildid>', methods=['GET', 'POST'])
 @login_required
-def guild_dashboard(guildid: int):  # TODO: Add check to see if user is guild admin
+def guild_dashboard(guildid: str):  # TODO: Add check to see if user is guild admin
     if guildid not in current_user.servers:
         abort(403)
 
@@ -87,9 +87,9 @@ def guild_dashboard(guildid: int):  # TODO: Add check to see if user is guild ad
     return render_template('bot/guild.html', server=server, factions=factions)
 
 
-@mod.route('/bot/dashboard/<int:guildid>/<int:factiontid>', methods=['POST'])
+@mod.route('/bot/dashboard/<string:guildid>/<int:factiontid>', methods=['POST'])
 @login_required
-def update_guild(guildid: int, factiontid: int):  # TODO: Add check to see if user is guild admin
+def update_guild(guildid: str, factiontid: int):  # TODO: Add check to see if user is guild admin
     if guildid not in current_user.servers:
         abort(403)
 

@@ -156,6 +156,11 @@ class User(UserMixin):
                 return utils.handle_discord_error(int(str(e)))
             is_admin = False
 
+            if guild['owner_id'] == self.discord_id:
+                servers.append(guild['id'])
+                is_admin = True
+                break
+
             for role in member['roles']:
                 for guild_role in guild['roles']:
                     # Checks if the user has the role and the role has the administrator permission
