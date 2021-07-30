@@ -58,6 +58,18 @@ class Vault(commands.Cog):
         cash = botutils.text_to_num(arg)
         user = User(user.tid)
         user.refresh(key=User(random.choice(server.admins)).key)
+
+        if user.factiontid == 0:
+            user.refresh(key=User(random.choice(server.admins)).key, force=True)
+
+            if user.factiontid == 0:
+                embed = discord.Embed()
+                embed.title = 'Faction ID Error'
+                embed.description = f'The faction ID of {ctx.message.author.name} is not set regardless of the ' \
+                                    f'forced refresh.'
+                await ctx.send(embed=embed)
+                return None
+
         faction = Faction(user.factiontid, key=User(random.choice(server.admins)).key)
         vault_config = faction.get_vault_config()
         config = faction.get_config()
@@ -145,6 +157,18 @@ class Vault(commands.Cog):
 
         user = User(user.tid)
         user.refresh(key=User(random.choice(server.admins)).key)
+
+        if user.factiontid == 0:
+            user.refresh(key=User(random.choice(server.admins)).key, force=True)
+
+            if user.factiontid == 0:
+                embed = discord.Embed()
+                embed.title = 'Faction ID Error'
+                embed.description = f'The faction ID of {ctx.message.author.name} is not set regardless of the ' \
+                                    f'forced refresh.'
+                await ctx.send(embed=embed)
+                return None
+
         faction = Faction(user.factiontid, key=User(random.choice(server.admins)).key)
         vault_config = faction.get_vault_config()
         config = faction.get_config()
@@ -195,6 +219,18 @@ class Vault(commands.Cog):
 
         user = User(user.tid)
         user.refresh(key=User(random.choice(server.admins)).key)
+
+        if user.factiontid == 0:
+            user.refresh(key=User(random.choice(server.admins)).key, force=True)
+
+            if user.factiontid == 0:
+                embed = discord.Embed()
+                embed.title = 'Faction ID Error'
+                embed.description = f'The faction ID of {ctx.message.author.name} is not set regardless of the ' \
+                                    f'forced refresh.'
+                await ctx.send(embed=embed)
+                return None
+
         faction = Faction(user.factiontid, key=User(random.choice(server.admins)).key)
         config = faction.get_config()
 
@@ -247,6 +283,18 @@ class Vault(commands.Cog):
 
         user = User(user.tid)
         user.refresh(key=User(random.choice(server.admins)).key)
+
+        if user.factiontid == 0:
+            user.refresh(key=User(random.choice(server.admins)).key, force=True)
+
+            if user.factiontid == 0:
+                embed = discord.Embed()
+                embed.title = 'Faction ID Error'
+                embed.description = f'The faction ID of {ctx.message.author.name} is not set regardless of the ' \
+                                    f'forced refresh.'
+                await ctx.send(embed=embed)
+                return None
+
         faction = Faction(user.factiontid, key=User(random.choice(server.admins)).key)
         config = faction.get_config()
 
