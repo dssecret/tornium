@@ -183,9 +183,28 @@ class Vault(commands.Cog):
             return None
 
         banking_channel = discord.utils.get(ctx.guild.channels, id=vault_config['banking'])
-        withdrawal = faction.withdrawals[int(request) - 1]
+
+        try:
+            withdrawal = faction.withdrawals[int(request) - 1]
+        except IndexError:
+            embed = discord.Embed()
+            embed.title = 'Request Does not Exist'
+            embed.description = f'Vault Request #{request} does not currently exist. Please verify that you entered ' \
+                                f'the curred vault request ID.'
+            await ctx.send(embed=embed)
+            return None
+
         # Message posted in banking channel
         withdrawal_message = await banking_channel.fetch_message(withdrawal['withdrawalmessage'])
+
+        if withdrawal['fulfilled']:
+            embed = discord.Embed()
+            embed.title = 'Request Already Fulfilled'
+            embed.description = f'Vault request #{request} has already been fulfilled by ' \
+                                f'{User(withdrawal["fulfiller"]).name} at ' \
+                                f'{withdrawal["timefulfilled"]}.'
+            await ctx.send(embed=embed)
+            return None
 
         embed = discord.Embed()
         embed.title = withdrawal_message.embeds[0].title
