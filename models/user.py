@@ -101,6 +101,8 @@ class User(UserMixin):
                 key = self.get_key()
             elif key is None:
                 key = current_user.get_key()
+                if key == '':
+                    raise Exception  # TODO: Make exception more descriptive
 
             session = session_local()
 

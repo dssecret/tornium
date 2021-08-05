@@ -13,27 +13,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, Float, String
 from database import base
 
 
-class FactionModel(base):
-    __tablename__ = 'Factions'
+class StatModel(base):
+    __tablename__ = 'Stats'
 
     tid = Column(Integer, primary_key=True)
     name = Column(String)
-    respect = Column(Integer)
-    capacity = Column(Integer)
-
-    keys = Column(String)  # String of list of keys
-
-    last_members = Column(Integer)  # Time of last members update
-
-    withdrawals = Column(String)  # String of list of dictionary of requests
-
-    guild = Column(Integer)  # Guild ID of the faction's guild
-    config = Column(String)  # String of dictionary of faction's bot configuration
-    vaultconfig = Column(String)  # String of dictionary of vault configuration
-
-    targets = Column(String)  # String of dictionary of targets
-    statconfig = Column(String)  # String of dictionary of target config
+    battlescore = Column(Float)
+    battlestats = Column(String)  # String of list of battlestats [str, def, spd, dex]
+    level = Column(Integer)
+    timeadded = Column(Integer)
+    addedid = Column(Integer)

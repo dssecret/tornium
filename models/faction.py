@@ -52,7 +52,8 @@ class Faction:
                 guild=0,
                 config='{"vault": 0}',
                 vaultconfig='{"banking": 0, "banker": 0}',
-                targets='{}'
+                targets='{}',
+                statconfig='{"global": 0}'
             )
 
             try:
@@ -83,6 +84,8 @@ class Faction:
         self.vault_config = json.loads(faction.vaultconfig)
 
         self.targets = json.loads(faction.targets)
+
+        self.stat_config = json.loads(faction.statconfig)
 
     def get_tid(self):
         """
@@ -125,6 +128,12 @@ class Faction:
             raise Exception  # TODO: Make exception more descriptive
 
         return self.vault_config
+
+    def get_stat_config(self):
+        if self.guild == 0:
+            return {}
+
+        return self.stat_config
 
     def get_config(self):
         if self.guild == 0:

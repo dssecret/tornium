@@ -15,6 +15,7 @@
 
 import datetime
 import logging
+import re
 
 from flask import render_template
 
@@ -25,6 +26,17 @@ from utils.discordget import *
 
 def get_logger():
     return logging.getLogger("server")
+
+
+def get_tid(name):
+    try:
+        return int(re.compile(r"\[(\d+)\]").findall(name)[0])
+    except IndexError:
+        return 0
+
+
+def get_torn_name(name):
+    return re.sub("[[].*?[]]", "", name).replace(' ', '')
 
 
 def handle_torn_error(error: int):
