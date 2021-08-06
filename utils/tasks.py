@@ -22,10 +22,14 @@ huey = MiniHuey()
 
 
 @huey.task()
-def tornget(endpoint, key, tots=0, fromts=0):
+def tornget(endpoint, key, tots=0, fromts=0, session=None):
     url = f'https://api.torn.com/{endpoint}&key={key}&comment=Tornium{"" if fromts == 0 else f"&from={fromts}"}' \
           f'{"" if tots == 0 else f"&to={tots}"}'
-    request = requests.get(url)
+
+    if session is None:  # Utilizes https://docs.python-requests.org/en/latest/user/advanced/#session-objects
+        request = requests.get(url)
+    else:
+        request = session.get(url)
 
     if request.status_code != 200:
         utils.get_logger().warning(f'The Torn API has responded with status code {request.status_code} to endpoint '
