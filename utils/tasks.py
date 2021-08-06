@@ -13,11 +13,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+from huey.contrib.mini import MiniHuey
 import requests
 
 import utils
 
+huey = MiniHuey()
 
+
+@huey.task()
 def tornget(endpoint, key, tots=0, fromts=0):
     url = f'https://api.torn.com/{endpoint}&key={key}&comment=Tornium{"" if fromts == 0 else f"&from={fromts}"}' \
           f'{"" if tots == 0 else f"&to={tots}"}'

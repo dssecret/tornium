@@ -25,7 +25,7 @@ from models.faction import Faction
 from models.factionmodel import FactionModel
 from models.user import User
 import utils
-from utils.tornget import tornget
+from utils.tasks import tornget
 
 mod = Blueprint('factionroutes', __name__)
 
@@ -53,6 +53,7 @@ def members():
     key = current_user.get_key()
     try:
         factionmembers = tornget('faction/?selections=', key)
+        factionmembers = factionmembers.get()
     except utils.TornError as e:
         error_code = int(str(e))
         return utils.handle_torn_error(error_code)
@@ -86,7 +87,8 @@ def targets():
                 return render_template('faction/targets.html', targets=faction.targets)
 
             try:
-                torn_user = utils.tornget(f'user/{request.form.get("targetid")}?selections=', current_user.key)
+                torn_user = tornget(f'user/{request.form.get("targetid")}?selections=', current_user.key)
+                torn_user = torn_user.get()
             except utils.TornError as e:
                 flash(f'The Torn API has returned error code {e}.', category='error')
                 return render_template('faction/targets.html', targets=faction.targets)
@@ -131,7 +133,8 @@ def refresh_target(tid):
     faction = Faction(current_user.factiontid)
 
     try:
-        torn_user = utils.tornget(f'user/{tid}?selections=', current_user.key)
+        torn_user = tornget(f'user/{tid}?selections=', current_user.key)
+        torn_user = torn_user.get()
     except utils.TornError as e:
         flash(f'The Torn API has returned error code {e}.', category='error')
         return render_template('faction/targets.html', targets=faction.targets)

@@ -20,7 +20,7 @@ from is_safe_url import is_safe_url
 from models.user import User
 from models.settingsmodel import get
 import utils
-from utils.tornget import tornget
+from utils.tasks import tornget
 
 
 mod = Blueprint('authroutes', __name__)
@@ -35,6 +35,7 @@ def login():
 
     try:
         torn_user = tornget(endpoint='user/?selections=', key=request.form['key'])
+        torn_user = torn_user.get()
     except utils.TornError as e:
         error_code = int(str(e))
         return utils.handle_torn_error(error_code)

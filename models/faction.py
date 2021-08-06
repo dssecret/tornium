@@ -23,7 +23,7 @@ from models.factionmodel import FactionModel
 from models.server import Server
 from models.user import User
 import utils
-from utils.tornget import tornget
+from utils.tasks import tornget
 
 
 class Faction:
@@ -39,6 +39,8 @@ class Faction:
         faction = session.query(FactionModel).filter_by(tid=tid).first()
         if faction is None:
             faction_data = tornget(f'faction/{tid}?selections=basic', key if key != "" else current_user.key)
+            faction_data = faction_data.get()
+
             now = utils.now()
 
             faction = FactionModel(
@@ -57,7 +59,8 @@ class Faction:
             )
 
             try:
-                tornget(f'faction/{tid}?selections=positions', key if key != "" else current_user.key)
+                result = tornget(f'faction/{tid}?selections=positions', key if key != "" else current_user.key)
+                result.get()
                 keys = json.loads(faction.keys)
                 keys.append(key if key != "" else current_user.key)
                 keys = json.dumps(keys)
@@ -111,6 +114,7 @@ class Faction:
             key = random.choice(self.get_keys())
 
         factionmembers = tornget('faction/?selections=', key)
+        factionmembers = factionmembers.get()
 
         for memberid, member in factionmembers['members'].values():
             user = User(memberid)

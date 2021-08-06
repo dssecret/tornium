@@ -22,7 +22,7 @@ from models.server import Server
 from models.servermodel import ServerModel
 from models.usermodel import UserModel, UserDiscordModel
 import utils
-from utils.tornget import tornget
+from utils.tasks import tornget
 
 
 class DiscordUser:
@@ -38,6 +38,7 @@ class DiscordUser:
 
         if user is None:
             torn_user = tornget(f'user/{did}?selections=discord', key)
+            torn_user = torn_user.get()
 
             user = UserDiscordModel(
                 discord_id=did,
@@ -107,6 +108,8 @@ class User(UserMixin):
             session = session_local()
 
             user_data = tornget(f'user/{self.tid}?selections=', key)
+            user_data = user_data.get()
+
             user = session.query(UserModel).filter_by(tid=self.tid).first()
             user.factionid = user_data['faction']['faction_id']
             user.name = user_data['name']
@@ -128,6 +131,8 @@ class User(UserMixin):
 
         if self.discord_id == "" or not force:
             user_data = tornget(f'user/?selections=discord', self.key)
+            user_data = user_data.get()
+
             self.discord_id = user_data['discord']['discordID']
             user.discord_id = user_data['discord']['discordID']
 
@@ -191,9 +196,11 @@ class User(UserMixin):
         user = session.query(UserModel).filter_by(tid=self.tid).first()
 
         faction_data = tornget(f'faction/?selections=', self.key)
+        faction_data = faction_data.get()
 
         try:
-            tornget(f'faction/?selections=positions', self.key)
+            response = tornget(f'faction/?selections=positions', self.key)
+            response.get()
         except utils.TornError:
             self.aa = False
             user.aa = False
