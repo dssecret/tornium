@@ -208,7 +208,7 @@ class Vault(commands.Cog):
 
         embed = discord.Embed()
         embed.title = withdrawal_message.embeds[0].title
-        embed.add_field(name='Original Message', value=withdrawal_message.embeds[0].description.split('.')[0])
+        embed.add_field(name='Original Message', value=withdrawal_message.embeds[0].description)
         embed.description = f'This request has been fulfilled by {ctx.message.author.name} at {time.ctime()}.'
         await withdrawal_message.edit(embed=embed)
 
