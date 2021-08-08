@@ -111,7 +111,7 @@ class User(UserMixin):
             session = session_local()
 
             if key == self.get_key():
-                user_data = tornget(f'user/?selections=basic,battlestats', key)
+                user_data = tornget(f'user/?selections=profile,battlestats', key)
             else:
                 user_data = tornget(f'user/{self.tid}?selections=', key)
             user_data = user_data.get()
