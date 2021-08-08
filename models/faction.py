@@ -48,6 +48,8 @@ class Faction:
                 name=faction_data['name'],
                 respect=faction_data['respect'],
                 capacity=faction_data['capacity'],
+                leader=faction_data['leader'],
+                coleader=faction_data['co-leader'],
                 keys='[]',
                 last_members=now,
                 withdrawals='[]',
@@ -75,6 +77,8 @@ class Faction:
         self.name = faction.name
         self.respect = faction.respect
         self.capacity = faction.capacity
+        self.leader = faction.leader
+        self.coleader = faction.coleader
 
         self.keys = json.loads(faction.keys)
 

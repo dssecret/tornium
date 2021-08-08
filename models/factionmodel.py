@@ -24,6 +24,8 @@ class FactionModel(base):
     name = Column(String)
     respect = Column(Integer)
     capacity = Column(Integer)
+    leader = Column(Integer)
+    coleader = Column(Integer)
 
     keys = Column(String)  # String of list of keys
 

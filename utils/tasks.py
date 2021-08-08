@@ -18,7 +18,7 @@ import requests
 
 import utils
 
-huey = MiniHuey()
+huey = MiniHuey()  # Utilizes https://huey.readthedocs.io/en/latest/contrib.html#mini-huey
 
 
 @huey.task()

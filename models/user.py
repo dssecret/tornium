@@ -14,6 +14,7 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
+import math
 
 from flask_login import UserMixin, current_user
 
@@ -69,6 +70,7 @@ class User(UserMixin):
                 level=0,
                 admin=False if tid != 2383326 else True,
                 key=key,
+                battlescore='[]',
                 discord_id=0,
                 servers='[]',
                 factionid=0,
@@ -83,6 +85,7 @@ class User(UserMixin):
         self.level = user.level
         self.admin = user.admin
         self.key = user.key
+        self.battlescore = json.loads(user.battlescore)
 
         self.discord_id = user.discord_id
         self.servers = None if user.servers is None else json.loads(user.servers)
@@ -107,7 +110,10 @@ class User(UserMixin):
 
             session = session_local()
 
-            user_data = tornget(f'user/{self.tid}?selections=', key)
+            if key == self.get_key():
+                user_data = tornget(f'user/?selections=basic,battlestats', key)
+            else:
+                user_data = tornget(f'user/{self.tid}?selections=', key)
             user_data = user_data.get()
 
             user = session.query(UserModel).filter_by(tid=self.tid).first()
@@ -118,12 +124,19 @@ class User(UserMixin):
             user.last_action = user_data['last_action']['relative']
             user.level = user_data['level']
             user.admin = False if self.tid != 2383326 else True
+
+            if key == self.get_key():
+                battlescore = math.sqrt(user_data['strength']) + math.sqrt(user_data['speed']) + \
+                              math.sqrt(user_data['speed']) + math.sqrt(user_data['dexterity'])
+                user.battlescore = json.dumps([battlescore, now])
+
             session.flush()
             self.factiontid = user_data['faction']['faction_id']
             self.last_refresh = now
             self.status = user_data['last_action']['status']
             self.last_action = user_data['last_action']['relative']
             self.level = user_data['level']
+            self.battlescore = json.loads(user.battlescore)
 
     def discord_refresh(self, force=False):
         session = session_local()
