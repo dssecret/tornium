@@ -14,6 +14,7 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 import datetime
 import logging
+import os
 
 import flask
 from flask_login import LoginManager
@@ -70,7 +71,7 @@ if settings.get("settings", "dev") and __name__ == "__main__":
     app.register_blueprint(admin_mod)
     app.register_blueprint(stat_mod)
 
-    app.run('localhost', 8000, debug=True)
+    app.run('localhost', 8000, debug=True, instance_path=f'{os.getcwd()}/instance')  # Temp bug fix for https://youtrack.jetbrains.com/issue/PY-49984
 
 if not settings.get("settings", "dev"):
     app.register_blueprint(base_mod)
