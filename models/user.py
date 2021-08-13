@@ -16,6 +16,7 @@
 import json
 import math
 
+import requests
 from flask_login import UserMixin, current_user
 
 from database import session_local
@@ -23,7 +24,7 @@ from models.server import Server
 from models.servermodel import ServerModel
 from models.usermodel import UserModel, UserDiscordModel
 import utils
-from utils.tasks import tornget
+from utils.tasks import tornget, discordget
 
 
 class DiscordUser:
@@ -160,10 +161,12 @@ class User(UserMixin):
             session.flush()
 
         servers = []
+        requests_session = requests.Session()
 
-        for guild in utils.discordget('users/@me/guilds'):
+        for guild in discordget('users/@me/guilds', session=requests_session):
             try:
-                member = utils.discordget(f'guilds/{guild["id"]}/members/{self.discord_id}')
+                member = discordget(f'guilds/{guild["id"]}/members/{self.discord_id}', session=requests_session)
+                member = member.get()
             except utils.DiscordError as e:
                 if int(str(e)) == 10007:
                     break
@@ -171,7 +174,8 @@ class User(UserMixin):
                     return utils.handle_discord_error(int(str(e)))
 
             try:
-                guild = utils.discordget(f'guilds/{guild["id"]}')
+                guild = discordget(f'guilds/{guild["id"]}', session=requests_session)
+                guild = guild.get()
             except utils.DiscordError as e:
                 return utils.handle_discord_error(int(str(e)))
             is_admin = False

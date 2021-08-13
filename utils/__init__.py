@@ -20,7 +20,6 @@ import re
 from flask import render_template
 
 from utils.errors import *
-from utils.discordget import *
 
 
 def get_logger():

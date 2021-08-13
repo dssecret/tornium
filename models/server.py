@@ -16,7 +16,7 @@ import json
 
 from database import session_local
 from models.servermodel import ServerModel
-import utils
+from utils.tasks import discordget
 
 
 class Server:
@@ -30,7 +30,7 @@ class Server:
         session = session_local()
         server = session.query(ServerModel).filter_by(sid=sid).first()
         if server is None:
-            guild = utils.discordget(f'guilds/{sid}')
+            guild = discordget(f'guilds/{sid}')
 
             server = ServerModel(
                 sid=sid,

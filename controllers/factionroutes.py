@@ -166,7 +166,7 @@ def bot():
 
         if request.form.get('guildid') is not None:
             try:
-                utils.discordget(f'guilds/{request.form.get("guildid")}')
+                utils.tasks.discordget(f'guilds/{request.form.get("guildid")}').get()
             except utils.DiscordError as e:
                 error_code = int(str(e))
                 return utils.handle_discord_error(error_code)
@@ -180,7 +180,7 @@ def bot():
             session.flush()
         elif request.form.get('banking') is not None:
             try:
-                channel = utils.discordget(f'channels/{request.form.get("banking")}')
+                channel = utils.tasks.discordget(f'channels/{request.form.get("banking")}')
             except utils.DiscordError as e:
                 error_code = int(str(e))
                 return utils.handle_discord_error(error_code)
@@ -195,7 +195,7 @@ def bot():
             session.flush()
         elif request.form.get('banker') is not None:
             try:
-                roles = utils.discordget(f'guilds/{faction.guild}/roles')
+                roles = utils.tasks.discordget(f'guilds/{faction.guild}/roles')
             except utils.DiscordError as e:
                 error_code = int(str(e))
                 return utils.handle_discord_error(error_code)

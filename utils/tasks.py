@@ -16,6 +16,7 @@
 from huey.contrib.mini import MiniHuey
 import requests
 
+from models import settingsmodel
 import utils
 
 huey = MiniHuey()  # Utilizes https://huey.readthedocs.io/en/latest/contrib.html#mini-huey
@@ -44,3 +45,31 @@ def tornget(endpoint, key, tots=0, fromts=0, session=None):
         raise utils.TornError(request["error"]["code"])
 
     return request
+
+
+@huey.task()
+def discordget(endpoint, session=None):
+    url = f'https://discord.com/api/v9/{endpoint}'
+
+    if session is None:
+        request = requests.get(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}'})
+    else:
+        request = session.get(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}'})
+
+    request_json = request.json()
+
+    if 'code' in request_json:
+        # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
+        # explanations
+
+        utils.get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
+                                f'({request_json["message"]}) to {url}).')
+        raise utils.DiscordError(request_json["code"])
+
+    if request.status_code != 200:
+        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
+                                   f'"{endpoint}".')
+        raise utils.NetworkingError(request.status_code)
+
+    return request_json
+
