@@ -40,7 +40,7 @@ handler = logging.FileHandler(filename='server.log', encoding='utf-8', mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-app = flask.Flask(__name__)
+app = flask.Flask(__name__, instance_path=f'{os.getcwd()}/instance')  # Temp bug fix for https://youtrack.jetbrains.com/issue/PY-49984
 app.secret_key = settings.get("settings", "secret")
 app.session = scoped_session(session_local, scopefunc=flask._app_ctx_stack.__ident_func__)
 
@@ -71,7 +71,7 @@ if settings.get("settings", "dev") and __name__ == "__main__":
     app.register_blueprint(admin_mod)
     app.register_blueprint(stat_mod)
 
-    app.run('localhost', 8000, debug=True, instance_path=f'{os.getcwd()}/instance')  # Temp bug fix for https://youtrack.jetbrains.com/issue/PY-49984
+    app.run('localhost', 8000, debug=True)
 
 if not settings.get("settings", "dev"):
     app.register_blueprint(base_mod)
