@@ -62,7 +62,7 @@ def members():
 
     for member in factionmembers['members']:
         user = User(int(member))
-        user.refresh(key=key)
+        # user.refresh(key=key)
         members.append(user)
 
     return render_template('faction/members.html', members=members)

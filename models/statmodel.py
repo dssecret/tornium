@@ -20,10 +20,9 @@ from database import base
 class StatModel(base):
     __tablename__ = 'Stats'
 
-    tid = Column(Integer, primary_key=True)
-    name = Column(String)
+    statid = Column(Integer, primary_key=True)
+    tid = Column(Integer)
     battlescore = Column(Float)
     battlestats = Column(String)  # String of list of battlestats [str, def, spd, dex]
-    level = Column(Integer)
     timeadded = Column(Integer)
     addedid = Column(Integer)

@@ -46,6 +46,7 @@ def login():
         user.set_key(request.form['key'])
 
     user.discord_refresh()
+    user.refresh()
     user.faction_refresh()
     login_user(user)
     next = request.args.get('next')

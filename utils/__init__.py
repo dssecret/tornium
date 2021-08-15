@@ -20,6 +20,7 @@ import re
 from flask import render_template
 
 from utils.errors import *
+from utils import tasks
 
 
 def get_logger():

@@ -77,7 +77,7 @@ class User(UserMixin):
                 factionid=0,
                 factionaa=False,
                 last_refresh=now,
-                status=0)
+                status='')
             session.add(user)
             session.flush()
 
@@ -163,7 +163,7 @@ class User(UserMixin):
         servers = []
         requests_session = requests.Session()
 
-        for guild in discordget('users/@me/guilds', session=requests_session):
+        for guild in discordget('users/@me/guilds', session=requests_session).get():
             try:
                 member = discordget(f'guilds/{guild["id"]}/members/{self.discord_id}', session=requests_session)
                 member = member.get()

@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+import datetime
 import json
 
 from flask import Blueprint, render_template, request
@@ -38,25 +39,6 @@ def index():
 @mod.route('/stats/db')
 @login_required
 def stats():
-    page = int(request.args.get('page', default=1))
-    tid = int(request.args.get('id', default=0))
-
-    faction = Faction(current_user.factiontid)
-    stats = []
-
-    session = session_local()
-
-    if tid == 0:
-        for stat_entry in session.query(StatModel).all():
-            if Faction(User(stat_entry.addedid).factiontid).stat_config['global'] == 1 or \
-                    User(stat_entry.addedid).factiontid != current_user.factiontid:
-                pass
-    else:
-        for stat_entry in session.query(StatModel).filter_by(tid=tid).all():
-            if Faction(User(stat_entry.addedid).factiontid).stat_config['global'] == 1 or \
-                    User(stat_entry.addedid).factiontid != current_user.factiontid:
-                pass
-
     return render_template('stats/db.html')
 
 
@@ -72,8 +54,6 @@ def stats_data():
 
     if utils.get_tid(search_value):
         stat_entries = session.query(StatModel).filter_by(tid=utils.get_tid(search_value)).all()
-    elif utils.get_torn_name(search_value):
-        stat_entries = session.query(StatModel).filter_by(name=utils.get_torn_name(search_value)).all()
     else:
         stat_entries = session.query(StatModel).all()
 
@@ -82,11 +62,7 @@ def stats_data():
                 User(stat_entry.addedid).factiontid != current_user.factiontid:
             continue
 
-        stats.append({
-            'name': f'{stat_entry.name} [{stat_entry.tid}]',
-            'level': stat_entry.level,
-            'timeadded': stat_entry.timeadded
-        })
+        stats.append([stat_entry.tid, 0, utils.rel_time(datetime.datetime.fromtimestamp(stat_entry.timeadded))])
 
     data = {
         'draw': request.args.get('draw'),
