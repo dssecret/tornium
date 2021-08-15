@@ -38,7 +38,9 @@ def get_torn_name(name):
     return re.sub("[[].*?[]]", "", name).replace(' ', '')
 
 
-def handle_torn_error(error: int):
+def handle_torn_error(error: str):
+    error = remove_str(error)
+
     if error == 0:
         return render_template('/errors/error.html', title='Unknown Error',
                                error='The Torn API has returned an unknown error.')
@@ -78,7 +80,9 @@ def handle_torn_error(error: int):
                                error=f'The Torn API has responded with error code {error}')
 
 
-def handle_discord_error(error: int):
+def handle_discord_error(error: str):
+    error = remove_str(error)
+
     if error == 0:
         return render_template('/errors/error.html', title='General Error',
                                error=f'The Discord API has returned a general error.')
@@ -118,6 +122,10 @@ def handle_discord_error(error: int):
 
 def now():
     return int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds())
+
+
+def remove_str(text):
+    return int(''.join(filter(lambda x: x.isdigit(), text)))
 
 
 def rel_time(time):

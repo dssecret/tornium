@@ -16,7 +16,6 @@
 import json
 
 from flask import Blueprint, render_template, jsonify, redirect
-from flask_login import login_required
 
 from controllers.adminroutes import admin_required
 from database import session_local

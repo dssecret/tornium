@@ -31,6 +31,7 @@ class Server:
         server = session.query(ServerModel).filter_by(sid=sid).first()
         if server is None:
             guild = discordget(f'guilds/{sid}')
+            guild = guild(blocking=True)
 
             server = ServerModel(
                 sid=sid,

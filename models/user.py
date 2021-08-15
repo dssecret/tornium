@@ -20,7 +20,6 @@ import requests
 from flask_login import UserMixin, current_user
 
 from database import session_local
-from models.server import Server
 from models.servermodel import ServerModel
 from models.usermodel import UserModel, UserDiscordModel
 import utils
@@ -40,7 +39,7 @@ class DiscordUser:
 
         if user is None:
             torn_user = tornget(f'user/{did}?selections=discord', key)
-            torn_user = torn_user.get()
+            torn_user = torn_user(blocking=True)
 
             user = UserDiscordModel(
                 discord_id=did,
@@ -115,7 +114,7 @@ class User(UserMixin):
                 user_data = tornget(f'user/?selections=profile,battlestats', key)
             else:
                 user_data = tornget(f'user/{self.tid}?selections=', key)
-            user_data = user_data.get()
+            user_data = user_data(blocking=True)
 
             user = session.query(UserModel).filter_by(tid=self.tid).first()
             user.factionid = user_data['faction']['faction_id']
@@ -140,12 +139,14 @@ class User(UserMixin):
             self.battlescore = json.loads(user.battlescore)
 
     def discord_refresh(self, force=False):
+        from models.server import Server
+
         session = session_local()
         user = session.query(UserModel).filter_by(tid=self.tid).first()
 
         if self.discord_id == "" or not force:
             user_data = tornget(f'user/?selections=discord', self.key)
-            user_data = user_data.get()
+            user_data = user_data(blocking=True)
 
             self.discord_id = user_data['discord']['discordID']
             user.discord_id = user_data['discord']['discordID']
@@ -162,11 +163,13 @@ class User(UserMixin):
 
         servers = []
         requests_session = requests.Session()
+        guilds = discordget('users/@me/guilds', session=requests_session)
+        guilds = guilds(blocking=True)
 
-        for guild in discordget('users/@me/guilds', session=requests_session).get():
+        for guild in guilds:
             try:
                 member = discordget(f'guilds/{guild["id"]}/members/{self.discord_id}', session=requests_session)
-                member = member.get()
+                member = member(blocking=True)
             except utils.DiscordError as e:
                 if int(str(e)) == 10007:
                     break
@@ -175,7 +178,7 @@ class User(UserMixin):
 
             try:
                 guild = discordget(f'guilds/{guild["id"]}', session=requests_session)
-                guild = guild.get()
+                guild = guild(blocking=True)
             except utils.DiscordError as e:
                 return utils.handle_discord_error(int(str(e)))
             is_admin = False
@@ -213,11 +216,11 @@ class User(UserMixin):
         user = session.query(UserModel).filter_by(tid=self.tid).first()
 
         faction_data = tornget(f'faction/?selections=', self.key)
-        faction_data = faction_data.get()
+        faction_data = faction_data(blocking=True)
 
         try:
             response = tornget(f'faction/?selections=positions', self.key)
-            response.get()
+            response(blocking=True)
         except utils.TornError:
             self.aa = False
             user.aa = False

@@ -19,6 +19,7 @@ import json
 
 from flask import Blueprint, render_template, abort, request, flash, redirect
 from flask_login import login_required, current_user
+from huey.exceptions import TaskException
 
 from database import session_local
 from models.faction import Faction
@@ -53,10 +54,12 @@ def members():
     key = current_user.get_key()
     try:
         factionmembers = tornget('faction/?selections=', key)
-        factionmembers = factionmembers.get()
-    except utils.TornError as e:
-        error_code = int(str(e))
-        return utils.handle_torn_error(error_code)
+        factionmembers = factionmembers(blocking=True)
+    except TaskException as e:
+        if 'TornError' in str(e):
+            return utils.handle_torn_error(str(e))
+        else:
+            raise e
 
     members = []
 
@@ -88,13 +91,12 @@ def targets():
 
             try:
                 torn_user = tornget(f'user/{request.form.get("targetid")}?selections=', current_user.key)
-                torn_user = torn_user.get()
-            except utils.TornError as e:
-                flash(f'The Torn API has returned error code {e}.', category='error')
-                return render_template('faction/targets.html', targets=faction.targets)
-            except utils.NetworkingError as e:
-                flash(f'The Torn API has had a networking error and has returned HTTP {e}', category='error')
-                return render_template('faction/targets.html', targets=faction.targets)
+                torn_user = torn_user.get(blocking=True)
+            except TaskException as e:
+                if 'TornError' in str(e):
+                    return utils.handle_torn_error(str(e))
+                else:
+                    raise e
 
             faction.targets[torn_user['player_id']] = {
                 'last_update': utils.now(),
@@ -134,13 +136,12 @@ def refresh_target(tid):
 
     try:
         torn_user = tornget(f'user/{tid}?selections=', current_user.key)
-        torn_user = torn_user.get()
-    except utils.TornError as e:
-        flash(f'The Torn API has returned error code {e}.', category='error')
-        return render_template('faction/targets.html', targets=faction.targets)
-    except utils.NetworkingError as e:
-        flash(f'The Torn API has had a networking error and has returned HTTP {e}', category='error')
-        return render_template('faction/targets.html', targets=faction.targets)
+        torn_user = torn_user(blocking=True)
+    except TaskException as e:
+        if 'TornError' in str(e):
+            return utils.handle_torn_error(str(e))
+        else:
+            raise e
 
     faction.targets[str(torn_user['player_id'])]['name'] = torn_user['name']
     faction.targets[str(torn_user['player_id'])]['level'] = torn_user['level']
@@ -166,14 +167,17 @@ def bot():
 
         if request.form.get('guildid') is not None:
             try:
-                utils.tasks.discordget(f'guilds/{request.form.get("guildid")}').get()
-            except utils.DiscordError as e:
-                error_code = int(str(e))
-                return utils.handle_discord_error(error_code)
-            except utils.NetworkingError as e:
-                error_code = int(str(e))
-                return render_template('errors/error.html', title='Discord Networking Error',
-                                       error=f'The Discord API has responded with HTTP error code {error_code}.')
+                data = utils.tasks.discordget(f'guilds/{request.form.get("guildid")}')
+                data(blocking=True)
+            except TaskException as e:
+                if 'DiscordError' in str(e):
+                    return utils.handle_discord_error(str(e))
+                elif 'NetworkingError' in str(e):
+                    return render_template('errors/error.html', title='Discord Networking Error',
+                                           error=f'The Discord API has responded with HTTP error code '
+                                                 f'{utils.remove_str(str(e))}.')
+                else:
+                    raise e
 
             faction.guild = request.form.get('guildid')
             faction_model.guild = request.form.get('guildid')
@@ -181,13 +185,17 @@ def bot():
         elif request.form.get('banking') is not None:
             try:
                 channel = utils.tasks.discordget(f'channels/{request.form.get("banking")}')
-            except utils.DiscordError as e:
-                error_code = int(str(e))
-                return utils.handle_discord_error(error_code)
-            except utils.NetworkingError as e:
-                error_code = int(str(e))
-                return render_template('errors/error.html', title='Discord Networking Error',
-                                       error=f'The Discord API has responded with HTTP error code {error_code}.')
+                channel = channel()
+            except TaskException as e:
+                e = str(e)
+                if 'DiscordError' in e:
+                    return utils.handle_discord_error(e)
+                elif 'NetworkingError' in e:
+                    return render_template('errors/error.html', title='Discord Networking Error',
+                                           error=f'The Discord API has responded with HTTP error code '
+                                                 f'{utils.remove_str(e)}.')
+                else:
+                    raise e
 
             vault_config = faction.get_vault_config()
             vault_config['banking'] = int(channel['id'])
@@ -196,13 +204,16 @@ def bot():
         elif request.form.get('banker') is not None:
             try:
                 roles = utils.tasks.discordget(f'guilds/{faction.guild}/roles')
-            except utils.DiscordError as e:
-                error_code = int(str(e))
-                return utils.handle_discord_error(error_code)
-            except utils.NetworkingError as e:
-                error_code = int(str(e))
-                return render_template('errors/error.html', title='Discord Networking Error',
-                                       error=f'The Discord API has responded with HTTP error code {error_code}.')
+                roles = roles(blocking=True)
+            except TaskException as e:
+                if 'DiscordError' in e:
+                    return utils.handle_discord_error(e)
+                elif 'NetworkingError' in e:
+                    return render_template('errors/error.html', title='Discord Networking Error',
+                                           error=f'The Discord API has responded with HTTP error code '
+                                                 f'{utils.remove_str(e)}.')
+                else:
+                    raise e
 
             for role in roles:  # TODO: Add error message for role not found in server
                 if role['id'] == request.form.get('banker'):

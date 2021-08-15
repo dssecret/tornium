@@ -18,7 +18,6 @@ import os
 
 import flask
 from flask_login import LoginManager
-from gevent import monkey; monkey.patch_all()
 from sqlalchemy.orm import scoped_session
 
 from controllers import mod as base_mod
@@ -32,7 +31,6 @@ from controllers.statroutes import mod as stat_mod
 from database import session_local
 from models import settingsmodel as settings
 import utils
-from utils import scheduler
 
 settings.initialize()
 
@@ -72,10 +70,6 @@ if settings.get("settings", "dev") and __name__ == "__main__":
     app.register_blueprint(error_mod)
     app.register_blueprint(admin_mod)
     app.register_blueprint(stat_mod)
-
-    utils.tasks.huey.start()
-    scheduler.fetch_attacks()
-    scheduler.refresh_users()
 
     app.run('localhost', 8000, debug=True)
 

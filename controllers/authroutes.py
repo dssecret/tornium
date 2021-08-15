@@ -15,6 +15,7 @@
 
 from flask import Blueprint, request, redirect, render_template, abort, url_for
 from flask_login import logout_user, login_user
+from huey.exceptions import TaskException
 from is_safe_url import is_safe_url
 
 from models.user import User
@@ -35,10 +36,12 @@ def login():
 
     try:
         torn_user = tornget(endpoint='user/?selections=', key=request.form['key'])
-        torn_user = torn_user.get()
-    except utils.TornError as e:
-        error_code = int(str(e))
-        return utils.handle_torn_error(error_code)
+        torn_user = torn_user(blocking=True)
+    except TaskException as e:
+        if 'TornError' in str(e):
+            return utils.handle_torn_error(str(e))
+        else:
+            raise e
 
     user = User(torn_user['player_id'])
 

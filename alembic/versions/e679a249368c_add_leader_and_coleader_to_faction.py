@@ -33,10 +33,15 @@ def upgrade():
     for faction in session.query(FactionModel).all():
         if len(json.loads(faction.keys)) == 0:
             continue
-        faction_data = tornget(f'faction/{faction.tid}?selections=',
-                               random.choice(json.loads(faction.keys)),
-                               session=requests_session)
-        faction_data = faction_data.get()
+
+        try:
+            faction_data = tornget(f'faction/{faction.tid}?selections=',
+                                   random.choice(json.loads(faction.keys)),
+                                   session=requests_session)
+            faction_data = faction_data(blocking=True)
+        except:
+            continue
+
         faction.leader = faction_data['leader']
         faction.coleader = faction_data['co-leader']
 
