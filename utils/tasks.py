@@ -83,7 +83,7 @@ def discordget(endpoint, session=None):
     return request_json
 
 
-@huey.periodic_task(crontab(hour='1'))
+@huey.periodic_task(crontab(hour='*'))
 def refresh_users():
     utils.get_logger().debug('Refresh Users started.')
     start = time.time()
@@ -100,7 +100,7 @@ def refresh_users():
         users.append(tornget(f'user/?selections=profile,battlestats,discord', user.key, session=requests_session))
 
     guilds = discordget('users/@me/guilds', session=requests_session)
-    guilds = guilds()
+    guilds = guilds(blocking=True)
 
     for user in users:
         try:
@@ -136,18 +136,18 @@ def refresh_users():
         for guild in guilds:
             try:
                 member = discordget(f'guilds/{guild["id"]}/members/{user.discord_id}', session=requests_session)
-                member()
+                member(blocking=True)
             except utils.DiscordError as e:
                 if int(str(e)) == 10007:
                     break
                 else:
-                    return utils.handle_discord_error(int(str(e)))
+                    return utils.handle_discord_error(str(e))
 
             try:
                 guild = discordget(f'guilds/{guild["id"]}', session=requests_session)
-                guild = guild()
+                guild = guild(blocking=True)
             except utils.DiscordError as e:
-                return utils.handle_discord_error(int(str(e)))
+                return utils.handle_discord_error(str(e))
             is_admin = False
 
             if guild['owner_id'] == user.discord_id:
@@ -171,7 +171,7 @@ def refresh_users():
         utils.get_logger().debug(f'Users fetched in {time.time() - start} milliseconds.')
 
 
-@huey.periodic_task(crontab(minute='5'))
+@huey.periodic_task(crontab(minute='*/5'))
 def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&f=61&t=16209964&b=0&a=0&start=0&to=0
     utils.get_logger().debug('Fetch attacks started.')
     start = time.time()
@@ -234,6 +234,6 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
         utils.get_logger().debug(f'Attacks fetched in {time.time() - start} milliseconds.')
 
 
-@huey.periodic_task(crontab(minute='1'))
+@huey.periodic_task(crontab(minute='*'))
 def test():
     utils.get_logger().debug('test')

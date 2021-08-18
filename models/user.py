@@ -174,13 +174,13 @@ class User(UserMixin):
                 if int(str(e)) == 10007:
                     break
                 else:
-                    return utils.handle_discord_error(int(str(e)))
+                    return utils.handle_discord_error(str(e))
 
             try:
                 guild = discordget(f'guilds/{guild["id"]}', session=requests_session)
                 guild = guild(blocking=True)
             except utils.DiscordError as e:
-                return utils.handle_discord_error(int(str(e)))
+                return utils.handle_discord_error(str(e))
             is_admin = False
 
             if guild['owner_id'] == self.discord_id:
