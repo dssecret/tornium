@@ -247,6 +247,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
                 addedid=attack['attacker_id']
             )
             session.add(stat_entry)
+            session.flush()
             statid += 1
         session.flush()
         utils.get_logger().debug(f'Attacks fetched in {time.time() - start} milliseconds.')
