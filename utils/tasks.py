@@ -208,6 +208,24 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
 
             user = session.query(UserModel).filter_by(tid=attack['attacker_id']).first()
 
+            if user is None:
+                user = UserModel(
+                    tid=attack['attacker_id'],
+                    name='',
+                    level=0,
+                    admin=False,
+                    key='',
+                    battlescore='[]',
+                    discord_id=0,
+                    servers='[]',
+                    factionid=0,
+                    factionaa=False,
+                    last_refresh=timestamp,
+                    status=''
+                )
+                session.add(user)
+                session.flush()
+
             try:
                 if json.loads(user.battlescore)[1] - utils.now() <= 10800000:  # Three hours
                     attacker_score = json.loads(user.battlescore)[0]
@@ -232,8 +250,3 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             statid += 1
         session.flush()
         utils.get_logger().debug(f'Attacks fetched in {time.time() - start} milliseconds.')
-
-
-@huey.periodic_task(crontab(minute='*'))
-def test():
-    utils.get_logger().debug('test')
