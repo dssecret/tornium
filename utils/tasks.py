@@ -83,7 +83,7 @@ def discordget(endpoint, session=None):
     return request_json
 
 
-@huey.periodic_task(crontab(hour='*'))
+@huey.periodic_task(crontab(hour='*/1'))
 def refresh_users():
     utils.get_logger().debug('Refresh Users started.')
     start = time.time()
@@ -188,8 +188,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
 
         faction_attacks.append(tornget('faction/?selections=basic,attacks',
                                        random.choice(json.loads(faction.keys)),
-                                       tots=timestamp,
-                                       fromts=timestamp - 300000,  # TODO: Adjust when the crontab timer is adjusted
+                                       fromts=timestamp - 300,  # TODO: Adjust when the crontab timer is adjusted
                                        session=requests_session))  # TODO: Store last update per faction in DB
 
     for faction in faction_attacks:
