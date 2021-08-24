@@ -83,24 +83,21 @@ def discordget(endpoint, session=None):
     return request_json
 
 
-@huey.periodic_task(crontab(hour='*/1'))
+@huey.periodic_task(crontab(minute='*/60'))  # crontab(hour='*') runs every minute
 def refresh_users():
-    utils.get_logger().debug('Refresh Users started.')
-    start = time.time()
-
     session = session_local()
     requests_session = requests.Session()
     users = []
     timestamp = utils.now()
+
+    guilds = discordget('users/@me/guilds', session=requests_session)
+    guilds = guilds(blocking=True)
 
     for user in session.query(UserModel).all():
         if user.key == '':
             continue
 
         users.append(tornget(f'user/?selections=profile,battlestats,discord', user.key, session=requests_session))
-
-    guilds = discordget('users/@me/guilds', session=requests_session)
-    guilds = guilds(blocking=True)
 
     for user in users:
         try:
@@ -168,14 +165,10 @@ def refresh_users():
 
         user.servers = json.dumps(servers)
         session.flush()
-        utils.get_logger().debug(f'Users fetched in {time.time() - start} milliseconds.')
 
 
 @huey.periodic_task(crontab(minute='*/5'))
 def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&f=61&t=16209964&b=0&a=0&start=0&to=0
-    utils.get_logger().debug('Fetch attacks started.')
-    start = time.time()
-
     session = session_local()
     requests_session = requests.Session()
     faction_attacks = []
@@ -200,7 +193,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
         for attack in faction_data['attacks'].values():
             if attack['attacker_faction'] != faction_data['ID']:
                 continue
-            elif attack['result'] in ['Assist', 'Lost']:
+            elif attack['result'] in ['Assist', 'Lost', 'Stalemate']:
                 continue
             elif attack['defender_id'] in [4, 10, 15, 17, 19, 20, 21]:  # Checks if NPC fight (and you defeated NPC)
                 continue
@@ -249,4 +242,3 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             session.flush()
             statid += 1
         session.flush()
-        utils.get_logger().debug(f'Attacks fetched in {time.time() - start} milliseconds.')
