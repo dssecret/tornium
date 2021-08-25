@@ -16,7 +16,6 @@
 import json
 import math
 import random
-import time
 
 from huey import SqliteHuey, crontab
 import requests
@@ -81,6 +80,34 @@ def discordget(endpoint, session=None):
         raise utils.NetworkingError(request.status_code)
 
     return request_json
+
+
+@huey.periodic_task(crontab(minute='*/3600'))  # crontab(hour='*') runs every minute
+def refresh_factions():
+    session = session_local()
+    requests_session = requests.Session()
+    factions = []
+
+    for faction in session.query(FactionModel).all():
+        if len(json.loads(faction.keys)) == 0:
+            continue
+
+        factions.append(tornget(f'faction/?selections=', random.choice(json.loads(faction.keys)), session=requests_session))
+
+    for faction in factions:
+        try:
+            faction_data = faction(blocking=True)
+        except:
+            continue
+
+        faction = session.query(FactionModel).filter_by(tid=faction_data['ID']).first()
+        faction.name = faction_data['name']
+        faction.respect = faction_data['respect']
+        faction.capacity = faction_data['capacity']
+        faction.leader = faction_data['leader']
+        faction.coleader = faction_data['co-leader']
+
+    session.flush()
 
 
 @huey.periodic_task(crontab(minute='*/60'))  # crontab(hour='*') runs every minute
@@ -196,6 +223,8 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             elif attack['result'] in ['Assist', 'Lost', 'Stalemate']:
                 continue
             elif attack['defender_id'] in [4, 10, 15, 17, 19, 20, 21]:  # Checks if NPC fight (and you defeated NPC)
+                continue
+            elif attack['modifiers']['fair_fight'] == 3:  # 3x FF can be greater than the defender battlescore indicated
                 continue
 
             user = session.query(UserModel).filter_by(tid=attack['attacker_id']).first()
