@@ -39,7 +39,7 @@ def index():
 @mod.route('/stats/db')
 @login_required
 def stats():
-    return render_template('stats/db.html')
+    return render_template('stats/db.html', battlescore=int(current_user.battlescore[0]))
 
 
 @mod.route('/stats/dbdata')
@@ -62,7 +62,8 @@ def stats_data():
                 User(stat_entry.addedid).factiontid != current_user.factiontid:
             continue
 
-        stats.append([stat_entry.tid, 0, utils.rel_time(datetime.datetime.fromtimestamp(stat_entry.timeadded))])
+        stats.append([stat_entry.tid, 'NYI', int(stat_entry.battlescore),
+                      utils.rel_time(datetime.datetime.fromtimestamp(stat_entry.timeadded))])
 
     data = {
         'draw': request.args.get('draw'),
