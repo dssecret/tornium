@@ -23,7 +23,7 @@ from models.factionmodel import FactionModel
 from models.server import Server
 from models.user import User
 import utils
-from utils.tornget import tornget
+from utils.tasks import tornget
 
 
 class Faction:
@@ -39,6 +39,8 @@ class Faction:
         faction = session.query(FactionModel).filter_by(tid=tid).first()
         if faction is None:
             faction_data = tornget(f'faction/{tid}?selections=basic', key if key != "" else current_user.key)
+            faction_data = faction_data(blocking=True)
+
             now = utils.now()
 
             faction = FactionModel(
@@ -46,22 +48,26 @@ class Faction:
                 name=faction_data['name'],
                 respect=faction_data['respect'],
                 capacity=faction_data['capacity'],
+                leader=faction_data['leader'],
+                coleader=faction_data['co-leader'],
                 keys='[]',
                 last_members=now,
                 withdrawals='[]',
                 guild=0,
                 config='{"vault": 0}',
                 vaultconfig='{"banking": 0, "banker": 0}',
-                targets='{}'
+                targets='{}',
+                statconfig='{"global": 0}'
             )
 
             try:
-                tornget(f'faction/{tid}?selections=positions', key if key != "" else current_user.key)
+                result = tornget(f'faction/{tid}?selections=positions', key if key != "" else current_user.key)
+                result(blocking=True)
                 keys = json.loads(faction.keys)
                 keys.append(key if key != "" else current_user.key)
                 keys = json.dumps(keys)
                 faction.keys = keys
-            except utils.TornError:
+            except:
                 pass
 
             session.add(faction)
@@ -71,6 +77,8 @@ class Faction:
         self.name = faction.name
         self.respect = faction.respect
         self.capacity = faction.capacity
+        self.leader = faction.leader
+        self.coleader = faction.coleader
 
         self.keys = json.loads(faction.keys)
 
@@ -83,6 +91,8 @@ class Faction:
         self.vault_config = json.loads(faction.vaultconfig)
 
         self.targets = json.loads(faction.targets)
+
+        self.stat_config = json.loads(faction.statconfig)
 
     def get_tid(self):
         """
@@ -108,6 +118,7 @@ class Faction:
             key = random.choice(self.get_keys())
 
         factionmembers = tornget('faction/?selections=', key)
+        factionmembers = factionmembers(blocking=True)
 
         for memberid, member in factionmembers['members'].values():
             user = User(memberid)
@@ -125,6 +136,12 @@ class Faction:
             raise Exception  # TODO: Make exception more descriptive
 
         return self.vault_config
+
+    def get_stat_config(self):
+        if self.guild == 0:
+            return {}
+
+        return self.stat_config
 
     def get_config(self):
         if self.guild == 0:

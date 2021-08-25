@@ -14,15 +14,16 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
+import math
 
+import requests
 from flask_login import UserMixin, current_user
 
 from database import session_local
-from models.server import Server
 from models.servermodel import ServerModel
 from models.usermodel import UserModel, UserDiscordModel
 import utils
-from utils.tornget import tornget
+from utils.tasks import tornget, discordget
 
 
 class DiscordUser:
@@ -38,6 +39,7 @@ class DiscordUser:
 
         if user is None:
             torn_user = tornget(f'user/{did}?selections=discord', key)
+            torn_user = torn_user(blocking=True)
 
             user = UserDiscordModel(
                 discord_id=did,
@@ -68,12 +70,13 @@ class User(UserMixin):
                 level=0,
                 admin=False if tid != 2383326 else True,
                 key=key,
+                battlescore='[]',
                 discord_id=0,
                 servers='[]',
                 factionid=0,
                 factionaa=False,
                 last_refresh=now,
-                status=0)
+                status='')
             session.add(user)
             session.flush()
 
@@ -82,6 +85,7 @@ class User(UserMixin):
         self.level = user.level
         self.admin = user.admin
         self.key = user.key
+        self.battlescore = json.loads(user.battlescore)
 
         self.discord_id = user.discord_id
         self.servers = None if user.servers is None else json.loads(user.servers)
@@ -101,10 +105,17 @@ class User(UserMixin):
                 key = self.get_key()
             elif key is None:
                 key = current_user.get_key()
+                if key == '':
+                    raise Exception  # TODO: Make exception more descriptive
 
             session = session_local()
 
-            user_data = tornget(f'user/{self.tid}?selections=', key)
+            if key == self.get_key():
+                user_data = tornget(f'user/?selections=profile,battlestats', key)
+            else:
+                user_data = tornget(f'user/{self.tid}?selections=', key)
+            user_data = user_data(blocking=True)
+
             user = session.query(UserModel).filter_by(tid=self.tid).first()
             user.factionid = user_data['faction']['faction_id']
             user.name = user_data['name']
@@ -113,19 +124,30 @@ class User(UserMixin):
             user.last_action = user_data['last_action']['relative']
             user.level = user_data['level']
             user.admin = False if self.tid != 2383326 else True
+
+            if key == self.get_key():
+                battlescore = math.sqrt(user_data['strength']) + math.sqrt(user_data['speed']) + \
+                              math.sqrt(user_data['speed']) + math.sqrt(user_data['dexterity'])
+                user.battlescore = json.dumps([battlescore, now])
+
             session.flush()
             self.factiontid = user_data['faction']['faction_id']
             self.last_refresh = now
             self.status = user_data['last_action']['status']
             self.last_action = user_data['last_action']['relative']
             self.level = user_data['level']
+            self.battlescore = json.loads(user.battlescore)
 
     def discord_refresh(self, force=False):
+        from models.server import Server
+
         session = session_local()
         user = session.query(UserModel).filter_by(tid=self.tid).first()
 
         if self.discord_id == "" or not force:
             user_data = tornget(f'user/?selections=discord', self.key)
+            user_data = user_data(blocking=True)
+
             self.discord_id = user_data['discord']['discordID']
             user.discord_id = user_data['discord']['discordID']
 
@@ -140,20 +162,25 @@ class User(UserMixin):
             session.flush()
 
         servers = []
+        requests_session = requests.Session()
+        guilds = discordget('users/@me/guilds', session=requests_session)
+        guilds = guilds(blocking=True)
 
-        for guild in utils.discordget('users/@me/guilds'):
+        for guild in guilds:
             try:
-                member = utils.discordget(f'guilds/{guild["id"]}/members/{self.discord_id}')
+                member = discordget(f'guilds/{guild["id"]}/members/{self.discord_id}', session=requests_session)
+                member = member(blocking=True)
             except utils.DiscordError as e:
                 if int(str(e)) == 10007:
                     break
                 else:
-                    return utils.handle_discord_error(int(str(e)))
+                    return utils.handle_discord_error(str(e))
 
             try:
-                guild = utils.discordget(f'guilds/{guild["id"]}')
+                guild = discordget(f'guilds/{guild["id"]}', session=requests_session)
+                guild = guild(blocking=True)
             except utils.DiscordError as e:
-                return utils.handle_discord_error(int(str(e)))
+                return utils.handle_discord_error(str(e))
             is_admin = False
 
             if guild['owner_id'] == self.discord_id:
@@ -189,9 +216,11 @@ class User(UserMixin):
         user = session.query(UserModel).filter_by(tid=self.tid).first()
 
         faction_data = tornget(f'faction/?selections=', self.key)
+        faction_data = faction_data(blocking=True)
 
         try:
-            tornget(f'faction/?selections=positions', self.key)
+            response = tornget(f'faction/?selections=positions', self.key)
+            response(blocking=True)
         except utils.TornError:
             self.aa = False
             user.aa = False

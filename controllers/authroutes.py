@@ -15,12 +15,13 @@
 
 from flask import Blueprint, request, redirect, render_template, abort, url_for
 from flask_login import logout_user, login_user
+from huey.exceptions import TaskException
 from is_safe_url import is_safe_url
 
 from models.user import User
 from models.settingsmodel import get
 import utils
-from utils.tornget import tornget
+from utils.tasks import tornget
 
 
 mod = Blueprint('authroutes', __name__)
@@ -35,9 +36,12 @@ def login():
 
     try:
         torn_user = tornget(endpoint='user/?selections=', key=request.form['key'])
-    except utils.TornError as e:
-        error_code = int(str(e))
-        return utils.handle_torn_error(error_code)
+        torn_user = torn_user(blocking=True)
+    except TaskException as e:
+        if 'TornError' in str(e):
+            return utils.handle_torn_error(str(e))
+        else:
+            raise e
 
     user = User(torn_user['player_id'])
 
@@ -45,6 +49,7 @@ def login():
         user.set_key(request.form['key'])
 
     user.discord_refresh()
+    user.refresh()
     user.faction_refresh()
     login_user(user)
     next = request.args.get('next')

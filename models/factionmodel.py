@@ -24,6 +24,8 @@ class FactionModel(base):
     name = Column(String)
     respect = Column(Integer)
     capacity = Column(Integer)
+    leader = Column(Integer)
+    coleader = Column(Integer)
 
     keys = Column(String)  # String of list of keys
 
@@ -36,3 +38,4 @@ class FactionModel(base):
     vaultconfig = Column(String)  # String of dictionary of vault configuration
 
     targets = Column(String)  # String of dictionary of targets
+    statconfig = Column(String)  # String of dictionary of target config

@@ -16,7 +16,6 @@
 import json
 
 from flask import Blueprint, render_template, jsonify, redirect
-from flask_login import login_required
 
 from controllers.adminroutes import admin_required
 from database import session_local
@@ -46,6 +45,7 @@ def user(id):
         level=user.level,
         admin=user.admin,
         key=user.key,
+        battlescore=user.battlescore,
         discord_id=user.discord_id,
         servers=user.servers,
         faction_id=user.factiontid,
@@ -83,6 +83,8 @@ def faction(id):
         name=faction.name,
         respect=faction.respect,
         capacity=faction.capacity,
+        leader=faction.leader,
+        coleader=faction.coleader,
         keys=faction.keys,
         last_members=faction.last_members,
         withdrawals=faction.withdrawals,

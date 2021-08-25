@@ -15,19 +15,32 @@
 
 import datetime
 import logging
+import re
 
 from flask import render_template
 
 from utils.errors import *
-from utils.tornget import *
-from utils.discordget import *
+from utils import tasks
 
 
 def get_logger():
     return logging.getLogger("server")
 
 
-def handle_torn_error(error: int):
+def get_tid(name):
+    try:
+        return int(re.compile(r"\[(\d+)\]").findall(name)[0])
+    except IndexError:
+        return 0
+
+
+def get_torn_name(name):
+    return re.sub("[[].*?[]]", "", name).replace(' ', '')
+
+
+def handle_torn_error(error: str):
+    error = remove_str(error)
+
     if error == 0:
         return render_template('/errors/error.html', title='Unknown Error',
                                error='The Torn API has returned an unknown error.')
@@ -67,7 +80,9 @@ def handle_torn_error(error: int):
                                error=f'The Torn API has responded with error code {error}')
 
 
-def handle_discord_error(error: int):
+def handle_discord_error(error: str):
+    error = remove_str(error)
+
     if error == 0:
         return render_template('/errors/error.html', title='General Error',
                                error=f'The Discord API has returned a general error.')
@@ -109,18 +124,29 @@ def now():
     return int((datetime.datetime.utcnow() - datetime.datetime(1970, 1, 1)).total_seconds())
 
 
+def remove_str(text):
+    return int(''.join(filter(lambda x: x.isdigit(), text)))
+
+
 def rel_time(time):
     delta = now() - int(time.timestamp())
 
-    if delta < 0:
-        raise Exception  # TODO: Make error descriptive
-    if delta < 60:
+    if delta < 60:  # One minute
         return 'Now'
-    elif delta < 3600:
-        return f'{int(round(delta/60))} minutes ago'
-    elif delta < 5400:
-        return 'One hour ago'
-    elif delta < 86400:
-        return f'{int(round(delta/3600))} hours ago'
+    elif delta < 3600:  # Sixty minutes
+        if int(round(delta/60)) == 1:
+            return f'{int(round(delta/60))} minute ago'
+        else:
+            return f'{int(round(delta/60))} minutes ago'
+    elif delta < 86400:  # One day
+        if int(round(delta/3600)) == 1:
+            return f'{int(round(delta/3600))} hours ago'
+        else:
+            return f'{int(round(delta/3600))} hours ago'
+    elif delta < 2592000:  # Thirty days
+        if int(round(delta/86400)) == 1:
+            return f'{int(round(delta/86400))} day ago'
+        else:
+            return f'{int(round(delta/86400))} days ago'
     else:
         return 'A long time ago'
