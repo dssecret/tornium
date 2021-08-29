@@ -51,6 +51,7 @@ def stats_data():
     session = session_local()
 
     stats = []
+    users = []
 
     if utils.get_tid(search_value):
         stat_entries = session.query(StatModel).filter_by(tid=utils.get_tid(search_value)).all()
@@ -61,9 +62,12 @@ def stats_data():
         if Faction(User(stat_entry.addedid).factiontid).stat_config['global'] != 1 and \
                 User(stat_entry.addedid).factiontid != current_user.factiontid:
             continue
+        elif stat_entry.tid in users:
+            continue
 
         stats.append([stat_entry.tid, 'NYI', int(stat_entry.battlescore),
                       utils.rel_time(datetime.datetime.fromtimestamp(stat_entry.timeadded))])
+        users.append(stat_entry.tid)
 
     data = {
         'draw': request.args.get('draw'),
