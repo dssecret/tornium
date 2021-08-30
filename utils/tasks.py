@@ -82,7 +82,7 @@ def discordget(endpoint, session=None):
     return request_json
 
 
-@huey.periodic_task(crontab(minute='*/3600'))  # crontab(hour='*') runs every minute
+@huey.periodic_task(crontab(minute='0', hour='0'))
 def refresh_factions():
     session = session_local()
     requests_session = requests.Session()
@@ -110,7 +110,7 @@ def refresh_factions():
     session.flush()
 
 
-@huey.periodic_task(crontab(minute='*/60'))  # crontab(hour='*') runs every minute
+@huey.periodic_task(crontab(minute='0'))
 def refresh_users():
     session = session_local()
     requests_session = requests.Session()
