@@ -38,19 +38,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="stats-modal" tabindex="-1" aria-labelledby="stats-modal" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modal-label"></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-
-            <div class="modal-body">
-
-            </div>
-        </div>
-    </div>
+<div id="modal">
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -68,9 +56,14 @@
         });
 
         $('#stats-table tbody').on('click', 'tr', function() {
-            console.log(table.row(this).data());
+            const xhttp = new XMLHttpRequest();
+            xhttp.onload = function() {
+                document.getElementById('modal').innerHTML = this.responseText;
+            }
+            xhttp.open('GET', '/stats/userdata?user=' + table.row(this).data()[0]);
+            xhttp.send()
             var modal = new bootstrap.Modal($('#stats-modal'));
-            modal.show()
+            modal.show();
         })
     });
 </script>

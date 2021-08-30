@@ -5,5 +5,25 @@
 {% include 'admin/navbar.html' %}
 
 {% block content %}
+<div class="px-3 py-3">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Scheduled Tasks</h5>
 
+            <div class="row">
+                <form class="form-floating" method="POST" action="/admin/dashboard">
+                    <div class="col-sm-12 col-md-8 col-lg-4 my-2">
+                        <input type="submit" class="btn btn-primary" id="refreshfactions" name="refreshfactions" value="Run Refresh Factions">
+                    </div>
+                    <div class="col-sm-12 col-md-8 col-lg-4 my-2">
+                        <input type="submit" class="btn btn-primary" id="refreshusers" name="refreshusers" value="Run Refresh Users">
+                    </div>
+                    <div class="col-sm-12 col-md-8 col-lg-4 my-2">
+                        <input type="submit" class="btn btn-primary" id="fetchattacks" name="fetchattacks" value="Run Fetch Attacks">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

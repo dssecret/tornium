@@ -38,7 +38,7 @@
                     <label for="banker">Banker Role</label>
                 </form>
 
-                <form method="POST" action="/faction/bot">
+                <form class="form-floating" method="POST" action="/faction/bot">
                     {% if config['vault'] == 0 %}
                     <input type="submit" class="btn btn-primary" id="enabled" name="enabled" value="Enabled">
                     <input type="submit" class="btn btn-primary active" disabled id="disabled" name="disabled" value="Disabled">
