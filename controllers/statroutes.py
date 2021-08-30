@@ -16,7 +16,7 @@
 import datetime
 import json
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 
 import utils
@@ -77,6 +77,35 @@ def stats_data():
     }
 
     return data
+
+
+@mod.route('/stats/userdata')
+@login_required
+def user_data():
+    tid = int(request.args.get('user'))
+    session = session_local()
+
+    stats = []
+
+    stat_entries = session.query(StatModel).filter_by(tid=tid).all()
+
+    for stat_entry in stat_entries:
+        if Faction(User(stat_entry.addedid).factiontid).stat_config['global'] != 1 and \
+                User(stat_entry.addedid).factiontid != current_user.factiontid:
+            continue
+        elif stat_entry.tid != tid:
+            continue
+
+        stats.append({
+            'statid': stat_entry.statid,
+            'tid': stat_entry.tid,
+            'battlescore': stat_entry.battlescore,
+            'battlestats': json.loads(stat_entry.battlestats),
+            'timeadded': stat_entry.timeadded,
+            'added': stat_entry.addedid
+        })
+
+    return render_template('stats/statmodal.html', user=tid, stats=stats)
 
 
 @mod.route('/stats/chain')
