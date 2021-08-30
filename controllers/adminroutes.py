@@ -18,6 +18,7 @@ from functools import wraps
 from flask import Blueprint, render_template, abort, request
 from flask_login import login_required, current_user
 
+import utils.tasks
 from models import settingsmodel
 
 
@@ -42,10 +43,18 @@ def index():
     return render_template('admin/index.html')
 
 
-@mod.route('/admin/dashboard')
+@mod.route('/admin/dashboard', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def dashboard():
+    if request.method == 'POST':
+        if request.form.get('refreshfactions') is not None:
+            utils.tasks.refresh_factions()
+        elif request.form.get('refreshusers') is not None:
+            utils.tasks.refresh_users()
+        elif request.form.get('fetchattacks') is not None:
+            utils.tasks.fetch_attacks()
+
     return render_template('admin/dashboard.html')
 
 

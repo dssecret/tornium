@@ -215,7 +215,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
     for faction in session.query(FactionModel).all():
         if len(json.loads(faction.keys)) == 0:
             continue
-        elif faction.config['stat'] == 0:
+        elif json.loads(faction.config)['stat'] == 0:
             continue
 
         faction_attacks.append(tornget('faction/?selections=basic,attacks',
