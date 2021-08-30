@@ -82,11 +82,12 @@ def discordget(endpoint, session=None):
     return request_json
 
 
-@huey.periodic_task(crontab(minute='*/3600'))  # crontab(hour='*') runs every minute
+@huey.periodic_task(crontab(minute='0', hour='0'))
 def refresh_factions():
     session = session_local()
     requests_session = requests.Session()
     factions = []
+    timestamp = utils.now()
 
     for faction in session.query(FactionModel).all():
         if len(json.loads(faction.keys)) == 0:
@@ -107,10 +108,19 @@ def refresh_factions():
         faction.leader = faction_data['leader']
         faction.coleader = faction_data['co-leader']
 
+        for member_id, member in faction_data['members'].items():
+            user = session.query(UserModel).filter_by(tid=int(member_id))
+            user.name = member['name']
+            user.level = member['level']
+            user.last_refresh = timestamp
+            user.factiontid = faction_data['ID']
+            user.status = member['last_action']['status']
+            user.last_action = member['last_action']['relative']
+
     session.flush()
 
 
-@huey.periodic_task(crontab(minute='*/60'))  # crontab(hour='*') runs every minute
+@huey.periodic_task(crontab(minute='0'))
 def refresh_users():
     session = session_local()
     requests_session = requests.Session()
