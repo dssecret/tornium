@@ -237,17 +237,29 @@ def bot():
 
 
 @mod.route('/faction/banking')
-@mod.route('/faction/banking?<int:page>')
 @aa_required
 @login_required
-def banking(page=1):
+def banking():
+    return render_template('faction/banking.html')
+
+
+@mod.route('/faction/bankingdata')
+@aa_required
+@login_required
+def bankingdata():
+    start = int(request.args.get('start'))
+    length = int(request.args.get('length'))
     faction = Faction(current_user.factiontid)
-    requests = faction.withdrawals[(10 * (page - 1)):(10 * page)]
+    withdrawals = []
 
-    for request_index in range(len(requests)):
-        requests[request_index]['requester'] = f'{User(requests[request_index]["requester"]).name} [{requests[request_index]["requester"]}]'
-        requests[request_index]['fulfiller'] = f'{User(requests[request_index]["fulfiller"]).name} [{requests[request_index]["fulfiller"]}]'
+    for withdrawal in faction.withdrawals:
+        withdrawals.append([withdrawal['id'], f'${withdrawal["amount"]}', withdrawal['requester'], withdrawal['timerequested'], withdrawal['fulfiller'], withdrawal['timefulfilled']])
 
-    return render_template('faction/banking.html',
-                           requests=requests,
-                           lastpage=int(ceil(len(faction.withdrawals) / 10)))
+    withdrawals = withdrawals[start:start+length]
+    data = {
+        'draw': request.args.get('draw'),
+        'recordsTotal': len(faction.withdrawals),
+        'recordsFiltered': len(faction.withdrawals),
+        'data': withdrawals
+    }
+    return data

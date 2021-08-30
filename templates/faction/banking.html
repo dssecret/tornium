@@ -35,20 +35,7 @@
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">All Withdrawals</h5>
-
-                {% if lastpage != 1 %}
-                <nav aria-label="Withdrawals Pages">
-                    <ul class="pagination">
-                        {% for page in range(1, lastpage + 1) %}
-                        <li class="page-item">
-                            <a class="page-link" href="?{{ page }}">{{ page }}</a>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                </nav>
-                {% endif %}
-
-                <table data-toggle="table">
+                <table id="banking-table" class="table table-striped table-bordered responsive">
                     <thead>
                        <tr>
                             <th>Request ID</th>
@@ -60,25 +47,27 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for request in requests %}
-                        <tr>
-                            <td>{{ request.id }}</td>
-                            <td>${{ request.amount }}</td>
-                            <td>{{ request.requester }}</td>
-                            <td>{{ request.timerequested }}</td>
-                            {% if request.timefulfilled == 0 %}
-                            <td></td>
-                            <td></td>
-                            {% else %}
-                            <td>{{ request.fulfiller }}</td>
-                            <td>{{ request.timefulfilled }}</td>
-                            {% endif %}
-                        </tr>
-                        {% endfor %}
+
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        var table = $('#banking-table').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "ordering": false,
+            "responsive": true,
+            "ajax": {
+                url: "/faction/bankingdata"
+            }
+        });
+    });
+</script>
 {% endblock %}
