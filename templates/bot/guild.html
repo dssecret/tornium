@@ -55,15 +55,15 @@
                         <div class="px-5 float-end">
                             <form method="POST" action="/bot/dashboard/{{ server.sid }}/{{ faction.tid }}">
                                 <button type="submit" class="btn btn-outline-danger">Remove</button>
+                                {% if current_user.factiontid == faction.tid %}
+                                <div class="px-2 float-end">
+                                    <a href="/faction/bot">
+                                        <button class="btn btn-outline-success">Edit</button>
+                                    </a>
+                                </div>
+                                {% endif %}
                             </form>
                         </div>
-                        {% if current_user.factiontid == faction.tid %}
-                        <div class="px-2 float-end">
-                            <a href="/faction/bot">
-                                <button class="btn btn-outline-success">Edit</button>
-                            </a>
-                        </div>
-                        {% endif %}
                     </li>
                     {% endfor %}
                 </ul>
