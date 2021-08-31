@@ -148,8 +148,9 @@ class User(UserMixin):
             user_data = tornget(f'user/?selections=discord', self.key)
             user_data = user_data(blocking=True)
 
-            self.discord_id = user_data['discord']['discordID']
-            user.discord_id = user_data['discord']['discordID']
+            if user_data['discord']['discordID'] != '':
+                self.discord_id = user_data['discord']['discordID']
+                user.discord_id = user_data['discord']['discordID']
 
         discord_user = session.query(UserDiscordModel).filter_by(discord_id=self.discord_id).first()
 

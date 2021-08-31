@@ -157,7 +157,7 @@ def refresh_users():
         user.battlescore = json.dumps([battlescore, timestamp])
 
         discord_user = session.query(UserDiscordModel).filter_by(discord_id=user.discord_id).first()
-        if discord_user is None:
+        if discord_user is None and user.discord_id != '':
             discord_user = UserDiscordModel(
                 discord_id=user.discord_id,
                 tid=user.tid
