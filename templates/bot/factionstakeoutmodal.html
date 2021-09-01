@@ -1,0 +1,36 @@
+<div class="modal fade" id="faction-modal" tabindex="-1" aria-labelledby="faction-modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-label">{{ faction }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                Last update: {{ lastupdate }}
+
+                <div class="list-group">
+                    <label class="list-group-item">
+                        <input class="form-check-input me-1" type="checkbox" value="" id="territory" aria-label="Territory" {% if 'territory' in keys %} checked {% endif %}>
+                        Territory
+                    </label>
+
+                    <label class="list-group-item">
+                        <input class="form-check-input me-1" type="checkbox" value="" id="members" aria-label="Members" {% if 'members' in keys %} checked {% endif %}>
+                        Members
+                    </label>
+
+                    <label class="list-group-item">
+                        <input class="form-check-input me-1" type="checkbox" value="" id="memberstatus" aria-label="Member Status" {% if 'memberstatus' in keys %} checked {% endif %}>
+                        Member Status
+                    </label>
+
+                    <label class="list-group-item">
+                        <input class="form-check-input me-1" type="checkbox" value="" id="memberactivity" aria-label="Member Activity" {% if 'memberactivity' in keys %} checked {% endif %}>
+                        Member Activity
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

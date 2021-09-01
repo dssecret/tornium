@@ -22,13 +22,13 @@ def upgrade():
         sa.Column('tid', sa.Integer, primary_key=True),
         sa.Column('name', sa.String),
         sa.Column('battlescore', sa.Float),
-        sa.Column('battlestats', sa.String, server_default='[]'),
+        sa.Column('battlestats', sa.String, default='[]'),
         sa.Column('level', sa.Integer),
         sa.Column('timeadded', sa.Integer),
         sa.Column('addedid', sa.Integer)
     )
 
-    op.add_column('Factions', sa.Column('statconfig', sa.String, server_default='{"global": 0}'))
+    op.add_column('Factions', sa.Column('statconfig', sa.String, default='{"global": 0}'))
 
 
 def downgrade():

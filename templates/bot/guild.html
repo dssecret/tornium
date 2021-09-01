@@ -5,7 +5,15 @@
 {% include 'bot/navbar.html' %}
 
 {% block content %}
-<div class="py-3 px-3">
+<div class="row">
+    <div class="py-3 px-3 col text-end">
+        <button type="button" class="btn btn-primary">
+            <a href="/bot/stakeouts/{{ guildid }}" style="color: white">Go to Guild Stakeouts</a>
+        </button>
+    </div>
+</div>
+
+<div class="pb-3 px-3">
     <div class="card">
         <div class="card-body">
             <h5 class="card-title">Basic Setup</h5>

@@ -17,15 +17,10 @@ from sqlalchemy import Column, Integer, String
 from database import base
 
 
-class ServerModel(base):
-    __tablename__ = 'Servers'
+class UserStakeoutModel(base):
+    __tablename__ = 'UserStakeouts'
 
-    sid = Column(Integer, primary_key=True)
-    name = Column(String)
-    admins = Column(String)  # String of list of admin ids
-    prefix = Column(String)
-
-    factions = Column(String)  # String of list of factions in server
-
-    userstakeouts = Column(String)  # String of list of staked-out users
-    factionstakeouts = Column(String)  # String of list of staked-out factions
+    tid = Column(Integer, primary_key=True)  # The user ID of the stakeout
+    data = Column(String)  # String of data from the Torn API
+    keys = Column(String)  # String of list of keys to be watched
+    lastupdate = Column(Integer)
