@@ -16,7 +16,7 @@
 import datetime
 import json
 
-from flask import Blueprint, render_template, abort, request, redirect, flash
+from flask import Blueprint, render_template, abort, request, redirect, flash, jsonify
 from flask_login import current_user, login_required
 
 import utils
@@ -203,7 +203,7 @@ def stakeout_data(guildid: str):
         stakeout = Stakeout(faction, user=False)
 
         return render_template('bot/factionstakeoutmodal.html',
-                               faction=Faction(faction, key=current_user.key),
+                               faction=f'{Faction(faction, key=current_user.key).name} [{faction}]',
                                lastupdate=utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update)),
                                keys=stakeout.keys[guildid],
                                guildid=guildid,
@@ -227,11 +227,12 @@ def stakeout_update(guildid):
     action = request.args.get('action')
     faction = request.args.get('faction')
     user = request.args.get('user')
+    value = request.args.get('value')
 
-    if action not in ['remove']:
-        raise Exception
+    if action not in ['remove', 'addkey', 'removekey']:
+        return json.dumps({'success': True}), 400, {'ContentType': 'application/json'}
     elif (not faction and not user) or (faction and user):
-        raise Exception  # TODO: make exception more descriptive
+        return json.dumps({'success': True}), 400, {'ContentType': 'application/json'}
 
     session = session_local
 
@@ -254,6 +255,50 @@ def stakeout_update(guildid):
             session.delete(stakeout)
 
         session.flush()
+    elif action == 'addkey':
+        if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity']:
+            return jsonify({'error': f'Faction is set to {faction} for a key that doesn\'t allow a faction '
+                                     f'ID to be passed.'}), 400
+        elif user is not None and value not in ['level', 'status', 'flyingstatus', 'online', 'offline']:
+            return jsonify({'error': f'User is set to {user} for a key that doesn\'t allow a user '
+                                     f'ID to be passed.'}), 400
+
+        if user is not None:
+            stakeout = session.query(UserStakeoutModel).filter_by(tid=user).first()
+        else:
+            stakeout = session.query(FactionStakeoutModel).filter_by(tid=faction).first()
+
+        keys = json.loads(stakeout.keys)
+
+        if value in keys[guildid]:
+            return jsonify({'error': f'Value {value} is already in {guildid}\'s list of keys.'}), 400
+
+        keys[guildid].append(value)
+        stakeout.keys = json.dumps(keys)
+        session.flush()
+    elif action == 'removekey':
+        if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity']:
+            return jsonify({'error': f'Faction is set to {faction} for a key that doesn\'t allow a faction '
+                                     f'ID to be passed.'}), 400
+        elif user is not None and value not in ['level', 'status', 'flyingstatus', 'online', 'offline']:
+            return jsonify({'error': f'User is set to {user} for a key that doesn\'t allow a user '
+                                     f'ID to be passed.'}), 400
+
+        if user is not None:
+            stakeout = session.query(UserStakeoutModel).filter_by(tid=user).first()
+        else:
+            stakeout = session.query(FactionStakeoutModel).filter_by(tid=faction).first()
+
+        keys = json.loads(stakeout.keys)
+
+        if value not in keys[guildid]:
+            return jsonify({'error': f'Value {value} is not in {guildid}\'s list of keys.'}), 400
+
+        keys[guildid].remove(value)
+        stakeout.keys = json.dumps(keys)
+        session.flush()
 
     if request.method == 'GET':
         return redirect(f'/bot/stakeouts/{guildid}')
+    else:
+        return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}

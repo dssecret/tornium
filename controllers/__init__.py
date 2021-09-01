@@ -25,5 +25,6 @@ def index():
 
 
 @mod.route('/robots.txt')
+@mod.route('/stakeouts.js')
 def static():
     return send_from_directory('static', request.path[1:])
