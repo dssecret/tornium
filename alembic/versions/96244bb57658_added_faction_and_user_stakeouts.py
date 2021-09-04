@@ -17,11 +17,8 @@ depends_on = None
 
 
 def upgrade():
-    try:
-        op.add_column('Servers', sa.Column('userstakeouts', sa.String, default='[]'))
-        op.add_column('Servers', sa.Column('factionstakeouts', sa.String, default='[]'))
-    except:
-        pass
+    op.add_column('Servers', sa.Column('userstakeouts', sa.String, default='[]'))
+    op.add_column('Servers', sa.Column('factionstakeouts', sa.String, default='[]'))
 
     op.create_table(
         'FactionStakeouts',
