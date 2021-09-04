@@ -79,7 +79,7 @@ async def on_message(message):
     user = DiscordUser(message.author.id, User(random.choice(server.admins)).key)
 
     if len(server.factions) != 1:
-        if user.tid != 0:
+        if user.tid == 0:
             await message.delete()
             embed = discord.Embed()
             embed.title = 'Requires Verification'
