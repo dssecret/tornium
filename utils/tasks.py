@@ -166,6 +166,9 @@ def refresh_factions():
         except:
             continue
 
+        if faction_data is None:
+            continue
+
         faction = session.query(FactionModel).filter_by(tid=faction_data['ID']).first()
         faction.name = faction_data['name']
         faction.respect = faction_data['respect']
@@ -242,6 +245,8 @@ def refresh_users():
                     break
                 else:
                     return utils.handle_discord_error(str(e))
+            except:
+                continue
 
             try:
                 guild = discordget(f'guilds/{guild["id"]}', session=requests_session)
