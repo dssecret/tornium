@@ -38,7 +38,7 @@ class Stakeout:
                     data = tornget(f'user/{tid}?selections=', key if key != '' else current_user.key)
                     data = data(blocking=True)
                 except:
-                    data = '{}'
+                    data = {}
 
                 stakeout = UserStakeoutModel(
                     tid=tid,
@@ -49,10 +49,10 @@ class Stakeout:
 
             else:
                 try:
-                    data = tornget(f'faction/{tid}?selections=s', key if key != '' else current_user.key)
+                    data = tornget(f'faction/{tid}?selections=', key if key != '' else current_user.key)
                     data = data(blocking=True)
                 except:
-                    data = '{}'
+                    data = {}
 
                 stakeout = FactionStakeoutModel(
                     tid=tid,

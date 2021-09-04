@@ -154,3 +154,8 @@ def rel_time(time):
 
 def torn_timestamp():
     return datetime.datetime.utcnow().strftime('%m/%d %H:%M:%S TCT')
+
+
+def remove_html(text):
+    cleaner = re.compile("<.*?>")
+    return re.sub(cleaner, '', text)
