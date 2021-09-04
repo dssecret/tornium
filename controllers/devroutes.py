@@ -23,6 +23,7 @@ from models.faction import Faction
 from models.factionmodel import FactionModel
 from models.server import Server
 from models.servermodel import ServerModel
+from models.stakeout import Stakeout
 from models.user import User
 from models.usermodel import UserModel
 
@@ -90,7 +91,9 @@ def faction(id):
         withdrawals=faction.withdrawals,
         guild=faction.guild,
         config=faction.config,
-        vault_config=faction.vault_config
+        vault_config=faction.vault_config,
+        targets=faction.targets,
+        stat_config=faction.stat_config
     )
 
 
@@ -138,7 +141,10 @@ def server(id):
         name=server.name,
         admins=server.admins,
         prefix=server.prefix,
-        factions=server.factions
+        factions=server.factions,
+        stakeout_config=server.stakeout_config,
+        user_stakeouts=server.user_stakeouts,
+        faction_stakeouts=server.faction_stakeouts
     )
 
 
@@ -158,3 +164,16 @@ def edit_server(id, key, value):
         raise NotImplementedError
 
     return redirect(f'/server/{id}')
+
+
+@mod.route('/stakeout/<int:id>/<int:stype>')
+@admin_required
+def stakeout(id, stype):
+    stakeout = Stakeout(id, user=True if stype == 0 else False)
+    return jsonify(
+        tid=stakeout.tid,
+        stype=stakeout.stype,
+        guilds=stakeout.guilds,
+        last_update=stakeout.last_update,
+        data=stakeout.data
+    )
