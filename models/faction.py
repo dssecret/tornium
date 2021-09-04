@@ -55,7 +55,7 @@ class Faction:
                 withdrawals='[]',
                 guild=0,
                 config='{"vault": 0, "stat": 1}',
-                vaultconfig='{"banking": 0, "banker": 0}',
+                vaultconfig='{"banking": 0, "banker": 0, "withdrawal": 0}',
                 targets='{}',
                 statconfig='{"global": 0}'
             )
