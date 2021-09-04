@@ -27,14 +27,14 @@ def upgrade():
         'FactionStakeouts',
         sa.Column('tid', sa.Integer, primary_key=True),
         sa.Column('data', sa.String, default='{}'),
-        sa.Column('keys', sa.String, default='{}'),
+        sa.Column('guilds', sa.String, default='{}'),
         sa.Column('lastupdate', sa.Integer, default=0)
     )
     op.create_table(
         'UserStakeouts',
         sa.Column('tid', sa.Integer, primary_key=True),
         sa.Column('data', sa.String, default='{}'),
-        sa.Column('keys', sa.String, default='{}'),
+        sa.Column('guilds', sa.String, default='{}'),
         sa.Column('lastupdate', sa.Integer, default=0)
     )
 

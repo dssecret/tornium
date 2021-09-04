@@ -22,5 +22,5 @@ class UserStakeoutModel(base):
 
     tid = Column(Integer, primary_key=True)  # The user ID of the stakeout
     data = Column(String)  # String of data from the Torn API
-    keys = Column(String)  # String of list of keys to be watched
+    guilds = Column(String)  # String of list of guilds to be watched
     lastupdate = Column(Integer)

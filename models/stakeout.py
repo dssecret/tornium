@@ -31,6 +31,7 @@ class Stakeout:
 
         if stakeout is None:
             now = utils.now()
+            guilds = {} if guild is None else {guild: {'keys': [], 'channel': 0}}
 
             if user:
                 try:
@@ -42,9 +43,7 @@ class Stakeout:
                 stakeout = UserStakeoutModel(
                     tid=tid,
                     data=json.dumps(data),
-                    keys=json.dumps({
-                        guild: []
-                    }),
+                    guilds=json.dumps(guilds),
                     lastupdate=now
                 )
 
@@ -58,21 +57,23 @@ class Stakeout:
                 stakeout = FactionStakeoutModel(
                     tid=tid,
                     data=json.dumps(data),
-                    keys=json.dumps({
-                        guild: []
-                    }),
+                    guilds=json.dumps(guilds),
                     lastupdate=now
                 )
 
             session.add(stakeout)
             session.flush()
-        elif guild not in json.loads(stakeout.keys) and guild is not None:
-            keys = json.loads(stakeout.keys)
-            keys[guild] = []
-            stakeout.keys = json.dumps(keys)
+        elif guild not in json.loads(stakeout.guilds) and guild is not None:
+            guilds = json.loads(stakeout.guilds)
+            guilds[guild] = {
+                'keys': [],
+                'channel': 0
+            }
+            stakeout.guilds = json.dumps(guilds)
             session.flush()
 
         self.tid = tid
         self.stype = 0 if user else 1  # 0 = user; 1 = faction
-        self.keys = json.loads(stakeout.keys)
+        self.guilds = json.loads(stakeout.guilds)
         self.last_update = stakeout.lastupdate
+        self.data = json.loads(stakeout.data)

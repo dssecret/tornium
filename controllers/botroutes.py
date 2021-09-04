@@ -18,16 +18,19 @@ import json
 
 from flask import Blueprint, render_template, abort, request, redirect, flash, jsonify
 from flask_login import current_user, login_required
+from is_safe_url import is_safe_url
 
-import utils
 from database import session_local
 from models.faction import Faction
 from models.factionstakeoutmodel import FactionStakeoutModel
+from models.settingsmodel import get
 from models.server import Server
 from models.servermodel import ServerModel
 from models.stakeout import Stakeout
 from models.user import User
 from models.userstakeoutmodel import UserStakeoutModel
+import utils
+from utils.tasks import discordpost, discorddelete
 
 mod = Blueprint('botroutes', __name__)
 
@@ -123,19 +126,51 @@ def stakeouts_dashboard(guildid: str):
         server_db = session.query(ServerModel).filter_by(sid=guildid).first()
 
         if request.form.get('factionid') is not None:
-            if not session.query(FactionStakeoutModel).filter_by(tid=request.form.get('factionid')).all():
-                Stakeout(int(request.form.get('factionid')), user=False, key=current_user.key, guild=int(guildid))
+            if session.query(FactionStakeoutModel).filter_by(tid=request.form.get('factionid')).first() is None:
+                stakeout = Stakeout(int(request.form.get('factionid')), user=False, key=current_user.key,
+                                    guild=int(guildid))
                 server.faction_stakeouts.append(int(request.form.get('factionid')))
                 server_db.factionstakeouts = json.dumps(list(set(server.faction_stakeouts)))
+                session.flush()
+
+                payload = {
+                    'name': f'faction-{stakeout.data["name"]}',
+                    'type': 0,
+                    'topic': f'The bot-created channel for stakeout notifications for {stakeout.data["name"]} '
+                             f'[{stakeout.data["ID"]}] by the Tornium bot.',
+                    'parent_id': server.stakeout_config['category']
+                }  # TODO: Add permission overwrite: everyone write false
+
+                channel = discordpost(f'guilds/{guildid}/channels', payload=payload)
+                channel = channel(blocking=True)
+
+                stakeout.guilds[guildid]['channel'] = int(channel['id'])
+                db_stakeout = session.query(FactionStakeoutModel).filter_by(tid=request.form.get('factionid')).first()
+                db_stakeout.guilds = json.dumps(stakeout.guilds)
                 session.flush()
             else:
                 flash(f'Faction ID {request.form.get("factionid")} is already being staked out in {server.name}.',
                       category='error')
         elif request.form.get('userid') is not None:
-            if not session.query(UserStakeoutModel).filter_by(tid=request.form.get('factionid')).all():
-                Stakeout(int(request.form.get('userid')), key=current_user.key, guild=int(guildid))
+            if session.query(UserStakeoutModel).filter_by(tid=request.form.get('userid')).first() is None:
+                stakeout = Stakeout(int(request.form.get('userid')), key=current_user.key, guild=int(guildid))
                 server.user_stakeouts.append(int(request.form.get('userid')))
                 server_db.userstakeouts = json.dumps(list(set(server.user_stakeouts)))
+
+                payload = {
+                    'name': f'user-{stakeout.data["name"]}',
+                    'type': 0,
+                    'topic': f'The bot-created channel for stakeout notifications for {stakeout.data["name"]} '
+                             f'[{stakeout.data["player_id"]}] by the Tornium bot.',
+                    'parent_id': server.stakeout_config['category']
+                }  # TODO: Add permission overwrite: everyone write false
+
+                channel = discordpost(f'guilds/{guildid}/channels', payload=payload)
+                channel = channel(blocking=True)
+
+                stakeout.guilds[guildid]['channel'] = int(channel['id'])
+                db_stakeout = session.query(UserStakeoutModel).filter_by(tid=request.form.get('userid')).first()
+                db_stakeout.guilds = json.dumps(stakeout.guilds)
                 session.flush()
             else:
                 flash(f'User ID {request.form.get("userid")} is already being staked out in {server.name}.',
@@ -160,14 +195,14 @@ def stakeouts(guildid: str, stype: int):
         for stakeout in server.user_stakeouts:
             stakeout = Stakeout(int(stakeout), key=current_user.key)
             stakeouts.append(
-                [stakeout.tid, stakeout.keys[guildid], utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update))]
+                [stakeout.tid, stakeout.guilds[guildid]['keys'], utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update))]
             )
     elif stype == 1:  # faction
         filtered = len(server.faction_stakeouts)
         for stakeout in server.faction_stakeouts:
             stakeout = Stakeout(int(stakeout), user=False, key=current_user.key)
             stakeouts.append(
-                [stakeout.tid, stakeout.keys[guildid], utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update))]
+                [stakeout.tid, stakeout.guilds[guildid]['keys'], utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update))]
             )
     else:
         filtered = 0
@@ -205,7 +240,7 @@ def stakeout_data(guildid: str):
         return render_template('bot/factionstakeoutmodal.html',
                                faction=f'{Faction(faction, key=current_user.key).name} [{faction}]',
                                lastupdate=utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update)),
-                               keys=stakeout.keys[guildid],
+                               keys=stakeout.guilds[guildid]['keys'],
                                guildid=guildid,
                                tid=faction)
     elif user:
@@ -216,7 +251,7 @@ def stakeout_data(guildid: str):
         return render_template('bot/userstakeoutmodal.html',
                                user=f'{User(user, key=current_user.key).name} [{user}]',
                                lastupdate=utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update)),
-                               keys=stakeout.keys[guildid],
+                               keys=stakeout.guilds[guildid]['keys'],
                                guildid=guildid,
                                tid=user)
 
@@ -228,10 +263,11 @@ def stakeout_update(guildid):
     faction = request.args.get('faction')
     user = request.args.get('user')
     value = request.args.get('value')
+    next_page = request.args.get('next')
 
-    if action not in ['remove', 'addkey', 'removekey']:
+    if action not in ['remove', 'addkey', 'removekey', 'enable', 'disable', 'category']:
         return json.dumps({'success': True}), 400, {'ContentType': 'application/json'}
-    elif (not faction and not user) or (faction and user):
+    elif faction and user:
         return json.dumps({'success': True}), 400, {'ContentType': 'application/json'}
 
     session = session_local
@@ -245,6 +281,7 @@ def stakeout_update(guildid):
             server.factionstakeouts = json.dumps(stakeouts)
 
             stakeout = session.query(FactionStakeoutModel).filter_by(tid=faction).first()
+            discorddelete(f'channels/{json.loads(stakeout.guilds)[guildid]["channel"]}')()
             session.delete(stakeout)
         elif user is not None:
             stakeouts = json.loads(server.userstakeouts)
@@ -252,6 +289,7 @@ def stakeout_update(guildid):
             server.userstakeouts = json.dumps(stakeouts)
 
             stakeout = session.query(UserStakeoutModel).filter_by(tid=user).first()
+            discorddelete(f'channels/{json.loads(stakeout.guilds)[guildid]["channel"]}')()
             session.delete(stakeout)
 
         session.flush()
@@ -267,14 +305,14 @@ def stakeout_update(guildid):
             stakeout = session.query(UserStakeoutModel).filter_by(tid=user).first()
         else:
             stakeout = session.query(FactionStakeoutModel).filter_by(tid=faction).first()
+        
+        guilds = json.loads(stakeout.guilds)
 
-        keys = json.loads(stakeout.keys)
-
-        if value in keys[guildid]:
+        if value in guilds[guildid]['keys']:
             return jsonify({'error': f'Value {value} is already in {guildid}\'s list of keys.'}), 400
 
-        keys[guildid].append(value)
-        stakeout.keys = json.dumps(keys)
+        guilds[guildid]['keys'].append(value)
+        stakeout.guilds = json.dumps(guilds)
         session.flush()
     elif action == 'removekey':
         if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity']:
@@ -289,16 +327,39 @@ def stakeout_update(guildid):
         else:
             stakeout = session.query(FactionStakeoutModel).filter_by(tid=faction).first()
 
-        keys = json.loads(stakeout.keys)
+        guilds = json.loads(stakeout.guilds)
 
-        if value not in keys[guildid]:
+        if value not in guilds[guildid]['keys']:
             return jsonify({'error': f'Value {value} is not in {guildid}\'s list of keys.'}), 400
 
-        keys[guildid].remove(value)
-        stakeout.keys = json.dumps(keys)
+        guilds[guildid]['keys'].remove(value)
+        stakeout.guilds = json.dumps(guilds)
+        session.flush()
+    elif action == 'enable':
+        server = session.query(ServerModel).filter_by(sid=guildid).first()
+        config = json.loads(server.config)
+        config['stakeouts'] = 1
+        server.config = json.dumps(config)
+        session.flush()
+    elif action == 'disable':
+        server = session.query(ServerModel).filter_by(sid=guildid).first()
+        config = json.loads(server.config)
+        config['stakeouts'] = 0
+        server.config = json.dumps(config)
+        session.flush()
+    elif action == 'category':
+        server = session.query(ServerModel).filter_by(sid=guildid).first()
+        config = json.loads(server.stakeoutconfig)
+        config['category'] = int(value)
+        server.stakeoutconfig = json.dumps(config)
         session.flush()
 
     if request.method == 'GET':
-        return redirect(f'/bot/stakeouts/{guildid}')
+        if next_page is None or next == 'None':
+            return redirect(f'/bot/stakeouts/{guildid}')
+        else:
+            if not get('settings', 'dev') and not is_safe_url(next, {'torn.deek.sh'}):
+                abort(400)
+        return redirect(next_page)
     else:
         return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}

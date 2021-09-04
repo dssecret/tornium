@@ -7,9 +7,15 @@
 {% block content %}
 <div class="row">
     <div class="py-3 px-3 col text-end">
+        {% if server.config['stakeouts'] == 0 %}
+        <button type="button" class="btn btn-primary" disabled>
+            <a href="#" style="color: white">Go to Guild Stakeouts</a>
+        </button>
+        {% else %}
         <button type="button" class="btn btn-primary">
             <a href="/bot/stakeouts/{{ guildid }}" style="color: white">Go to Guild Stakeouts</a>
         </button>
+        {% endif %}
     </div>
 </div>
 
@@ -41,7 +47,7 @@
                 <form class="form-floating" method="POST" action="/bot/dashboard/{{ server.sid }}">
                     <input class="form-control" id="factionid" name="factionid" placeholder="Enter the Torn Faction ID">
                     <label for="factionid">Faction ID</label>
-                    <button class="btn btn-lg btn-primary" type="submit">Add</button>
+                    <button class="btn btn-primary mt-2" type="submit">Add</button>
                 </form>
             </div>
 
@@ -66,7 +72,7 @@
                                 {% if current_user.factiontid == faction.tid %}
                                 <div class="px-2 float-end">
                                     <a href="/faction/bot">
-                                        <button class="btn btn-outline-success">Edit</button>
+                                        <button type="button" class="btn btn-outline-success">Edit</button>
                                     </a>
                                 </div>
                                 {% endif %}
@@ -78,12 +84,55 @@
             </div>
         </div>
     </div>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Stakeouts</h5>
+            <p class="card-text">
+                The stakeouts that are run in the particular Discord guild.
+            </p>
+
+            <div class="col-sm-12 col-md-8 col-lg-4 mb-3">
+                <div class="form-floating">
+                    <input class="form-control" id="stakeoutcategory" name="stakeoutcategory" value="{{ server.stakeout_config['category'] }}">
+                    <label for="stakeoutcategory">Stakeout Category</label>
+                </div>
+            </div>
+
+            {% if server.config['stakeouts'] == 0 %}
+            <button type="button" class="btn btn-primary active">
+                <a href="/bot/stakeouts/{{ guildid }}/update?action=enable&next=/bot/dashboard/{{ guildid }}" style="color: white;">Enabled</a>
+            </button>
+            <button type="button" class="btn btn-primary" disabled>
+                <a href="#" style="color: white;">Disabled</a>
+            </button>
+            {% else %}
+            <button type="button" class="btn btn-primary" disabled>
+                <a href="#" style="color: white;">Enabled</a>
+            </button>
+            <button type="button" class="btn btn-primary active">
+                <a href="/bot/stakeouts/{{ guildid }}/update?action=disable&next=/bot/dashboard/{{ guildid }}" style="color: white;">Disabled</a>
+            </button>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
   $(document).ready(function(){
     $('[data-bs-toggle="tooltip"]').tooltip({
       container: '.list-group'
+    });
+
+    $('#stakeoutcategory').on('keypress', function(e) {
+        if(e.which === 13) {
+            const id = $('#stakeoutcategory').val();
+            const xhttp = new XMLHttpRequest();
+
+            xhttp.open('POST', `/bot/stakeouts/{{ guildid }}/update?action=category&value=${id}`);
+            xhttp.send();
+        }
     });
   });
 </script>

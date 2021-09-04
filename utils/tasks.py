@@ -23,8 +23,11 @@ import requests
 from database import session_local
 from models import settingsmodel
 from models.factionmodel import FactionModel
+from models.factionstakeoutmodel import FactionStakeoutModel
+from models.servermodel import ServerModel
 from models.statmodel import StatModel
 from models.usermodel import UserModel, UserDiscordModel
+from models.userstakeoutmodel import UserStakeoutModel
 import utils
 
 huey = SqliteHuey()
@@ -64,6 +67,11 @@ def discordget(endpoint, session=None):
     else:
         request = session.get(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}'})
 
+    if str(request.status_code)[:1] != '2':
+        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
+                                   f'"{endpoint}".')
+        raise utils.NetworkingError(request.status_code)
+
     request_json = request.json()
 
     if 'code' in request_json:
@@ -74,10 +82,65 @@ def discordget(endpoint, session=None):
                                 f'({request_json["message"]}) to {url}).')
         raise utils.DiscordError(request_json["code"])
 
-    if request.status_code != 200:
+    return request_json
+
+
+@huey.task()
+def discordpost(endpoint, payload, session=None):
+    url = f'https://discord.com/api/v9/{endpoint}'
+
+    if session is None:
+        request = requests.post(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+                                              'Content-Type': 'application/json'},
+                                data=json.dumps(payload))
+    else:
+        request = session.post(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+                                             'Content-Type': 'application/json'},
+                               data=json.dumps(payload))
+
+    if str(request.status_code)[:1] != '2':
         utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
                                    f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
+
+    request_json = request.json()
+
+    if 'code' in request_json:
+        # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
+        # explanations
+
+        utils.get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
+                                f'({request_json["message"]}) to {url}).')
+        raise utils.DiscordError(request_json["code"])
+
+    return request_json
+
+
+@huey.task()
+def discorddelete(endpoint, session=None):
+    url = f'https://discord.com/api/v9/{endpoint}'
+
+    if session is None:
+        request = requests.delete(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+                                                'Content-Type': 'application/json'})
+    else:
+        request = session.delete(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+                                               'Content-Type': 'application/json'})
+
+    if str(request.status_code)[:1] != '2':
+        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
+                                   f'"{endpoint}".')
+        raise utils.NetworkingError(request.status_code)
+
+    request_json = request.json()
+
+    if 'code' in request_json:
+        # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
+        # explanations
+
+        utils.get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
+                                f'({request_json["message"]}) to {url}).')
+        raise utils.DiscordError(request_json["code"])
 
     return request_json
 
@@ -93,7 +156,8 @@ def refresh_factions():
         if len(json.loads(faction.keys)) == 0:
             continue
 
-        factions.append(tornget(f'faction/?selections=', random.choice(json.loads(faction.keys)), session=requests_session))
+        factions.append(tornget(f'faction/?selections=', random.choice(json.loads(faction.keys)),
+                                session=requests_session))
 
     for faction in factions:
         try:
@@ -283,3 +347,73 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             session.flush()
             statid += 1
         session.flush()
+
+
+@huey.periodic_task(crontab())
+def update_user_stakeouts():
+    pass
+
+
+@huey.task()
+def user_stakeout(stakeout: UserStakeoutModel, key, session, requests_session=None):
+    # TODO: Add try and except to tornget, discordget, and discordpost
+    data = tornget(f'user/{stakeout.tid}?selections=', key=key, session=requests_session)
+    data = data(blocking=True)
+    stakeout_data = json.loads(stakeout.data)
+
+    for guildid, guild_stakeout in json.loads(stakeout.guilds).items():
+        if len(guild_stakeout['keys']) == 0:
+            continue
+
+        server = session.query(ServerModel).filter_by(sid=guildid).first()
+
+        if json.loads(server.config)['stakeouts'] == 0:
+            continue
+
+        channels = discordget(f'guilds/{guildid}/channels', session=requests_session)
+        channels = channels(blocking=True)
+
+        for channel in channels:
+            if channel['id'] == guild_stakeout['channel']:
+                break
+        else:
+            payload = {
+                'name': f'user-{data["name"]}',
+                'type': 0,
+                'topic': f'The bot-created channel for stakeout notifications for {data["name"]} [{data["player_id"]}] '
+                         f'by the Tornium bot.',
+                'parent_id': json.loads(server.stakeout_config)['category']
+            }  # TODO: Add permission overwrite: everyone write false
+            channel = discordpost(f'guilds/{guildid}/channels', payload=payload, session=requests_session)
+            channel = channel(blocking=True)
+            updated_guilds = json.loads(stakeout.guilds)
+            updated_guilds[guildid]['channel'] = int(channel['id'])
+            guild_stakeout['channel'] = int(channel['id'])
+            stakeout.guilds = json.dumps(updated_guilds)
+
+        if 'level' in guild_stakeout['keys'] and data['level'] != stakeout_data['level']:
+            embed = {
+                'embed': {
+                    'title': 'Level Change',
+                    'description': f'The level of staked out user {data["name"]} has changed from '
+                                   f'{stakeout_data["level"]} to {data["level"]}.'
+                }
+            }
+            embed = utils.embed_timestamp(embed)
+        if 'status' in guild_stakeout['keys'] and data['status']['state'] != stakeout_data['status']['state']:
+            pass
+        if 'flyingstatus' in guild_stakeout['keys'] and \
+                (['Travelling', 'In'] in data['status']['state'] or
+                 ['Travelling', 'In'] in stakeout_data['status']['state']) \
+                and data['status']['state'] != stakeout_data['status']['state']:
+            pass
+        if 'online' in guild_stakeout['keys'] and data['last_action']['status'] == 'Online' \
+                and stakeout_data['last_action']['status'] in ['Offline', 'Idle']:
+            pass
+        if 'offline' in guild_stakeout['keys'] and data['last_action']['status'] in ['Offline', 'Idle'] and \
+                stakeout_data['last_action']['status'] in ['Online', 'Idle'] and \
+                data['last_action']['status'] != stakeout_data['last_action']['status']:
+            pass
+
+        stakeout.lastupdate = utils.now()
+    session.flush()

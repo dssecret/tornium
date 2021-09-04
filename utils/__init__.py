@@ -150,3 +150,7 @@ def rel_time(time):
             return f'{int(round(delta/86400))} days ago'
     else:
         return 'A long time ago'
+
+
+def embed_timestamp(embed):
+    embed['timestamp'] = datetime.datetime.utcnow().isoformat()
