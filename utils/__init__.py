@@ -152,5 +152,5 @@ def rel_time(time):
         return 'A long time ago'
 
 
-def embed_timestamp(embed):
-    embed['timestamp'] = datetime.datetime.utcnow().isoformat()
+def torn_timestamp():
+    return datetime.datetime.utcnow().strftime('%m/%d %H:%M:%S TCT')

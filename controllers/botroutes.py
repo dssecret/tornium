@@ -148,6 +148,20 @@ def stakeouts_dashboard(guildid: str):
                 db_stakeout = session.query(FactionStakeoutModel).filter_by(tid=request.form.get('factionid')).first()
                 db_stakeout.guilds = json.dumps(stakeout.guilds)
                 session.flush()
+
+                message_payload = {
+                    'embeds': [
+                        {
+                            'title': 'Faction Stakeout Creation',
+                            'description': f'A stakeout of faction {stakeout.data["name"]} has been created in '
+                                           f'{server.name}. This stakeout can be setup or removed in the '
+                                           f'[Tornium Dashboard](https://torn.deek.sh/bot/stakeouts/{server.sid}) by a '
+                                           f'server administrator.',
+                            'timestamp': datetime.datetime.utcnow().isoformat()
+                        }
+                    ]
+                }
+                discordpost(f'channels/{channel["id"]}/messages', payload=message_payload)()
             else:
                 flash(f'Faction ID {request.form.get("factionid")} is already being staked out in {server.name}.',
                       category='error')
@@ -172,6 +186,20 @@ def stakeouts_dashboard(guildid: str):
                 db_stakeout = session.query(UserStakeoutModel).filter_by(tid=request.form.get('userid')).first()
                 db_stakeout.guilds = json.dumps(stakeout.guilds)
                 session.flush()
+
+                message_payload = {
+                    'embeds': [
+                        {
+                            'title': 'User Stakeout Creation',
+                            'description': f'A stakeout of user {stakeout.data["name"]} has been created in '
+                                           f'{server.name}. This stakeout can be setup or removed in the '
+                                           f'[Tornium Dashboard](https://torn.deek.sh/bot/stakeouts/{server.sid}) by a '
+                                           f'server administrator.',
+                            'timestamp': datetime.datetime.utcnow().isoformat()
+                        }
+                    ]
+                }
+                discordpost(f'channels/{channel["id"]}/messages', payload=message_payload)()
             else:
                 flash(f'User ID {request.form.get("userid")} is already being staked out in {server.name}.',
                       category='error')

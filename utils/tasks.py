@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+import datetime
 import json
 import math
 import random
@@ -351,13 +352,28 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
 
 @huey.periodic_task(crontab())
 def update_user_stakeouts():
-    pass
+    session = session_local()
+    requests_session = requests.Session()
+
+    for stakeout in session.query(UserStakeoutModel).all():
+        user_stakeout(stakeout.tid, requests_session=requests_session)()
 
 
 @huey.task()
-def user_stakeout(stakeout: UserStakeoutModel, key, session, requests_session=None):
+def user_stakeout(stakeout, requests_session=None, key=None):
     # TODO: Add try and except to tornget, discordget, and discordpost
-    data = tornget(f'user/{stakeout.tid}?selections=', key=key, session=requests_session)
+    session = session_local()
+    stakeout = session.query(UserStakeoutModel).filter_by(tid=stakeout).first()
+
+    if key is not None:
+        data = tornget(f'user/{stakeout.tid}?selections=', key=key, session=requests_session)
+    else:
+        guild = random.choice(list(json.loads(stakeout.guilds).keys()))
+        guild = session.query(ServerModel).filter_by(sid=guild).first()
+        admin = random.choice(json.loads(guild.admins))
+        admin = session.query(UserModel).filter_by(tid=admin).first()
+        data = tornget(f'user/{stakeout.tid}?selections=', key=admin.key, session=requests_session)
+
     data = data(blocking=True)
     stakeout_data = json.loads(stakeout.data)
 
@@ -374,46 +390,103 @@ def user_stakeout(stakeout: UserStakeoutModel, key, session, requests_session=No
         channels = channels(blocking=True)
 
         for channel in channels:
-            if channel['id'] == guild_stakeout['channel']:
+            if channel['id'] == str(guild_stakeout['channel']):
                 break
         else:
-            payload = {
-                'name': f'user-{data["name"]}',
-                'type': 0,
-                'topic': f'The bot-created channel for stakeout notifications for {data["name"]} [{data["player_id"]}] '
-                         f'by the Tornium bot.',
-                'parent_id': json.loads(server.stakeout_config)['category']
-            }  # TODO: Add permission overwrite: everyone write false
-            channel = discordpost(f'guilds/{guildid}/channels', payload=payload, session=requests_session)
-            channel = channel(blocking=True)
-            updated_guilds = json.loads(stakeout.guilds)
-            updated_guilds[guildid]['channel'] = int(channel['id'])
-            guild_stakeout['channel'] = int(channel['id'])
-            stakeout.guilds = json.dumps(updated_guilds)
+            continue
 
         if 'level' in guild_stakeout['keys'] and data['level'] != stakeout_data['level']:
-            embed = {
-                'embed': {
-                    'title': 'Level Change',
-                    'description': f'The level of staked out user {data["name"]} has changed from '
-                                   f'{stakeout_data["level"]} to {data["level"]}.'
-                }
+            payload = {
+                'embeds': [
+                    {
+                        'title': 'Level Change',
+                        'description': f'The level of staked out user {data["name"]} has changed from '
+                                       f'{stakeout_data["level"]} to {data["level"]}.',
+                        'timestamp': datetime.datetime.utcnow().isoformat(),
+                        'footer': {
+                            'text': utils.torn_timestamp()
+                        }
+                    }
+                ]
             }
-            embed = utils.embed_timestamp(embed)
+            discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+
         if 'status' in guild_stakeout['keys'] and data['status']['state'] != stakeout_data['status']['state']:
-            pass
+            payload = {
+                'embeds': [
+                    {
+                        'title': 'Status Change',
+                        'description': f'The status of staked out user {data["name"]} has changed from '
+                                       f'{stakeout_data["status"]["state"]} to {data["status"]["state"]}.',
+                        'timestamp': datetime.datetime.utcnow().isoformat(),
+                        'footer': {
+                            'text': utils.torn_timestamp()
+                        }
+                    }
+                ]
+            }
+            discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+
         if 'flyingstatus' in guild_stakeout['keys'] and \
-                (['Travelling', 'In'] in data['status']['state'] or
-                 ['Travelling', 'In'] in stakeout_data['status']['state']) \
+                (data['status']['state'] in ['Travelling', 'In'] or
+                 stakeout_data['status']['state'] in ['Travelling', 'In']) \
                 and data['status']['state'] != stakeout_data['status']['state']:
-            pass
+            payload = {
+                'embeds': [
+                    {
+                        'title': 'Flying Status Change',
+                        'description': f'The flying status of staked out user {data["name"]} has changed from '
+                                       f'{stakeout_data["status"]["state"]} to {data["status"]["state"]}.',
+                        'timestamp': datetime.datetime.utcnow().isoformat(),
+                        'footer': {
+                            'text': utils.torn_timestamp()
+                        }
+                    }
+                ]
+            }
+            discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+
         if 'online' in guild_stakeout['keys'] and data['last_action']['status'] == 'Online' \
                 and stakeout_data['last_action']['status'] in ['Offline', 'Idle']:
-            pass
+            payload = {
+                'embeds': [
+                    {
+                        'title': 'Status Change',
+                        'description': f'The status of staked out user {data["name"]} has changed from '
+                                       f'{stakeout_data["last_action"]["status"]} to {data["last_action"]["status"]}.',
+                        'timestamp': datetime.datetime.utcnow().isoformat(),
+                        'footer': {
+                            'text': utils.torn_timestamp()
+                        }
+                    }
+                ]
+            }
+            discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+
         if 'offline' in guild_stakeout['keys'] and data['last_action']['status'] in ['Offline', 'Idle'] and \
                 stakeout_data['last_action']['status'] in ['Online', 'Idle'] and \
                 data['last_action']['status'] != stakeout_data['last_action']['status']:
-            pass
+            if data['last_action']['status'] == 'Idle' and datetime.datetime.utcnow().timestamp() - \
+                    data['last_action']['timestamp'] < 300:
+                continue
+            elif data['last_action']['status'] == 'Idle' and stakeout_data['last_action']['status'] == 'Idle':
+                continue
 
-        stakeout.lastupdate = utils.now()
+            payload = {
+                'embeds': [
+                    {
+                        'title': 'Status Change',
+                        'description': f'The status of staked out user {data["name"]} has changed from '
+                                       f'{stakeout_data["last_action"]["status"]} to {data["last_action"]["status"]}.',
+                        'timestamp': datetime.datetime.utcnow().isoformat(),
+                        'footer': {
+                            'text': utils.torn_timestamp()
+                        }
+                    }
+                ]
+            }
+            discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+
+    stakeout.lastupdate = utils.now()
+    stakeout.data = json.dumps(data)
     session.flush()
