@@ -78,7 +78,7 @@ async def on_message(message):
 
     user = DiscordUser(message.author.id, User(random.choice(server.admins)).key)
 
-    if len(server.factions) != 1:
+    if len(server.factions) > 1:
         if user.tid == 0:
             await message.delete()
             embed = discord.Embed()
@@ -88,11 +88,6 @@ async def on_message(message):
                                 'utilize this bot. If you have recently verified, please ' \
                                 'wait for a minute or two before trying again.'
             await message.author.send(embed=embed)
-            return None
-    elif len(server.factions) == 0:
-        if message.clean_content[0] != server.prefix:
-            await bot.process_commands(message)
-        else:
             return None
 
         user = User(user.tid)
@@ -111,6 +106,12 @@ async def on_message(message):
                 return None
 
         faction = Faction(user.factiontid)
+    elif len(server.factions) == 0:
+        if message.clean_content[0] == server.prefix:
+            await bot.process_commands(message)
+            return None
+        else:
+            return None
     else:
         faction = Faction(server.factions[0])
 
@@ -123,6 +124,7 @@ async def on_message(message):
         message = await message.channel.send(embed=embed)
         await asyncio.sleep(30)
         await message.delete()
+        return None
 
     await bot.process_commands(message)
 
