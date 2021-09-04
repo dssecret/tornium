@@ -146,7 +146,7 @@ def discorddelete(endpoint, session=None):
     return request_json
 
 
-@huey.periodic_task(crontab(minute='0', hour='0'))
+@huey.periodic_task(crontab(minute='0'))
 def refresh_factions():
     session = session_local()
     requests_session = requests.Session()
@@ -174,6 +174,7 @@ def refresh_factions():
         faction.coleader = faction_data['co-leader']
 
         for member_id, member in faction_data['members'].items():
+            print(member)
             user = session.query(UserModel).filter_by(tid=int(member_id))
             user.name = member['name']
             user.level = member['level']

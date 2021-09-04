@@ -89,6 +89,11 @@ async def on_message(message):
                                 'wait for a minute or two before trying again.'
             await message.author.send(embed=embed)
             return None
+    elif len(server.factions) == 0:
+        if message.clean_content[0] != server.prefix:
+            await bot.process_commands(message)
+        else:
+            return None
 
         user = User(user.tid)
 
