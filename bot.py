@@ -69,7 +69,8 @@ async def on_message(message):
         embed = discord.Embed()
         embed.title = 'No Server Admins Stored'
         embed.description = f'There are no server admins stored for {message.guild.name}; therefore an admin will ' \
-                            f'need to log in to the [dashboard](https://torn.deek.sh/) for an admin to be added.'
+                            f'need to log in to the [dashboard](https://torn.deek.sh/) for an admin to be added for ' \
+                            f'the bot to be operational.'
         message = await message.channel.send(embed=embed)
         await asyncio.sleep(30)
         await message.delete()
@@ -77,34 +78,36 @@ async def on_message(message):
 
     user = DiscordUser(message.author.id, User(random.choice(server.admins)).key)
 
-    if user.tid == 0:
-        embed = discord.Embed()
-        embed.title = 'Requires Verification'
-        embed.description = 'You are required to be verified officially through the ' \
-                            '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
-                            'utilize the banking features of this bot. If you have recently verified, please ' \
-                            'wait for a minute or two before trying again.'
-        message = await message.channel.send(embed=embed)
-        await asyncio.sleep(30)
-        await message.delete()
-        return None
-
-    user = User(user.tid)
-
-    if user.factiontid == 0:
-        user.refresh(key=User(random.choice(server.admins)).key, force=True)
-
-        if user.factiontid == 0:
-            embed = discord.Embed()
-            embed.title = 'Faction ID Error'
-            embed.description = f'The faction ID of {message.author.name} is not set regardless of the ' \
-                                f'forced refresh.'
-            message = await message.channel.send(embed=embed)
-            await asyncio.sleep(30)
+    if len(server.factions) != 1:
+        if user.tid != 0:
             await message.delete()
+            embed = discord.Embed()
+            embed.title = 'Requires Verification'
+            embed.description = 'You are required to be verified officially through the ' \
+                                '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
+                                'utilize this bot. If you have recently verified, please ' \
+                                'wait for a minute or two before trying again.'
+            await message.author.send(embed=embed)
             return None
 
-    faction = Faction(user.factiontid)
+        user = User(user.tid)
+
+        if user.factiontid == 0:
+            user.refresh(key=User(random.choice(server.admins)).key, force=True)
+
+            if user.factiontid == 0:
+                embed = discord.Embed()
+                embed.title = 'Faction ID Error'
+                embed.description = f'The faction ID of {message.author.name} is not set regardless of the ' \
+                                    f'forced refresh.'
+                message = await message.channel.send(embed=embed)
+                await asyncio.sleep(30)
+                await message.delete()
+                return None
+
+        faction = Faction(user.factiontid)
+    else:
+        faction = Faction(server.factions[0])
 
     if message.channel.id == faction.get_vault_config()['withdrawal'] and message.clean_content[0] != server.prefix:
         await message.delete()
