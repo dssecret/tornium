@@ -182,10 +182,29 @@ def bot():
             faction.guild = request.form.get('guildid')
             faction_model.guild = request.form.get('guildid')
             session.flush()
+        elif request.form.get('withdrawal') is not None:
+            try:
+                channel = utils.tasks.discordget(f'channels/{request.form.get("withdrawal")}')
+                channel = channel(blocking=True)
+            except TaskException as e:
+                e = str(e)
+                if 'DiscordError' in e:
+                    return utils.handle_discord_error(e)
+                elif 'NetworkingError' in e:
+                    return render_template('errors/error.html', title='Discord Networking Error',
+                                           error=f'The Discord API has responded with HTTP error code '
+                                                 f'{utils.remove_str(e)}.')
+                else:
+                    raise e
+
+            vault_config = faction.get_vault_config()
+            vault_config['withdrawal'] = int(channel['id'])
+            faction_model.vaultconfig = json.dumps(vault_config)
+            session.flush()
         elif request.form.get('banking') is not None:
             try:
                 channel = utils.tasks.discordget(f'channels/{request.form.get("banking")}')
-                channel = channel()
+                channel = channel(blocking=True)
             except TaskException as e:
                 e = str(e)
                 if 'DiscordError' in e:
@@ -206,6 +225,7 @@ def bot():
                 roles = utils.tasks.discordget(f'guilds/{faction.guild}/roles')
                 roles = roles(blocking=True)
             except TaskException as e:
+                e = str(e)
                 if 'DiscordError' in e:
                     return utils.handle_discord_error(e)
                 elif 'NetworkingError' in e:

@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+import datetime
 import json
 import math
 import random
@@ -23,8 +24,11 @@ import requests
 from database import session_local
 from models import settingsmodel
 from models.factionmodel import FactionModel
+from models.factionstakeoutmodel import FactionStakeoutModel
+from models.servermodel import ServerModel
 from models.statmodel import StatModel
 from models.usermodel import UserModel, UserDiscordModel
+from models.userstakeoutmodel import UserStakeoutModel
 import utils
 
 huey = SqliteHuey()
@@ -64,6 +68,11 @@ def discordget(endpoint, session=None):
     else:
         request = session.get(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}'})
 
+    if str(request.status_code)[:1] != '2':
+        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
+                                   f'"{endpoint}".')
+        raise utils.NetworkingError(request.status_code)
+
     request_json = request.json()
 
     if 'code' in request_json:
@@ -74,15 +83,70 @@ def discordget(endpoint, session=None):
                                 f'({request_json["message"]}) to {url}).')
         raise utils.DiscordError(request_json["code"])
 
-    if request.status_code != 200:
+    return request_json
+
+
+@huey.task()
+def discordpost(endpoint, payload, session=None):
+    url = f'https://discord.com/api/v9/{endpoint}'
+
+    if session is None:
+        request = requests.post(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+                                              'Content-Type': 'application/json'},
+                                data=json.dumps(payload))
+    else:
+        request = session.post(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+                                             'Content-Type': 'application/json'},
+                               data=json.dumps(payload))
+
+    if str(request.status_code)[:1] != '2':
         utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
                                    f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
 
+    request_json = request.json()
+
+    if 'code' in request_json:
+        # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
+        # explanations
+
+        utils.get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
+                                f'({request_json["message"]}) to {url}).')
+        raise utils.DiscordError(request_json["code"])
+
     return request_json
 
 
-@huey.periodic_task(crontab(minute='0', hour='0'))
+@huey.task()
+def discorddelete(endpoint, session=None):
+    url = f'https://discord.com/api/v9/{endpoint}'
+
+    if session is None:
+        request = requests.delete(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+                                                'Content-Type': 'application/json'})
+    else:
+        request = session.delete(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+                                               'Content-Type': 'application/json'})
+
+    if str(request.status_code)[:1] != '2':
+        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
+                                   f'"{endpoint}".')
+        raise utils.NetworkingError(request.status_code)
+
+    request_json = request.json()
+
+    if 'code' in request_json:
+        # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
+        # explanations
+
+        utils.get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
+                                f'({request_json["message"]}) to {url}).')
+        raise utils.DiscordError(request_json["code"])
+
+    return request_json
+
+
+@huey.periodic_task(crontab(minute='0'))
 def refresh_factions():
     session = session_local()
     requests_session = requests.Session()
@@ -93,7 +157,8 @@ def refresh_factions():
         if len(json.loads(faction.keys)) == 0:
             continue
 
-        factions.append(tornget(f'faction/?selections=', random.choice(json.loads(faction.keys)), session=requests_session))
+        factions.append(tornget(f'faction/?selections=', random.choice(json.loads(faction.keys)),
+                                session=requests_session))
 
     for faction in factions:
         try:
@@ -109,6 +174,7 @@ def refresh_factions():
         faction.coleader = faction_data['co-leader']
 
         for member_id, member in faction_data['members'].items():
+            print(member)
             user = session.query(UserModel).filter_by(tid=int(member_id))
             user.name = member['name']
             user.level = member['level']
@@ -283,3 +349,408 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             session.flush()
             statid += 1
         session.flush()
+
+
+@huey.periodic_task(crontab())
+def update_user_stakeouts():
+    session = session_local()
+    requests_session = requests.Session()
+
+    for stakeout in session.query(UserStakeoutModel).all():
+        user_stakeout(stakeout.tid, requests_session=requests_session)()
+
+
+@huey.periodic_task(crontab())
+def update_faction_stakeouts():
+    session = session_local()
+    requests_session = requests.Session()
+
+    for stakeout in session.query(FactionStakeoutModel).all():
+        faction_stakeout(stakeout.tid, requests_session=requests_session)()
+
+
+@huey.task()
+def user_stakeout(stakeout, requests_session=None, key=None):
+    # TODO: Add try and except to tornget, discordget, and discordpost
+    session = session_local()
+    stakeout = session.query(UserStakeoutModel).filter_by(tid=stakeout).first()
+
+    if key is not None:
+        data = tornget(f'user/{stakeout.tid}?selections=', key=key, session=requests_session)
+    else:
+        guild = random.choice(list(json.loads(stakeout.guilds).keys()))
+        guild = session.query(ServerModel).filter_by(sid=guild).first()
+        admin = random.choice(json.loads(guild.admins))
+        admin = session.query(UserModel).filter_by(tid=admin).first()
+        data = tornget(f'user/{stakeout.tid}?selections=', key=admin.key, session=requests_session)
+
+    data = data(blocking=True)
+    stakeout_data = json.loads(stakeout.data)
+
+    for guildid, guild_stakeout in json.loads(stakeout.guilds).items():
+        if len(guild_stakeout['keys']) == 0:
+            continue
+
+        server = session.query(ServerModel).filter_by(sid=guildid).first()
+
+        if json.loads(server.config)['stakeouts'] == 0:
+            continue
+
+        channels = discordget(f'guilds/{guildid}/channels', session=requests_session)
+        channels = channels(blocking=True)
+
+        for channel in channels:
+            if channel['id'] == str(guild_stakeout['channel']):
+                break
+        else:
+            continue
+
+        if 'level' in guild_stakeout['keys'] and data['level'] != stakeout_data['level']:
+            payload = {
+                'embeds': [
+                    {
+                        'title': 'Level Change',
+                        'description': f'The level of staked out user {data["name"]} has changed from '
+                                       f'{stakeout_data["level"]} to {data["level"]}.',
+                        'timestamp': datetime.datetime.utcnow().isoformat(),
+                        'footer': {
+                            'text': utils.torn_timestamp()
+                        }
+                    }
+                ]
+            }
+            discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+
+        if 'status' in guild_stakeout['keys'] and data['status']['state'] != stakeout_data['status']['state']:
+            payload = {
+                'embeds': [
+                    {
+                        'title': 'Status Change',
+                        'description': f'The status of staked out user {data["name"]} has changed from '
+                                       f'{stakeout_data["status"]["state"]} to {data["status"]["state"]}.',
+                        'timestamp': datetime.datetime.utcnow().isoformat(),
+                        'footer': {
+                            'text': utils.torn_timestamp()
+                        }
+                    }
+                ]
+            }
+            discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+
+        if 'flyingstatus' in guild_stakeout['keys'] and \
+                (data['status']['state'] in ['Travelling', 'In'] or
+                 stakeout_data['status']['state'] in ['Travelling', 'In']) \
+                and data['status']['state'] != stakeout_data['status']['state']:
+            payload = {
+                'embeds': [
+                    {
+                        'title': 'Flying Status Change',
+                        'description': f'The flying status of staked out user {data["name"]} has changed from '
+                                       f'{stakeout_data["status"]["state"]} to {data["status"]["state"]}.',
+                        'timestamp': datetime.datetime.utcnow().isoformat(),
+                        'footer': {
+                            'text': utils.torn_timestamp()
+                        }
+                    }
+                ]
+            }
+            discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+
+        if 'online' in guild_stakeout['keys'] and data['last_action']['status'] == 'Online' \
+                and stakeout_data['last_action']['status'] in ['Offline', 'Idle']:
+            payload = {
+                'embeds': [
+                    {
+                        'title': 'Activity Change',
+                        'description': f'The activity of staked out user {data["name"]} has changed from '
+                                       f'{stakeout_data["last_action"]["status"]} to {data["last_action"]["status"]}.',
+                        'timestamp': datetime.datetime.utcnow().isoformat(),
+                        'footer': {
+                            'text': utils.torn_timestamp()
+                        }
+                    }
+                ]
+            }
+            discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+
+        if 'offline' in guild_stakeout['keys'] and data['last_action']['status'] in ['Offline', 'Idle'] and \
+                stakeout_data['last_action']['status'] in ['Online', 'Idle'] and \
+                data['last_action']['status'] != stakeout_data['last_action']['status']:
+            if data['last_action']['status'] == 'Idle' and datetime.datetime.utcnow().timestamp() - \
+                    data['last_action']['timestamp'] < 300:
+                continue
+            elif data['last_action']['status'] == 'Idle' and stakeout_data['last_action']['status'] == 'Idle':
+                continue
+
+            payload = {
+                'embeds': [
+                    {
+                        'title': 'Activity Change',
+                        'description': f'The activity of staked out user {data["name"]} has changed from '
+                                       f'{stakeout_data["last_action"]["status"]} to {data["last_action"]["status"]}.',
+                        'timestamp': datetime.datetime.utcnow().isoformat(),
+                        'footer': {
+                            'text': utils.torn_timestamp()
+                        }
+                    }
+                ]
+            }
+            discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+
+    stakeout.lastupdate = utils.now()
+    stakeout.data = json.dumps(data)
+    session.flush()
+
+
+@huey.task()
+def faction_stakeout(stakeout, requests_session=None, key=None):
+    # TODO: Add try and except to tornget, discordget, and discordpost
+    session = session_local()
+    stakeout = session.query(FactionStakeoutModel).filter_by(tid=stakeout).first()
+
+    if key is not None:
+        data = tornget(f'faction/{stakeout.tid}?selections=basic,territory', key=key, session=requests_session)
+    else:
+        guild = random.choice(list(json.loads(stakeout.guilds).keys()))
+        guild = session.query(ServerModel).filter_by(sid=guild).first()
+        admin = random.choice(json.loads(guild.admins))
+        admin = session.query(UserModel).filter_by(tid=admin).first()
+        data = tornget(f'faction/{stakeout.tid}?selections=basic,territory', key=admin.key, session=requests_session)
+
+    data = data(blocking=True)
+    stakeout_data = json.loads(stakeout.data)
+
+    for guildid, guild_stakeout in json.loads(stakeout.guilds).items():
+        if len(guild_stakeout['keys']) == 0:
+            continue
+
+        server = session.query(ServerModel).filter_by(sid=guildid).first()
+
+        if json.loads(server.config)['stakeouts'] == 0:
+            continue
+
+        channels = discordget(f'guilds/{guildid}/channels', session=requests_session)
+        channels = channels(blocking=True)
+
+        for channel in channels:
+            if channel['id'] == str(guild_stakeout['channel']):
+                break
+        else:
+            continue
+
+        # stakeout_data: data from the previous minute
+        # data: data from this minute
+
+        if 'territory' in guild_stakeout['keys'] and data['territory'] != stakeout_data['territory']:
+            for territoryid, territory in stakeout_data['territory'].items():
+                if territoryid not in data['territory']:
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Territory Removed',
+                                'description': f'The territory {territoryid} of faction {data["name"]} has '
+                                               f'been dropped.',
+                                'timestamp': datetime.datetime.utcnow().isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp()
+                                }
+                            }
+                        ]
+                    }
+                    discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                elif 'racket' in territory and 'racket' not in data['territory'][territoryid]:
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Racket Lost',
+                                'description': f'A racket has been lost on {territoryid}, controlled by faction '
+                                               f'{data["name"]}. The racket was {data["territory"]["racket"]["name"]} '
+                                               f'and gave {territory["territory"]["racket"]["reward"]}.',
+                                'timestamp': datetime.datetime.utcnow().isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp()
+                                }
+                            }
+                        ]
+                    }
+                    discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+
+            for territoryid, territory in data['territory'].items():
+                if territoryid not in stakeout_data['territory']:
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Territory Gained',
+                                'description': f'The territory {territoryid} has been claimed by '
+                                               f'faction {data["name"]}.',
+                                'timestamp': datetime.datetime.utcnow().isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp()
+                                }
+                            }
+                        ]
+                    }
+                    discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                if 'racket' in territory and 'racket' not in stakeout_data['territory'][territoryid]:
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Racket Gained',
+                                'description': f'A racket on {territoryid} has been controlled by faction '
+                                               f'{data["name"]}. The racket is '
+                                               f'{data["territory"]["racket"]["name"]} and '
+                                               f'gives {data["territory"]["racket"]["reward"]}.',
+                                'timestamp': datetime.datetime.utcnow().isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp()
+                                }
+                            }
+                        ]
+                    }
+                    discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                elif territory['racket']['level'] > stakeout_data['territory'][territoryid]['racket']['level']:
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Racket Leveled Up',
+                                'description': f'A racket on {territoryid} controlled by faction {data["name"]}. '
+                                               f'The racket is {territory["racket"]["name"]} and now '
+                                               f'gives {territory["racket"]["reward"]} from '
+                                               f'{stakeout_data["territory"][territoryid]["racket"]["reward"]}.',
+                                'timestamp': datetime.datetime.utcnow().isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp()
+                                }
+                            }
+                        ]
+                    }
+                    discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                elif territory['racket']['level'] > stakeout_data['territory'][territoryid]['racket']['level']:
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Racket Leveled Down',
+                                'description': f'A racket on {territoryid} controlled by faction {data["name"]}. '
+                                               f'The racket is {territory["racket"]["name"]} and now '
+                                               f'gives {territory["racket"]["reward"]} from '
+                                               f'{stakeout_data["territory"][territoryid]["racket"]["reward"]}.',
+                                'timestamp': datetime.datetime.utcnow().isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp()
+                                }
+                            }
+                        ]
+                    }
+                    discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+        if 'members' in guild_stakeout['keys'] and data['members'] != stakeout_data['members']:
+            for memberid, member in stakeout_data['members'].items():
+                if memberid not in data['members']:
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Member Left',
+                                'description': f'Member {member["name"]} has left faction {data["name"]}.',
+                                'timestamp': datetime.datetime.utcnow().isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp()
+                                }
+                            }
+                        ]
+                    }
+                    discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+
+            for memberid, member in data['members'].items():
+                if memberid not in stakeout_data['members']:
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Member Left',
+                                'description': f'Member {member["name"]} has left faction {data["name"]}.',
+                                'timestamp': datetime.datetime.utcnow().isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp()
+                                }
+                            }
+                        ]
+                    }
+                    discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+        if 'memberstatus' in guild_stakeout['keys'] and data['members'] != stakeout_data['members']:
+            for memberid, member in stakeout_data['members'].items():
+                if memberid not in data['members']:
+                    continue
+                elif member['status']['description'] != data['members'][memberid]['status']['description'] \
+                        or member["status"]["state"] != data["members"][memberid]["status"]["state"]:
+                    if member['status']['details'] == data['members'][memberid]['status']['details']:
+                        continue
+
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Member Status Change',
+                                'description': f'Member {member["name"]} of faction {data["name"]} is now '
+                                               f'{data["members"][memberid]["status"]["description"]} from '
+                                               f'{member["status"]["description"]}'
+                                               f'{"" if member["status"]["details"] == "" else " because " + utils.remove_html(member["status"]["details"])}.',
+                                'timestamp': datetime.datetime.utcnow().isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp()
+                                }
+                            }
+                        ]
+                    }
+                    discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+        if 'memberactivity' in guild_stakeout['keys'] and data['members'] != stakeout_data['members']:
+            for memberid, member in stakeout_data['members'].items():
+                if memberid not in data['members']:
+                    continue
+
+                if member['last_action']['status'] in ('Offline', 'Idle') and data['members'][memberid]['last_action']['status'] == 'Online':
+                    if data["members"][memberid]["last_action"]["status"] == "Idle" and \
+                            datetime.datetime.now(datetime.timezone.utc).timestamp() - \
+                            data["members"][memberid]["last_action"]["timestamp"] < 300:
+                        continue
+
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Member Activity Change',
+                                'description': f'Member {member["name"]} of faction {data["name"]} is now '
+                                               f'{data["members"][memberid]["last_action"]["status"]} from '
+                                               f'{member["last_action"]["status"]}.',
+                                'timestamp': datetime.datetime.utcnow().isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp()
+                                }
+                            }
+                        ]
+                    }
+                    discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                elif member['last_action']['status'] in ('Online', 'Idle') and \
+                        data['members'][memberid]['last_action']['status'] in ('Offline', 'Idle'):
+                    if data['members'][memberid]['last_action']['status'] == 'Idle' and \
+                            datetime.datetime.now(datetime.timezone.utc).timestamp() - \
+                            data["members"][memberid]["last_action"]["timestamp"] < 300:
+                        continue
+                    elif data["members"][memberid]["last_action"]["status"] == "Idle" \
+                            and member["last_action"]["status"] == "Idle":
+                        continue
+
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Member Activity Change',
+                                'description': f'Member {member["name"]} of faction {data["name"]} is now '
+                                               f'{data["members"][memberid]["last_action"]["status"]} from '
+                                               f'{member["last_action"]["status"]}.',
+                                'timestamp': datetime.datetime.utcnow().isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp()
+                                }
+                            }
+                        ]
+                    }
+                    discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+
+    stakeout.lastupdate = utils.now()
+    stakeout.data = json.dumps(data)
+    session.flush()

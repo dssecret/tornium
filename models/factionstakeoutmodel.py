@@ -13,18 +13,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from flask import Blueprint, render_template, send_from_directory, request
-
-mod = Blueprint('baseroutes', __name__)
-
-
-@mod.route('/')
-@mod.route('/index')
-def index():
-    return render_template('index.html')
+from sqlalchemy import Column, Integer, String
+from database import base
 
 
-@mod.route('/robots.txt')
-@mod.route('/stakeouts.js')
-def static():
-    return send_from_directory('static', request.path[1:])
+class FactionStakeoutModel(base):
+    __tablename__ = 'FactionStakeouts'
+
+    tid = Column(Integer, primary_key=True)  # The faction ID of the stakeout
+    data = Column(String)  # String of data from the Torn API
+    guilds = Column(String)  # String of list of keys to be watched
+    lastupdate = Column(Integer)

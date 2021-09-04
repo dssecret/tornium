@@ -17,7 +17,7 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('Factions', sa.Column('config', sa.String, server_default='{"vault": 0}'))
+    op.add_column('Factions', sa.Column('config', sa.String, default='{"vault": 0}'))
 
 
 def downgrade():

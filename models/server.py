@@ -12,6 +12,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
+
 import json
 
 from database import session_local
@@ -38,7 +39,11 @@ class Server:
                 name=guild['name'],
                 admins='[]',
                 prefix='?',
-                factions='[]'
+                config='{"stakeouts": 0}',
+                factions='[]',
+                stakeoutconfig='{"category": 0}',
+                userstakeouts='[]',
+                factionstakeouts='[]'
             )
             session.add(server)
             session.flush()
@@ -47,4 +52,10 @@ class Server:
         self.name = server.name
         self.admins = json.loads(server.admins)
         self.prefix = server.prefix
+        self.config = json.loads(server.config)
+
         self.factions = json.loads(server.factions)
+
+        self.stakeout_config = json.loads(server.stakeoutconfig)
+        self.user_stakeouts = json.loads(server.userstakeouts)
+        self.faction_stakeouts = json.loads(server.factionstakeouts)

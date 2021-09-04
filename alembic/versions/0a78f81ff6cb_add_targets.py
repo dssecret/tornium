@@ -17,7 +17,7 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('Factions', sa.Column('targets', sa.String, server_default='{}'))
+    op.add_column('Factions', sa.Column('targets', sa.String, default='{}'))
 
 
 def downgrade():

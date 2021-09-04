@@ -24,5 +24,10 @@ class ServerModel(base):
     name = Column(String)
     admins = Column(String)  # String of list of admin ids
     prefix = Column(String)
+    config = Column(String)  # String of dictionary of server configurations
 
     factions = Column(String)  # String of list of factions in server
+
+    stakeoutconfig = Column(String)  # String of dictionary of stakeout configurations for the server
+    userstakeouts = Column(String)  # String of list of staked-out users
+    factionstakeouts = Column(String)  # String of list of staked-out factions

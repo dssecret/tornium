@@ -38,4 +38,5 @@ class FactionModel(base):
     vaultconfig = Column(String)  # String of dictionary of vault configuration
 
     targets = Column(String)  # String of dictionary of targets
+
     statconfig = Column(String)  # String of dictionary of target config

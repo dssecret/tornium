@@ -17,7 +17,7 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('Users', sa.Column('battlescore', sa.String, server_default='[]'))
+    op.add_column('Users', sa.Column('battlescore', sa.String, default='[]'))
 
 
 def downgrade():

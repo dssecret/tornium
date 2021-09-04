@@ -150,3 +150,12 @@ def rel_time(time):
             return f'{int(round(delta/86400))} days ago'
     else:
         return 'A long time ago'
+
+
+def torn_timestamp():
+    return datetime.datetime.utcnow().strftime('%m/%d %H:%M:%S TCT')
+
+
+def remove_html(text):
+    cleaner = re.compile("<.*?>")
+    return re.sub(cleaner, '', text)
