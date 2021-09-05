@@ -177,7 +177,6 @@ def refresh_factions():
         faction.coleader = faction_data['co-leader']
 
         for member_id, member in faction_data['members'].items():
-            print(member)
             user = session.query(UserModel).filter_by(tid=int(member_id))
             user.name = member['name']
             user.level = member['level']
