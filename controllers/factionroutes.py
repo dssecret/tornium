@@ -43,7 +43,6 @@ def aa_required(f):
 
 
 @mod.route('/faction')
-@login_required
 def index():
     return render_template('faction/index.html')
 

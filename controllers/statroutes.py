@@ -31,7 +31,6 @@ mod = Blueprint('statroutes', __name__)
 
 
 @mod.route('/stats')
-@login_required
 def index():
     return render_template('stats/index.html')
 
