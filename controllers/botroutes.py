@@ -288,7 +288,6 @@ def stakeout_update(guildid):
     faction = request.args.get('faction')
     user = request.args.get('user')
     value = request.args.get('value')
-    next_page = request.args.get('next')
 
     if action not in ['remove', 'addkey', 'removekey', 'enable', 'disable', 'category']:
         return json.dumps({'success': True}), 400, {'ContentType': 'application/json'}
@@ -380,11 +379,6 @@ def stakeout_update(guildid):
         session.flush()
 
     if request.method == 'GET':
-        if next_page is None or next == 'None':
-            return redirect(f'/bot/stakeouts/{guildid}')
-        else:
-            if not get('settings', 'dev') and not is_safe_url(next, {'torn.deek.sh'}):
-                abort(400)
-        return redirect(next_page)
+        return redirect(f'/bot/stakeouts/{guildid}')
     else:
         return json.dumps({'success': True}), 200, {'ContentType': 'application/json'}

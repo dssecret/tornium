@@ -101,7 +101,7 @@
 
             {% if server.config['stakeouts'] == 0 %}
             <button type="button" class="btn btn-primary active">
-                <a href="/bot/stakeouts/{{ guildid }}/update?action=enable&next=/bot/dashboard/{{ guildid }}" style="color: white;">Enabled</a>
+                <a href="/bot/stakeouts/{{ guildid }}/update?action=enable" style="color: white;">Enabled</a>
             </button>
             <button type="button" class="btn btn-primary" disabled>
                 <a href="#" style="color: white;">Disabled</a>
@@ -111,7 +111,7 @@
                 <a href="#" style="color: white;">Enabled</a>
             </button>
             <button type="button" class="btn btn-primary active">
-                <a href="/bot/stakeouts/{{ guildid }}/update?action=disable&next=/bot/dashboard/{{ guildid }}" style="color: white;">Disabled</a>
+                <a href="/bot/stakeouts/{{ guildid }}/update?action=disable" style="color: white;">Disabled</a>
             </button>
             {% endif %}
         </div>
