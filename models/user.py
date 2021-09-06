@@ -70,6 +70,7 @@ class User(UserMixin):
                 level=0,
                 admin=False if tid != 2383326 else True,
                 key=key,
+                keys='[]',
                 battlescore='[]',
                 discord_id=0,
                 servers='[]',
@@ -85,6 +86,7 @@ class User(UserMixin):
         self.level = user.level
         self.admin = user.admin
         self.key = user.key
+        self.keys = json.loads(user.keys)
         self.battlescore = json.loads(user.battlescore)
 
         self.discord_id = user.discord_id

@@ -26,6 +26,7 @@ class UserModel(base):
     last_refresh = Column(Integer)
     admin = Column(Boolean)
     key = Column(String(16))
+    keys = Column(String)  # String of dictionary of Tornium keys of the user
     battlescore = Column(String)  # String of list of battlescore, last update timestamp
 
     discord_id = Column(Integer)
