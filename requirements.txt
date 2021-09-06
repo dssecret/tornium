@@ -4,5 +4,6 @@ flask == 2.0.1
 flask-login == 0.5.0
 huey == 2.3.2
 is-safe-url == 1.0
+redis == 3.5.3
 requests == 2.25.1
 sqlalchemy == 1.4.19
