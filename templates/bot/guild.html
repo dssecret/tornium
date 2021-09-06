@@ -130,6 +130,10 @@
             const id = $('#stakeoutcategory').val();
             const xhttp = new XMLHttpRequest();
 
+            xhttp.onload = function() {
+                window.location.reload();
+            }
+
             xhttp.open('POST', `/bot/stakeouts/{{ guildid }}/update?action=category&value=${id}`);
             xhttp.send();
         }
