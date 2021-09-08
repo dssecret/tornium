@@ -668,8 +668,8 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     payload = {
                         'embeds': [
                             {
-                                'title': 'Member Left',
-                                'description': f'Member {member["name"]} has left faction {data["name"]}.',
+                                'title': 'Member Joined',
+                                'description': f'Member {member["name"]} has joined faction {data["name"]}.',
                                 'timestamp': datetime.datetime.utcnow().isoformat(),
                                 'footer': {
                                     'text': utils.torn_timestamp()
