@@ -14,18 +14,55 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 import base64
+import datetime
 from functools import wraps
 import json
 import secrets
 
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, Response
 
 from database import session_local
 from models.user import User
 from models.usermodel import UserModel
+import redisdb
 import utils
 
 mod = Blueprint('apiroutes', __name__)
+
+
+def ratelimit(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        client = redisdb.get_redis()
+        key = kwargs['user'].tid
+        limit = 150
+
+        if client.setnx(key, limit):
+            client.expire(key, 60 - datetime.datetime.utcnow().second)
+
+        value = client.get(key)
+
+        if client.ttl(key) < 0:
+            client.expire(key, 1)
+
+        if value and int(value) > 0:
+            client.decrby(key, 1)
+        else:
+            client.expire(key, 1 + client.ttl(key))
+
+            return jsonify({
+                'code': 4000,
+                'name': 'Too Many Requests',
+                'message': 'Server failed to respond to request. Too many requests were received.'
+            }), 429, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 def torn_key_required(func):
@@ -78,16 +115,24 @@ def index():
 
 @mod.route('/api/test')
 @torn_key_required
+@ratelimit
 def test(*args, **kwargs):
+    client = redisdb.get_redis()
+
     return jsonify({
         'code': 1,
         'name': 'OK',
         'message': 'Server request was successful. Authentication was successful.'
-    }), 200
+    }), 200, {
+        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+    }
 
 
 @mod.route('/api/keys', methods=['POST'])
 @torn_key_required
+@ratelimit
 def create_key(*args, **kwargs):
     user = User(kwargs['user'].tid)
     session = session_local()
@@ -98,22 +143,34 @@ def create_key(*args, **kwargs):
     expires = data.get('expires')
 
     if expires <= utils.now():
+        client = redisdb.get_redis()
+
         return jsonify({
             'code': 0,
             'name': 'InvalidExpiryTimestamp',
             'message': 'Server failed to create the key. The provided timestamp was greater than the current '
                        'timestamp on the server.'
-        }), 400
+        }), 400, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
     if scopes is None:
         scopes = []
 
     for scope in scopes:
         if scope not in []:
+            client = redisdb.get_redis()
+
             return jsonify({
                 'code': 0,
                 'name': 'InvalidScope',
                 'message': 'Server failed to create the key. The provided array of scopes included an invalid scope.'
-            }), 400
+            }), 400, {
+                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            }
 
     key = base64.b64encode(f'{user.tid}:{secrets.token_urlsafe(32)}'.encode('utf-8')).decode('utf-8')
     user.keys[key] = {
