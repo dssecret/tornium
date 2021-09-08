@@ -55,10 +55,10 @@ def ratelimit(func):
                 'name': 'Too Many Requests',
                 'message': 'Server failed to respond to request. Too many requests were received.'
             }), 429, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-        }
+                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            }
 
         return func(*args, **kwargs)
 
