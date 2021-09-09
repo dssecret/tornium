@@ -41,11 +41,13 @@ def index():
 
 
 @mod.route('/bot/documentation')
+@login_required
 def documentation():
     return render_template('bot/documentation.html')
 
 
 @mod.route('/bot/host')
+@login_required
 def hosting():
     return render_template('bot/host.html')
 
