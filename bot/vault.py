@@ -37,7 +37,7 @@ class Vault(commands.Cog):
         self.bot = bot
         self.logger = logger
 
-    @commands.command(aliases=["req", "with", "w"])
+    @commands.command(aliases=["req", "with", "w", "W", "Withdraw"])
     async def withdraw(self, ctx, arg):
         await ctx.message.delete()
 
