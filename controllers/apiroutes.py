@@ -350,19 +350,19 @@ def create_stakeout(stype, *args, **kwargs):
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
-    # elif not set(json.loads(session.query(KeyModel).filter_by(key=kwargs['key']).first().scopes)) & \
-    #         {'admin', 'write:stakeouts', 'guilds:admin'}:  # TODO: Scope check broken on JSON loads of scopes
-    #     # Checks if key's scopes permit this action
-    #     return jsonify({
-    #         'code': 4004,
-    #         'name': 'InsufficientPermissions',
-    #         'message': 'Server failed to fulfill the request. The scope of the Tornium key provided was not '
-    #                    'sufficient for the request.'
-    #     }), 403, {
-    #         'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-    #         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-    #         'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-    #     }
+    elif not set(json.loads(session.query(KeyModel).filter_by(key=kwargs['key']).first().scopes)) & \
+            {'admin', 'write:stakeouts', 'guilds:admin'}:
+        # Checks if key's scopes permit this action
+        return jsonify({
+            'code': 4004,
+            'name': 'InsufficientPermissions',
+            'message': 'Server failed to fulfill the request. The scope of the Tornium key provided was not '
+                       'sufficient for the request.'
+        }), 403, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
     elif stype == 'user' and session.query(UserStakeoutModel).filter_by(tid=tid).first() is not None and guildid in \
             json.loads(session.query(UserStakeoutModel).filter_by(tid=tid).first()['guilds']):
         return jsonify({
