@@ -15,7 +15,7 @@
 
 import base64
 import datetime
-from functools import wraps
+from functools import wraps, partial
 import json
 import secrets
 
@@ -58,6 +58,36 @@ def ratelimit(func):
                 'name': 'Too Many Requests',
                 'message': 'Server failed to respond to request. Too many requests were received.'
             }), 429, {
+                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            }
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def requires_scopes(func=None, scopes=None):
+    if not func:
+        return partial(requires_scopes, scopes=scopes)
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        print(args)
+        print(kwargs)
+        print(scopes)
+
+        session = session_local()
+        client = redisdb.get_redis()
+
+        if not set(json.loads(session.query(KeyModel).filter_by(key=kwargs['key']).first().scopes)) & scopes:
+            return jsonify({
+                'code': 4004,
+                'name': 'InsufficientPermissions',
+                'message': 'Server failed to fulfill the request. The scope of the Tornium key provided was not '
+                           'sufficient for the request.'
+            }), 403, {
                 'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
                 'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
                 'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
@@ -291,6 +321,7 @@ def create_key(*args, **kwargs):
 @mod.route('/api/stakeouts/<string:stype>', methods=['POST'])
 @tornium_key_required
 @ratelimit
+@requires_scopes(scopes={'admin', 'write:stakeouts', 'guilds:admin'})
 def create_stakeout(stype, *args, **kwargs):
     session = session_local()
     data = json.loads(request.get_data().decode('utf-8'))
@@ -350,21 +381,8 @@ def create_stakeout(stype, *args, **kwargs):
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
-    elif not set(json.loads(session.query(KeyModel).filter_by(key=kwargs['key']).first().scopes)) & \
-            {'admin', 'write:stakeouts', 'guilds:admin'}:
-        # Checks if key's scopes permit this action
-        return jsonify({
-            'code': 4004,
-            'name': 'InsufficientPermissions',
-            'message': 'Server failed to fulfill the request. The scope of the Tornium key provided was not '
-                       'sufficient for the request.'
-        }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-        }
     elif stype == 'user' and session.query(UserStakeoutModel).filter_by(tid=tid).first() is not None and guildid in \
-            json.loads(session.query(UserStakeoutModel).filter_by(tid=tid).first()['guilds']):
+            json.loads(session.query(UserStakeoutModel).filter_by(tid=tid).first().guilds):
         return jsonify({
             'code': 0,
             'name': 'StakeoutAlreadyExists',
@@ -375,7 +393,7 @@ def create_stakeout(stype, *args, **kwargs):
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
     elif stype == 'faction' and session.query(FactionStakeoutModel).filter_by(tid=tid).first() is not None and \
-            guildid in json.loads(session.query(FactionStakeoutModel).filter_by(tid=tid).first()['guilds']):
+            guildid in json.loads(session.query(FactionStakeoutModel).filter_by(tid=tid).first().guilds):
         return jsonify({
             'code': 0,
             'name': 'StakeoutAlreadyExists',
