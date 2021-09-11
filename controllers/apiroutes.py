@@ -381,8 +381,8 @@ def create_stakeout(stype, *args, **kwargs):
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
-    elif stype == 'user' and session.query(UserStakeoutModel).filter_by(tid=tid).first() is not None and guildid in \
-            json.loads(session.query(UserStakeoutModel).filter_by(tid=tid).first().guilds):
+    elif stype == 'user' and session.query(UserStakeoutModel).filter_by(tid=tid).first() is not None and str(guildid) \
+            in json.loads(session.query(UserStakeoutModel).filter_by(tid=tid).first().guilds):
         return jsonify({
             'code': 0,
             'name': 'StakeoutAlreadyExists',
@@ -393,7 +393,7 @@ def create_stakeout(stype, *args, **kwargs):
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
     elif stype == 'faction' and session.query(FactionStakeoutModel).filter_by(tid=tid).first() is not None and \
-            guildid in json.loads(session.query(FactionStakeoutModel).filter_by(tid=tid).first().guilds):
+            str(guildid) in json.loads(session.query(FactionStakeoutModel).filter_by(tid=tid).first().guilds):
         return jsonify({
             'code': 0,
             'name': 'StakeoutAlreadyExists',
