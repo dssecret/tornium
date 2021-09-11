@@ -18,7 +18,7 @@ import json
 import math
 import random
 
-from huey import SqliteHuey, crontab
+from huey import SqliteHuey, RedisHuey, crontab
 import requests
 
 from database import session_local
@@ -31,7 +31,10 @@ from models.usermodel import UserModel, UserDiscordModel
 from models.userstakeoutmodel import UserStakeoutModel
 import utils
 
-huey = SqliteHuey()
+if settingsmodel.get('settings', 'taskqueue') == 'sqlite':
+    huey = SqliteHuey()
+else:
+    huey = RedisHuey(host='localhost', port=6379)
 
 
 @huey.task()

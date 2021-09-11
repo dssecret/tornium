@@ -53,7 +53,8 @@ def initialize():
             'banlist': [],
             'useragentlist': [],
             'bottoken': '',
-            'secret': str(os.urandom(32))
+            'secret': str(os.urandom(32)),
+            'taskqueue': 'redis'
         }
         _write('settings', data)
 
@@ -97,7 +98,7 @@ def get(file: str, key: str):
     if file not in _read('settings')['jsonfiles']:
         raise ValueError
 
-    return _read(file)[key]
+    return _read(file).get(key)
 
 
 def update(file: str, key: str, value):

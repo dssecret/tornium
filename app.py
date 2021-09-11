@@ -12,6 +12,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
+
 import datetime
 import logging
 import os
@@ -28,6 +29,7 @@ from controllers.botroutes import mod as bot_mod
 from controllers.errors import mod as error_mod
 from controllers.adminroutes import mod as admin_mod
 from controllers.statroutes import mod as stat_mod
+from controllers.apiroutes import mod as api_mod
 from database import session_local
 from models import settingsmodel as settings
 import utils
@@ -70,6 +72,7 @@ if settings.get("settings", "dev") and __name__ == "__main__":
     app.register_blueprint(error_mod)
     app.register_blueprint(admin_mod)
     app.register_blueprint(stat_mod)
+    app.register_blueprint(api_mod)
 
     app.run('localhost', 8000, debug=True)
 
@@ -82,3 +85,4 @@ if not settings.get("settings", "dev"):
     app.register_blueprint(admin_mod)
     app.register_blueprint(dev_mod)
     app.register_blueprint(stat_mod)
+    app.register_blueprint(api_mod)

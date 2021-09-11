@@ -12,7 +12,8 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
-from flask import Blueprint, render_template
+
+from flask import Blueprint, render_template, request, jsonify
 
 
 mod = Blueprint('errors', __name__)
@@ -48,7 +49,14 @@ def error404(e):
     :param e: HTTP error
     """
 
-    return render_template('/errors/404.html'), 404
+    if not request.path.startswith('/api') or request.path in ['/api', '/api/documentation']:
+        return render_template('/errors/404.html'), 404
+    else:
+        return jsonify({
+            'code': 4010,  # TODO: Update code once determined
+            'name': 'EndpointNotFound',
+            'message': 'Server failed to find the requested endpoint'
+        }), 404
 
 
 @mod.app_errorhandler(422)
