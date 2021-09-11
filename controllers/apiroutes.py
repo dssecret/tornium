@@ -428,7 +428,7 @@ def create_stakeout(stype, *args, **kwargs):
         session.flush()
 
     payload = {
-        'name': f'faction-{stakeout.data["name"]}' if name is None else name,
+        'name': f'{stype}-{stakeout.data["name"]}' if name is None else name,
         'type': 0,
         'topic': f'The bot-created channel for stakeout notifications for {stakeout.data["name"]} '
                  f'[{stakeout.data["player_id"] if stype == "user" else stakeout.data["ID"]}] by the Tornium bot.',
