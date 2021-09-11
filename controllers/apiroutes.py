@@ -74,10 +74,6 @@ def requires_scopes(func=None, scopes=None):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        print(args)
-        print(kwargs)
-        print(scopes)
-
         session = session_local()
         client = redisdb.get_redis()
 
@@ -485,7 +481,7 @@ def create_stakeout(stype, *args, **kwargs):
         'config': json.loads(db_stakeout.guilds)[str(guildid)],
         'data': stakeout.data,
         'last_update': stakeout.last_update
-    }), 403, {
+    }), 200, {
         'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
         'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
