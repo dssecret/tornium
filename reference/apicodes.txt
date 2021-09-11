@@ -5,4 +5,5 @@ Code, Error Code, HTTP Status Code, Message
 4001, NoAuthenticationInformation, 401, Server failed to authenticate the request. No authentication code was provided.
 4002, InvalidAuthenticationInformation, 401, Server failed to authenticate the request. The provided authentication code was invalid.
 4003, InvalidAuthenticationType, 401, Server failed to authenticate the request. The provided authentication type was not "Basic" and therefore invalid.
+4004, InsufficientPermissions, 403, Server failed to fulfill the request. The scope of the Tornium key provided was not sufficient for the request.
 4010, EndpointNotFound, 404, Server failed to find the requested endpoint.

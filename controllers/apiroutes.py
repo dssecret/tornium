@@ -19,11 +19,16 @@ from functools import wraps
 import json
 import secrets
 
-from flask import Blueprint, render_template, request, jsonify, Response
+from flask import Blueprint, render_template, request, jsonify
 
 from database import session_local
+from models.factionstakeoutmodel import FactionStakeoutModel
+from models.keymodel import KeyModel
+from models.servermodel import ServerModel
+from models.stakeout import Stakeout
 from models.user import User
 from models.usermodel import UserModel
+from models.userstakeoutmodel import UserStakeoutModel
 import redisdb
 import utils
 
@@ -48,8 +53,6 @@ def ratelimit(func):
         if value and int(value) > 0:
             client.decrby(key, 1)
         else:
-            client.expire(key, 1 + client.ttl(key))
-
             return jsonify({
                 'code': 4000,
                 'name': 'Too Many Requests',
@@ -102,6 +105,103 @@ def torn_key_required(func):
             }), 401
 
         kwargs['user'] = user
+        kwargs['keytype'] = 'Torn'
+        kwargs['key'] = authorization
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def tornium_key_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if request.headers.get('Authorization') is None:
+            return jsonify({
+                'code': 4001,
+                'name': 'NoAuthenticationInformation',
+                'message': 'Server failed to authenticate the request. No authentication code was provided.'
+            }), 401
+        elif request.headers.get('Authorization').split(' ')[0] != 'Basic':
+            return jsonify({
+                'code': 4003,
+                'name': 'InvalidAuthenticationType',
+                'message': 'Server failed to authenticate the request. The provided authentication type was not '
+                           '"Basic" and therefore invalid.'
+            }), 401
+
+        authorization = str(base64.b64decode(request.headers.get('Authorization').split(' ')[1]), 'utf-8').split(':')[0]
+
+        if authorization == '':
+            return jsonify({
+                'code': 4001,
+                'name': 'NoAuthenticationInformation',
+                'message': 'Server failed to authenticate the request. No authentication code was provided.'
+            }), 401
+
+        session = session_local()
+        key = session.query(KeyModel).filter_by(key=authorization).first()
+
+        if key is None:
+            return jsonify({
+                'code': 4001,
+                'name': 'InvalidAuthenticationInformation',
+                'message': 'Server failed to authenticate the request. The provided authentication code was invalid.'
+            }), 401
+
+        kwargs['user'] = session.query(UserModel).filter_by(tid=key.ownertid).first()
+        kwargs['keytype'] = 'Tornium'
+        kwargs['key'] = authorization
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def key_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if request.headers.get('Authorization') is None:
+            return jsonify({
+                'code': 4001,
+                'name': 'NoAuthenticationInformation',
+                'message': 'Server failed to authenticate the request. No authentication code was provided.'
+            }), 401
+        elif request.headers.get('Authorization').split(' ')[0] != 'Basic':
+            return jsonify({
+                'code': 4003,
+                'name': 'InvalidAuthenticationType',
+                'message': 'Server failed to authenticate the request. The provided authentication type was not '
+                           '"Basic" and therefore invalid.'
+            }), 401
+
+        authorization = str(base64.b64decode(request.headers.get('Authorization').split(' ')[1]), 'utf-8').split(':')[0]
+
+        if authorization == '':
+            return jsonify({
+                'code': 4001,
+                'name': 'NoAuthenticationInformation',
+                'message': 'Server failed to authenticate the request. No authentication code was provided.'
+            }), 401
+
+        session = session_local()
+        key = session.query(KeyModel).filter_by(key=authorization).first()
+        user = session.query(UserModel).filter_by(key=authorization).first()
+
+        if user is not None:
+            kwargs['user'] = user
+            kwargs['keytype'] = 'Torn'
+            kwargs['key'] = authorization
+        elif key is not None:
+            kwargs['user'] = session.query(UserModel).filter_by(tid=key.ownertid).first()
+            kwargs['keytype'] = 'Tornium'
+            kwargs['key'] = authorization
+        else:
+            return jsonify({
+                'code': 4001,
+                'name': 'InvalidAuthenticationInformation',
+                'message': 'Server failed to authenticate the request. The provided authentication code was invalid.'
+            }), 401
 
         return func(*args, **kwargs)
 
@@ -113,10 +213,10 @@ def index():
     return render_template('api/index.html')
 
 
-@mod.route('/api/test')
+@mod.route('/api/key')
 @torn_key_required
 @ratelimit
-def test(*args, **kwargs):
+def test_key(*args, **kwargs):
     client = redisdb.get_redis()
 
     return jsonify({
@@ -136,13 +236,12 @@ def test(*args, **kwargs):
 def create_key(*args, **kwargs):
     user = User(kwargs['user'].tid)
     session = session_local()
-    user_db = session.query(UserModel).filter_by(tid=user.tid).first()
     data = json.loads(request.get_data().decode('utf-8'))
 
     scopes = data.get('scopes')
     expires = data.get('expires')
 
-    if expires <= utils.now():
+    if expires is not None and expires <= utils.now():
         client = redisdb.get_redis()
 
         return jsonify({
@@ -173,9 +272,203 @@ def create_key(*args, **kwargs):
             }
 
     key = base64.b64encode(f'{user.tid}:{secrets.token_urlsafe(32)}'.encode('utf-8')).decode('utf-8')
-    user.keys[key] = {
-        'scopes': json.loads(scopes),
-        'expires': expires if expires is not None else utils.now() + 2592000  # One month from now
-    }
-    user_db.keys = json.dumps(user.keys)
+    keydb = KeyModel(
+        key=key,
+        ownertid=user.tid,
+        scopes=json.dumps(scopes)
+    )
+    session.add(keydb)
+    session.flush()
 
+    return jsonify({
+        'key': key,
+        'ownertid': user.tid,
+        'scopes': scopes,
+        'expires': expires
+    })
+
+
+@mod.route('/api/stakeouts/<string:stype>', methods=['POST'])
+@tornium_key_required
+@ratelimit
+def create_stakeout(stype, *args, **kwargs):
+    session = session_local()
+    data = json.loads(request.get_data().decode('utf-8'))
+    client = redisdb.get_redis()
+
+    guildid = data.get('guildid')
+    tid = data.get('tid')
+    keys = data.get('keys')
+    name = data.get('name')
+    category = data.get('category')
+
+    if guildid is None:
+        return jsonify({
+            'code': 0,
+            'name': 'UnknownGuild',
+            'message': 'Server failed to fulfill the request. There was no guild ID provided but a guild ID was '
+                       'required.'
+        }), 400, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+    elif tid is None:
+        return jsonify({
+            'code': 0,
+            'name': 'UnkownID',
+            'message': 'Server failed to fulfill the request. There was no Torn ID provided but a Torn ID was '
+                       'required.'
+        }), 400, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    guildid = int(guildid)
+    tid = int(tid)
+
+    if stype not in ['faction', 'user']:
+        return jsonify({
+            'code': 0,
+            'name': 'InvalidStakeoutType',
+            'message': 'Server failed to create the stakeout. The provided stakeout type did not match a known '
+                       'stakeout type.'
+        }), 400, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+    elif str(guildid) not in User(session.query(KeyModel).filter_by(key=kwargs['key']).first().ownertid).servers:
+        return jsonify({
+            'code': 0,
+            'name': 'UnknownGuild',
+            'message': 'Server failed to fulfill the request. The provided guild ID did not match a guild that the '
+                       'owner of the provided Tornium key was marked as an administrator in.'
+        }), 403, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+    # elif not set(json.loads(session.query(KeyModel).filter_by(key=kwargs['key']).first().scopes)) & \
+    #         {'admin', 'write:stakeouts', 'guilds:admin'}:  # TODO: Scope check broken on JSON loads of scopes
+    #     # Checks if key's scopes permit this action
+    #     return jsonify({
+    #         'code': 4004,
+    #         'name': 'InsufficientPermissions',
+    #         'message': 'Server failed to fulfill the request. The scope of the Tornium key provided was not '
+    #                    'sufficient for the request.'
+    #     }), 403, {
+    #         'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+    #         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+    #         'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+    #     }
+    elif stype == 'user' and session.query(UserStakeoutModel).filter_by(tid=tid).first() is not None and guildid in \
+            json.loads(session.query(UserStakeoutModel).filter_by(tid=tid).first()['guilds']):
+        return jsonify({
+            'code': 0,
+            'name': 'StakeoutAlreadyExists',
+            'message': 'Server failed to fulfill the request. The provided user ID is already being staked'
+        }), 400, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+    elif stype == 'faction' and session.query(FactionStakeoutModel).filter_by(tid=tid).first() is not None and \
+            guildid in json.loads(session.query(FactionStakeoutModel).filter_by(tid=tid).first()['guilds']):
+        return jsonify({
+            'code': 0,
+            'name': 'StakeoutAlreadyExists',
+            'message': 'Server failed to fulfill the request. The provided faction ID is already being staked'
+        }), 400, {
+                   'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+                   'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+                   'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+               }
+    elif stype == 'user' and keys is not None and not set(keys) & {'level', 'status', 'flyingstatus', 'online', 'offline'}:
+        return jsonify({
+            'code': 0,
+            'name': 'InvalidStakeoutKey',
+            'message': 'Server failed to fulfill the request. The provided array of stakeout keys included a '
+                       'stakeout key that was invalid for the provided stakeout type..'
+        }), 403, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+    elif stype == 'faction' and keys is not None and not set(keys) & {'territory', 'members', 'memberstatus', 'memberactivity'}:
+        return jsonify({
+            'code': 0,
+            'name': 'InvalidStakeoutKey',
+            'message': 'Server failed to fulfill the request. The provided array of stakeout keys included a '
+                       'stakeout key that was invalid for the provided stakeout type..'
+        }), 403, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    stakeout = Stakeout(
+        tid=tid,
+        guild=guildid,
+        user=True if stype == 'user' else False,
+        key=kwargs['user'].key
+    )
+    guild = session.query(ServerModel).filter_by(sid=guildid).first()
+
+    if stype == 'user':
+        stakeouts = json.loads(guild.userstakeouts)
+        stakeouts.append(tid)
+        guild.userstakeouts = json.dumps(list(set(stakeouts)))
+        session.flush()
+    elif stype == 'faction':
+        stakeouts = json.loads(guild.factionstakeouts)
+        stakeouts.append(tid)
+        guild.factionstakeouts = json.dumps(list(set(stakeouts)))
+        session.flush()
+
+    payload = {
+        'name': f'faction-{stakeout.data["name"]}' if name is None else name,
+        'type': 0,
+        'topic': f'The bot-created channel for stakeout notifications for {stakeout.data["name"]} '
+                 f'[{stakeout.data["player_id"] if stype == "user" else stakeout.data["ID"]}] by the Tornium bot.',
+        'parent_id': json.loads(guild.stakeoutconfig)['category'] if category is None else category
+    }
+
+    channel = utils.tasks.discordpost(f'guilds/{guildid}/channels', payload=payload)
+    channel = channel(blocking=True)
+
+    stakeout.guilds[str(guildid)]['channel'] = int(channel['id'])
+    if stype == 'user':
+        db_stakeout = session.query(UserStakeoutModel).filter_by(tid=tid).first()
+    elif stype == 'faction':
+        db_stakeout = session.query(FactionStakeoutModel).filter_by(tid=tid).first()
+
+    db_stakeout.guilds = json.dumps(stakeout.guilds)
+    session.flush()
+
+    message_payload = {
+        'embeds': [
+            {
+                'title': 'Faction Stakeout Creation',
+                'description': f'A stakeout of faction {stakeout.data["name"]} has been created in '
+                               f'{guild.name}. This stakeout can be setup or removed in the '
+                               f'[Tornium Dashboard](https://torn.deek.sh/bot/stakeouts/{guild.sid}) by a '
+                               f'server administrator.',
+                'timestamp': datetime.datetime.utcnow().isoformat()
+            }
+        ]
+    }
+    utils.tasks.discordpost(f'channels/{channel["id"]}/messages', payload=message_payload)()
+
+    return jsonify({
+        'id': tid,
+        'type': stype,
+        'config': json.loads(db_stakeout.guilds)[str(guildid)],
+        'data': stakeout.data,
+        'last_update': stakeout.last_update
+    }), 403, {
+        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+    }

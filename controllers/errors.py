@@ -49,7 +49,7 @@ def error404(e):
     :param e: HTTP error
     """
 
-    if not request.path.startswith('/api'):
+    if not request.path.startswith('/api') or request.path in ['/api', '/api/documentation']:
         return render_template('/errors/404.html'), 404
     else:
         return jsonify({
