@@ -55,6 +55,30 @@ def tornget(endpoint, key, tots=0, fromts=0, session=None):
     request = request.json()
 
     if 'error' in request:
+        if request['error']['code'] == 13 or request['error']['code'] == 10:
+            db_session = session_local()
+            user = db_session.query(UserModel).filter_by(key=key).first()
+            user.key = ''
+
+            faction = db_session.query(FactionModel).fitler_by(tid=user.factiontid).first()
+            faction_keys = json.loads(faction.keys)
+
+            if key in faction_keys:
+                faction_keys.remove(key)
+
+            faction.keys = json.dumps(faction_keys)
+
+            for server in json.loads(user.servers):
+                server = db_session.query(ServerModel).filter_by(sid=server).first()
+                server_admins = json.loads(server.admins)
+
+                if user.tid in server_admins:
+                    server_admins.remove(user.tid)
+
+                server.admins = json.dumps(server_admins)
+
+            db_session.flush()
+
         utils.get_logger().info(f'The Torn API has responded with error code {request["error"]["code"]} '
                                 f'({request["error"]["error"]}) to {endpoint}).')
         raise utils.TornError(request["error"]["code"])
