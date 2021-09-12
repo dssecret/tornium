@@ -272,7 +272,12 @@ def bankingdata():
     withdrawals = []
 
     for withdrawal in faction.withdrawals:
-        withdrawals.append([withdrawal['id'], f'${withdrawal["amount"]}', withdrawal['requester'], withdrawal['timerequested'], withdrawal['fulfiller'], withdrawal['timefulfilled']])
+        requester = f'{User(withdrawal["requester"]).name} [{withdrawal["requester"]}]'
+        fulfiller = f'{User(withdrawal["fulfiller"]).name} [{withdrawal["fulfiller"]}]' if withdrawal["fulfiller"] != 0 else ''
+        timefulfilled = withdrawal['timefulfilled'] if withdrawal['timefulfilled'] != 0 else ''
+
+        withdrawals.append([withdrawal["id"], f'${withdrawal["amount"]:,}', requester, withdrawal['timerequested'],
+                            fulfiller, timefulfilled])
 
     withdrawals = withdrawals[start:start+length]
     data = {
