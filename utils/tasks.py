@@ -241,7 +241,7 @@ def refresh_users():
         for guild in guilds:
             try:
                 member = discordget(f'guilds/{guild["id"]}/members/{user.discord_id}', session=requests_session)
-                member(blocking=True)
+                member = member(blocking=True)
             except utils.DiscordError as e:
                 if int(str(e)) == 10007:
                     break
