@@ -455,7 +455,7 @@ def banking_request(*args, **kwargs):
                 }
             ]
         }
-        message = utils.tasks.discordpost(f'channels/{vault_config["withdrawal"]}/messages', payload=message_payload)
+        message = utils.tasks.discordpost(f'channels/{vault_config["banking"]}/messages', payload=message_payload)
         message = message(blocking=True)
 
         faction.withdrawals.append({
