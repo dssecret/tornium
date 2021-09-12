@@ -16,8 +16,10 @@
 import datetime
 import json
 
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request
 from flask_login import login_required, current_user
+from sqlalchemy import String
+from sqlalchemy.sql.expression import cast
 
 import utils
 from controllers.factionroutes import aa_required
@@ -53,7 +55,7 @@ def stats_data():
     users = []
 
     if utils.get_tid(search_value):
-        stat_entries = session.query(StatModel).filter_by(tid=utils.get_tid(search_value)).all()
+        stat_entries = session.query(StatModel).filter(cast(StatModel.tid, String).startswith(str(utils.get_tid(search_value)))).all()
     else:
         stat_entries = session.query(StatModel).all()
 

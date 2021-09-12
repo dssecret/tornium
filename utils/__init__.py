@@ -31,7 +31,10 @@ def get_tid(name):
     try:
         return int(re.compile(r"\[(\d+)\]").findall(name)[0])
     except IndexError:
-        return 0
+        try:
+            return int(name)
+        except ValueError:
+            return 0
 
 
 def get_torn_name(name):
