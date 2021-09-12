@@ -220,7 +220,7 @@ def refresh_users():
         user.last_action = user_data['last_action']['relative']
         user.level = user_data['level']
         user.admin = False if user.tid != 2383326 else True
-        user.discord_id = user_data['discord']['discordID']
+        user.discord_id = user_data['discord']['discordID'] if user_data['discord']['discordID'] != '' else 0
         user.factiontid = user_data['faction']['faction_id']
 
         battlescore = math.sqrt(user_data['strength']) + math.sqrt(user_data['speed']) + \
