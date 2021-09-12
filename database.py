@@ -17,7 +17,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-engine = create_engine('sqlite+pysqlite:///data.sql', connect_args={'check_same_thread': False})
+from models import settingsmodel
+
+if settingsmodel.is_dev():
+    engine = create_engine('sqlite+pysqlite:///data.sql', connect_args={'check_same_thread': False})
+else:
+    engine = create_engine(f'mysql+pymysql://{settingsmodel.get("settings", "username")}:'
+                           f'{settingsmodel.get("settings", "password")}@localhost/Tornium')
+
 session_local = scoped_session(sessionmaker(autocommit=True, autoflush=False, bind=engine))
 base = declarative_base()
 

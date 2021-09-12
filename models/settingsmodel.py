@@ -54,7 +54,9 @@ def initialize():
             'useragentlist': [],
             'bottoken': '',
             'secret': str(os.urandom(32)),
-            'taskqueue': 'redis'
+            'taskqueue': 'redis',
+            'username': 'tornium',
+            'password': ''
         }
         _write('settings', data)
 
