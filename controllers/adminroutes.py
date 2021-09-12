@@ -50,10 +50,16 @@ def dashboard():
     if request.method == 'POST':
         if request.form.get('refreshfactions') is not None:
             utils.tasks.refresh_factions()
+        elif request.form.get('refreshguilds') is not None:
+            utils.tasks.refresh_guilds()
         elif request.form.get('refreshusers') is not None:
             utils.tasks.refresh_users()
         elif request.form.get('fetchattacks') is not None:
             utils.tasks.fetch_attacks()
+        elif request.form.get('refreshuserstakeouts') is not None:
+            utils.tasks.update_user_stakeouts()
+        elif request.form.get('refreshfactionstakeouts') is not None:
+            utils.tasks.update_faction_stakeouts()
 
     return render_template('admin/dashboard.html')
 

@@ -215,15 +215,64 @@ def refresh_factions():
     session.flush()
 
 
+@huey.periodic_task(crontab(minute='30'))
+def refresh_guilds():
+    session = session_local()
+    requests_session = requests.Session()
+
+    guilds = discordget('users/@me/guilds', session=requests_session)
+    guilds = guilds(blocking=True)
+
+    for guild in guilds:
+        try:
+            members = discordget(f'guilds/{guild["id"]}/members', session=requests_session)
+            members = members(blocking=True)
+        except utils.DiscordError as e:
+            if int(str(e)) == 10007:
+                break
+            else:
+                return utils.handle_discord_error(str(e))
+        except:
+            continue
+
+        try:
+            guild = discordget(f'guilds/{guild["id"]}', session=requests_session)
+            guild = guild(blocking=True)
+        except utils.DiscordError as e:
+            return utils.handle_discord_error(str(e))
+
+        owner_discord = session.query(UserDiscordModel).filter_by(discord_id=guild['owner_id']).first()
+
+        if owner_discord is not None and owner_discord.tid != 0:
+            owner = session.query(UserModel).filter_by(owner_discord.tid).first()
+            owner_servers = json.loads(owner.servers)
+            owner_servers.append(guild['id'])
+            owner.servers = json.dumps(list(set(owner_servers)))
+
+        for member in members:
+            member_discord = session.query(UserDiscordModel).filter_by(discord_id=member['user']['id'])
+
+            if member_discord is not None and member_discord.tid != 0:
+                user = session.query(UserModel).filter_by(member_discord.tid).first()
+                user_servers = json.loads(user.servers)
+
+                for role in member['roles']:
+                    for guild_role in guild['roles']:
+                        # Checks if the user has the role and the role has the administrator permission
+                        if guild_role['id'] == role and (int(guild_role['permissions']) & 0x0000000008) == 0x0000000008:
+                            user_servers.append(guild['id'])
+
+                user.servers = json.dumps(list(set(user_servers)))
+
+    session.flush()
+
+
 @huey.periodic_task(crontab(minute='0'))
 def refresh_users():
     session = session_local()
     requests_session = requests.Session()
     users = []
     timestamp = utils.now()
-
-    guilds = discordget('users/@me/guilds', session=requests_session)
-    guilds = guilds(blocking=True)
 
     for user in session.query(UserModel).all():
         if user.key == '':
@@ -258,46 +307,6 @@ def refresh_users():
                 tid=user.tid
             )
             session.add(discord_user)
-            session.flush()
-
-        servers = []
-
-        for guild in guilds:
-            try:
-                member = discordget(f'guilds/{guild["id"]}/members/{user.discord_id}', session=requests_session)
-                member = member(blocking=True)
-            except utils.DiscordError as e:
-                if int(str(e)) == 10007:
-                    break
-                else:
-                    return utils.handle_discord_error(str(e))
-            except:
-                continue
-
-            try:
-                guild = discordget(f'guilds/{guild["id"]}', session=requests_session)
-                guild = guild(blocking=True)
-            except utils.DiscordError as e:
-                return utils.handle_discord_error(str(e))
-            is_admin = False
-
-            if guild['owner_id'] == user.discord_id:
-                servers.append(guild['id'])
-                is_admin = True
-                break
-
-            for role in member['roles']:
-                for guild_role in guild['roles']:
-                    # Checks if the user has the role and the role has the administrator permission
-                    if guild_role['id'] == role and (int(guild_role['permissions']) & 0x0000000008) == 0x0000000008:
-                        servers.append(guild['id'])
-                        is_admin = True
-                        break
-
-                if is_admin:
-                    break
-
-        user.servers = json.dumps(servers)
         session.flush()
 
 
