@@ -14,13 +14,22 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.dialects.mysql import BIGINT, MEDIUMTEXT
+
 from database import base
+from models.settingsmodel import is_dev
 
 
 class FactionStakeoutModel(base):
     __tablename__ = 'FactionStakeouts'
 
-    tid = Column(Integer, primary_key=True)  # The faction ID of the stakeout
-    data = Column(String)  # String of data from the Torn API
-    guilds = Column(String)  # String of list of keys to be watched
-    lastupdate = Column(Integer)
+    if is_dev():
+        tid = Column(Integer, primary_key=True)  # The faction ID of the stakeout
+        data = Column(String)  # String of data from the Torn API
+        guilds = Column(String)  # String of list of keys to be watched
+        lastupdate = Column(Integer)
+    else:
+        tid = Column(BIGINT, primary_key=True)  # The faction ID of the stakeout
+        data = Column(MEDIUMTEXT)  # String of data from the Torn API
+        guilds = Column(MEDIUMTEXT)  # String of list of keys to be watched
+        lastupdate = Column(BIGINT)

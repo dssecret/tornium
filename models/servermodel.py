@@ -14,20 +14,36 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.dialects.mysql import BIGINT, TEXT, MEDIUMTEXT, TINYTEXT
+
 from database import base
+from models.settingsmodel import is_dev
 
 
 class ServerModel(base):
     __tablename__ = 'Servers'
 
-    sid = Column(Integer, primary_key=True)
-    name = Column(String)
-    admins = Column(String)  # String of list of admin ids
-    prefix = Column(String)
-    config = Column(String)  # String of dictionary of server configurations
+    if is_dev():
+        sid = Column(Integer, primary_key=True)
+        name = Column(String)
+        admins = Column(String)  # String of list of admin ids
+        prefix = Column(String)
+        config = Column(String)  # String of dictionary of server configurations
 
-    factions = Column(String)  # String of list of factions in server
+        factions = Column(String)  # String of list of factions in server
 
-    stakeoutconfig = Column(String)  # String of dictionary of stakeout configurations for the server
-    userstakeouts = Column(String)  # String of list of staked-out users
-    factionstakeouts = Column(String)  # String of list of staked-out factions
+        stakeoutconfig = Column(String)  # String of dictionary of stakeout configurations for the server
+        userstakeouts = Column(String)  # String of list of staked-out users
+        factionstakeouts = Column(String)  # String of list of staked-out factions
+    else:
+        sid = Column(BIGINT, primary_key=True)
+        name = Column(TEXT)
+        admins = Column(MEDIUMTEXT)  # String of list of admin ids
+        prefix = Column(TINYTEXT)
+        config = Column(TEXT)  # String of dictionary of server configurations
+
+        factions = Column(MEDIUMTEXT)  # String of list of factions in server
+
+        stakeoutconfig = Column(TEXT)  # String of dictionary of stakeout configurations for the server
+        userstakeouts = Column(MEDIUMTEXT)  # String of list of staked-out users
+        factionstakeouts = Column(MEDIUMTEXT)  # String of list of staked-out factions

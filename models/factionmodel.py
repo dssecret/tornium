@@ -14,29 +14,54 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.dialects.mysql import BIGINT, TEXT, INTEGER, LONGTEXT
+
 from database import base
+from models.settingsmodel import is_dev
 
 
 class FactionModel(base):
     __tablename__ = 'Factions'
 
-    tid = Column(Integer, primary_key=True)
-    name = Column(String)
-    respect = Column(Integer)
-    capacity = Column(Integer)
-    leader = Column(Integer)
-    coleader = Column(Integer)
+    if is_dev():
+        tid = Column(Integer, primary_key=True)
+        name = Column(String)
+        respect = Column(Integer)
+        capacity = Column(Integer)
+        leader = Column(Integer)
+        coleader = Column(Integer)
 
-    keys = Column(String)  # String of list of keys
+        keys = Column(String)  # String of list of keys
 
-    last_members = Column(Integer)  # Time of last members update
+        last_members = Column(Integer)  # Time of last members update
 
-    withdrawals = Column(String)  # String of list of dictionary of requests
+        withdrawals = Column(String)  # String of list of dictionary of requests
 
-    guild = Column(Integer)  # Guild ID of the faction's guild
-    config = Column(String)  # String of dictionary of faction's bot configuration
-    vaultconfig = Column(String)  # String of dictionary of vault configuration
+        guild = Column(Integer)  # Guild ID of the faction's guild
+        config = Column(String)  # String of dictionary of faction's bot configuration
+        vaultconfig = Column(String)  # String of dictionary of vault configuration
 
-    targets = Column(String)  # String of dictionary of targets
+        targets = Column(String)  # String of dictionary of targets
 
-    statconfig = Column(String)  # String of dictionary of target config
+        statconfig = Column(String)  # String of dictionary of target config
+    else:
+        tid = Column(BIGINT, primary_key=True)
+        name = Column(TEXT)
+        respect = Column(INTEGER)
+        capacity = Column(INTEGER)
+        leader = Column(INTEGER)
+        coleader = Column(INTEGER)
+
+        keys = Column(TEXT)  # String of list of keys
+
+        last_members = Column(BIGINT)  # Time of last members update
+
+        withdrawals = Column(LONGTEXT)  # String of list of dictionary of requests
+
+        guild = Column(BIGINT)  # Guild ID of the faction's guild
+        config = Column(TEXT)  # String of dictionary of faction's bot configuration
+        vaultconfig = Column(TEXT)  # String of dictionary of vault configuration
+
+        targets = Column(LONGTEXT)  # String of dictionary of targets
+
+        statconfig = Column(TEXT)  # String of dictionary of target config

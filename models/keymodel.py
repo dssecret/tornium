@@ -14,12 +14,20 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.dialects.mysql import VARCHAR, BIGINT, MEDIUMTEXT
+
 from database import base
+from models.settingsmodel import is_dev
 
 
 class KeyModel(base):
     __tablename__ = 'Keys'
 
-    key = Column(String, primary_key=True)
-    ownertid = Column(Integer)
-    scopes = Column(String)  # String of list of scopes
+    if is_dev():
+        key = Column(String, primary_key=True)
+        ownertid = Column(Integer)
+        scopes = Column(String)  # String of list of scopes
+    else:
+        key = Column(VARCHAR(70), primary_key=True)
+        ownertid = Column(BIGINT)
+        scopes = Column(MEDIUMTEXT)  # String of list of scopes

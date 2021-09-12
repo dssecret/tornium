@@ -14,15 +14,26 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 from sqlalchemy import Column, Integer, Float, String
+from sqlalchemy.dialects.mysql import INTEGER, FLOAT, TEXT
+
 from database import base
+from models.settingsmodel import is_dev
 
 
 class StatModel(base):
     __tablename__ = 'Stats'
 
-    statid = Column(Integer, primary_key=True)
-    tid = Column(Integer)
-    battlescore = Column(Float)
-    battlestats = Column(String)  # String of list of battlestats [str, def, spd, dex]
-    timeadded = Column(Integer)
-    addedid = Column(Integer)
+    if is_dev():
+        statid = Column(Integer, primary_key=True)
+        tid = Column(Integer)
+        battlescore = Column(Float)
+        battlestats = Column(String)  # String of list of battlestats [str, def, spd, dex]
+        timeadded = Column(Integer)
+        addedid = Column(Integer)
+    else:
+        statid = Column(INTEGER, primary_key=True)
+        tid = Column(INTEGER)
+        battlescore = Column(FLOAT)
+        battlestats = Column(TEXT)  # String of list of battlestats [str, def, spd, dex]
+        timeadded = Column(INTEGER)
+        addedid = Column(INTEGER)
