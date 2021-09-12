@@ -297,7 +297,7 @@ def index():
 
 
 @mod.route('/api/key')
-@torn_key_required
+@key_required
 @ratelimit
 def test_key(*args, **kwargs):
     client = redisdb.get_redis()
