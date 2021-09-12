@@ -445,7 +445,7 @@ def banking_request(*args, **kwargs):
 
         request_id = len(faction.withdrawals) + 1
         message_payload = {
-            # 'content': f'<@&{vault_config["banker"]}>',
+            'content': f'<@&{vault_config["banker"]}>',
             'embeds': [
                 {
                     'title': f'Vault Request #{request_id}',
