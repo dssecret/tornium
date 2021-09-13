@@ -111,9 +111,9 @@ class User(UserMixin):
             session = session_local()
 
             if key == self.get_key():
-                user_data = tornget(f'user/?selections=profile,battlestats', key)
+                user_data = tornget(f'user/?selections=profile,battlestats,discord', key)
             else:
-                user_data = tornget(f'user/{self.tid}?selections=', key)
+                user_data = tornget(f'user/{self.tid}?selections=profile,discord', key)
             user_data = user_data(blocking=True)
 
             user = session.query(UserModel).filter_by(tid=self.tid).first()
@@ -124,6 +124,7 @@ class User(UserMixin):
             user.last_action = user_data['last_action']['relative']
             user.level = user_data['level']
             user.admin = False if self.tid != 2383326 else True
+            user.discord_id = user_data['discord']['discordID'] if user_data['discord']['discordID'] != '' else 0
 
             if key == self.get_key():
                 battlescore = math.sqrt(user_data['strength']) + math.sqrt(user_data['speed']) + \
@@ -137,85 +138,18 @@ class User(UserMixin):
             self.last_action = user_data['last_action']['relative']
             self.level = user_data['level']
             self.battlescore = json.loads(user.battlescore)
+            self.discord_id = user_data['discord']['discordID'] if user_data['discord']['discordID'] != '' else 0
 
-    def discord_refresh(self, force=False):
-        from models.server import Server
+            if self.discord_id != 0:
+                discord_user = session.query(UserDiscordModel).filter_by(discord_id=self.discord_id).first()
 
-        session = session_local()
-        user = session.query(UserModel).filter_by(tid=self.tid).first()
-
-        if self.discord_id == "" or not force:
-            user_data = tornget(f'user/?selections=discord', self.key)
-            user_data = user_data(blocking=True)
-
-            if user_data['discord']['discordID'] != '':
-                self.discord_id = user_data['discord']['discordID']
-                user.discord_id = user_data['discord']['discordID']
-
-        discord_user = session.query(UserDiscordModel).filter_by(discord_id=self.discord_id).first()
-
-        if discord_user is None:
-            discord_user = UserDiscordModel(
-                discord_id=self.discord_id,
-                tid=self.tid
-            )
-            session.add(discord_user)
-            session.flush()
-
-        servers = []
-        requests_session = requests.Session()
-        guilds = discordget('users/@me/guilds', session=requests_session)
-        guilds = guilds(blocking=True)
-
-        for guild in guilds:
-            try:
-                member = discordget(f'guilds/{guild["id"]}/members/{self.discord_id}', session=requests_session)
-                member = member(blocking=True)
-            except utils.DiscordError as e:
-                if int(str(e)) == 10007:
-                    break
-                else:
-                    return utils.handle_discord_error(str(e))
-            except utils.NetworkingError as e:
-                break
-
-            try:
-                guild = discordget(f'guilds/{guild["id"]}', session=requests_session)
-                guild = guild(blocking=True)
-            except utils.DiscordError as e:
-                return utils.handle_discord_error(str(e))
-            except utils.NetworkingError as e:
-                break
-
-            is_admin = False
-
-            if guild['owner_id'] == self.discord_id:
-                servers.append(guild['id'])
-                is_admin = True
-                break
-
-            for role in member['roles']:
-                for guild_role in guild['roles']:
-                    # Checks if the user has the role and the role has the administrator permission
-                    if guild_role['id'] == role and (int(guild_role['permissions']) & 0x0000000008) == 0x0000000008:
-                        servers.append(guild['id'])
-                        is_admin = True
-                        break
-
-                if is_admin:
-                    break
-
-        self.servers = servers
-        user.servers = json.dumps(servers)
-        session.flush()
-
-        for sid in self.servers:
-            server = Server(sid)
-            server_model = session.query(ServerModel).filter_by(sid=sid).first()
-
-            server.admins.append(self.tid)
-            server_model.admins = json.dumps(server.admins)
-            session.flush()
+                if discord_user is None:
+                    discord_user = UserDiscordModel(
+                        discord_id=self.discord_id,
+                        tid=self.tid
+                    )
+                    session.add(discord_user)
+                    session.flush()
 
     def faction_refresh(self):
         session = session_local()
