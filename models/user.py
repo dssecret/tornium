@@ -176,12 +176,17 @@ class User(UserMixin):
                     break
                 else:
                     return utils.handle_discord_error(str(e))
+            except utils.NetworkingError as e:
+                break
 
             try:
                 guild = discordget(f'guilds/{guild["id"]}', session=requests_session)
                 guild = guild(blocking=True)
             except utils.DiscordError as e:
                 return utils.handle_discord_error(str(e))
+            except utils.NetworkingError as e:
+                break
+
             is_admin = False
 
             if guild['owner_id'] == self.discord_id:
