@@ -338,7 +338,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
         for attack in faction_data['attacks'].values():
             if attack['attacker_faction'] != faction_data['ID']:
                 continue
-            elif attack['result'] in ['Assist', 'Lost', 'Stalemate']:
+            elif attack['result'] in ['Assist', 'Lost', 'Stalemate', 'Attacked', 'Mugged', 'Hospitalized', 'Special', 'Escape']:
                 continue
             elif attack['defender_id'] in [4, 10, 15, 17, 19, 20, 21]:  # Checks if NPC fight (and you defeated NPC)
                 continue
