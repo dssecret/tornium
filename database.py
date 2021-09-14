@@ -24,7 +24,8 @@ if settingsmodel.is_dev():
 else:
     engine = create_engine(f'mysql+pymysql://{settingsmodel.get("settings", "username")}:'
                            f'{settingsmodel.get("settings", "password")}@localhost/Tornium',
-                          pool_pre_ping=True)
+                           pool_pre_ping=True, 
+                           pool_recycle=3600e)
 
 session_local = scoped_session(sessionmaker(autocommit=True, autoflush=False, bind=engine))
 base = declarative_base()
