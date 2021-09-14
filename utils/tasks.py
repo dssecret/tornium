@@ -456,7 +456,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
         try:
             channels = channels(blocking=True)
         except Exception as e:
-            utils.get_logging().exception(e)
+            utils.get_logger().exception(e)
             return
 
         for channel in channels:
@@ -482,7 +482,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
             try:
                 discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
             except Exception as e:
-                utils.get_logging().exception(e)
+                utils.get_logger().exception(e)
                 return
 
         if 'status' in guild_stakeout['keys'] and data['status']['state'] != stakeout_data['status']['state']:
@@ -502,7 +502,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
             try:
                 discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
             except Exception as e:
-                utils.get_logging().exception(e)
+                utils.get_logger().exception(e)
                 return
 
         if 'flyingstatus' in guild_stakeout['keys'] and \
@@ -525,7 +525,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
             try:
                 discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
             except Exception as e:
-                utils.get_logging().exception(e)
+                utils.get_logger().exception(e)
                 return
 
         if 'online' in guild_stakeout['keys'] and data['last_action']['status'] == 'Online' \
@@ -546,7 +546,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
             try:
                 discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
             except Exception as e:
-                utils.get_logging().exception(e)
+                utils.get_logger().exception(e)
                 return
 
         if 'offline' in guild_stakeout['keys'] and data['last_action']['status'] in ['Offline', 'Idle'] and \
@@ -574,7 +574,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
             try:
                 discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
             except Exception as e:
-                utils.get_logging().exception(e)
+                utils.get_logger().exception(e)
                 return
 
     stakeout.lastupdate = utils.now()
@@ -600,7 +600,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
     try:
         data = data(blocking=True)
     except Exception as e:
-        utils.get_logging().exception(e)
+        utils.get_logger().exception(e)
         return
     
     stakeout_data = json.loads(stakeout.data)
@@ -618,7 +618,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
             channels = discordget(f'guilds/{guildid}/channels', session=requests_session)
             channels = channels(blocking=True)
         except Exception as e:
-            utils.get_logging().exception(e)
+            utils.get_logger().exception(e)
             return
 
         for channel in channels:
@@ -649,7 +649,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logging().exception(e)
+                        utils.get_logger().exception(e)
                         return
                 elif 'racket' in territory and 'racket' not in data['territory'][territoryid]:
                     payload = {
@@ -669,7 +669,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logging().exception(e)
+                        utils.get_logger().exception(e)
                         return
 
             for territoryid, territory in data['territory'].items():
@@ -690,7 +690,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logging().exception(e)
+                        utils.get_logger().exception(e)
                         return
                 if 'racket' in territory and 'racket' not in stakeout_data['territory'][territoryid]:
                     payload = {
@@ -711,7 +711,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logging().exception(e)
+                        utils.get_logger().exception(e)
                         return
                 elif territory['racket']['level'] > stakeout_data['territory'][territoryid]['racket']['level']:
                     payload = {
@@ -732,7 +732,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logging().exception(e)
+                        utils.get_logger().exception(e)
                         return
                 elif territory['racket']['level'] > stakeout_data['territory'][territoryid]['racket']['level']:
                     payload = {
@@ -753,7 +753,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logging().exception(e)
+                        utils.get_logger().exception(e)
                         return
         if 'members' in guild_stakeout['keys'] and data['members'] != stakeout_data['members']:
             for memberid, member in stakeout_data['members'].items():
@@ -773,7 +773,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logging().exception(e)
+                        utils.get_logger().exception(e)
                         return
 
             for memberid, member in data['members'].items():
@@ -793,7 +793,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logging().exception(e)
+                        utils.get_logger().exception(e)
                         return
         if 'memberstatus' in guild_stakeout['keys'] and data['members'] != stakeout_data['members']:
             for memberid, member in stakeout_data['members'].items():
@@ -822,7 +822,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logging().exception(e)
+                        utils.get_logger().exception(e)
                         return
         if 'memberactivity' in guild_stakeout['keys'] and data['members'] != stakeout_data['members']:
             for memberid, member in stakeout_data['members'].items():
@@ -852,7 +852,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logging().exception(e)
+                        utils.get_logger().exception(e)
                         return
                 elif member['last_action']['status'] in ('Online', 'Idle') and \
                         data['members'][memberid]['last_action']['status'] in ('Offline', 'Idle'):
@@ -881,7 +881,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logging().exception(e)
+                        utils.get_logger().exception(e)
                         return
 
     stakeout.lastupdate = utils.now()
