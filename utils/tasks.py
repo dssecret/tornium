@@ -888,8 +888,8 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         utils.get_logger().exception(e)
                         return
         if 'armory' in guild_stakeout['keys']:
-            server = session.query(ServerModel).filter_by(sid=guildid)
-            faction = session.query(FactionModel).filter_by(tid=stakeout.tid)
+            server = session.query(ServerModel).filter_by(sid=guildid).first()
+            faction = session.query(FactionModel).filter_by(tid=stakeout.tid).first()
 
             if stakeout.tid in json.loads(server.factions) and faction.guild == guildid:
                 if key is not None:
