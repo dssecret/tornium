@@ -41,7 +41,6 @@ else:
 def tornget(endpoint, key, tots=0, fromts=0, session=None):
     url = f'https://api.torn.com/{endpoint}&key={key}&comment=Tornium{"" if fromts == 0 else f"&from={fromts}"}' \
           f'{"" if tots == 0 else f"&to={tots}"}'
-    print(url)
 
     if session is None:  # Utilizes https://docs.python-requests.org/en/latest/user/advanced/#session-objects
         request = requests.get(url)
@@ -422,7 +421,7 @@ def update_faction_stakeouts():
     requests_session = requests.Session()
 
     for stakeout in session.query(FactionStakeoutModel).all():
-        faction_stakeout(stakeout.tid, requests_session=requests_session)(blocking=True)
+        faction_stakeout(stakeout.tid, requests_session=requests_session)()
 
 
 @huey.task()
@@ -895,10 +894,6 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
         if 'armory' in guild_stakeout['keys']:
             server = session.query(ServerModel).filter_by(sid=guildid).first()
             faction = session.query(FactionModel).filter_by(tid=stakeout.tid).first()
-
-            print(server.name)
-            print(faction.name)
-
             if stakeout.tid in json.loads(server.factions) and faction.guild == int(guildid):
                 if key is not None:
                     data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
@@ -913,7 +908,6 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
 
                 try:
                     data = data(blocking=True)
-                    print(data)
                 except Exception as e:
                     utils.get_logger().exception(e)
                     break
@@ -922,7 +916,6 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     break
 
                 for news in data['armorynews'].values():
-                    print(news)
                     timestamp = news['timestamp']
                     news = utils.remove_html(news['news'])
 
