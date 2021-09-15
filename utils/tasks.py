@@ -263,6 +263,10 @@ def refresh_guilds():
 
             if member_discord is not None and member_discord.tid != 0:
                 user = session.query(UserModel).filter_by(tid=member_discord.tid).first()
+
+                if user is None:
+                    continue
+
                 user_servers = json.loads(user.servers)
 
                 for role in member['roles']:
