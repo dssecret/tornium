@@ -320,7 +320,7 @@ def stakeout_update(guildid):
 
         session.flush()
     elif action == 'addkey':
-        if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity']:
+        if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity', 'armory']:
             return jsonify({'error': f'Faction is set to {faction} for a key that doesn\'t allow a faction '
                                      f'ID to be passed.'}), 400
         elif user is not None and value not in ['level', 'status', 'flyingstatus', 'online', 'offline']:
@@ -341,7 +341,7 @@ def stakeout_update(guildid):
         stakeout.guilds = json.dumps(guilds)
         session.flush()
     elif action == 'removekey':
-        if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity']:
+        if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity', 'armory']:
             return jsonify({'error': f'Faction is set to {faction} for a key that doesn\'t allow a faction '
                                      f'ID to be passed.'}), 400
         elif user is not None and value not in ['level', 'status', 'flyingstatus', 'online', 'offline']:

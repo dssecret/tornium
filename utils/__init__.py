@@ -155,8 +155,11 @@ def rel_time(time):
         return 'A long time ago'
 
 
-def torn_timestamp():
-    return datetime.datetime.utcnow().strftime('%m/%d %H:%M:%S TCT')
+def torn_timestamp(timestamp=None):
+    if timestamp is None:
+        return datetime.datetime.utcnow().strftime('%m/%d %H:%M:%S TCT')
+    else:
+        return datetime.datetime.fromtimestamp(timestamp).strftime('%m/%d %H:%M:%S TCT')
 
 
 def remove_html(text):

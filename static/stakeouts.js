@@ -195,4 +195,21 @@ $(document).ready(function() {
 
         xhttp.send();
     });
+
+    $(document).on('change', '#armory', function() {
+        const xhttp = new XMLHttpRequest();
+        const id = $('#faction-modal').attr('data-id');
+
+        xhttp.onload = function() {
+            factiontable.ajax.reload();
+        }
+
+        if ($('#armory')[0].checked) {
+            xhttp.open('POST', `/bot/stakeouts/${guildid}/update?action=addkey&value=armory&faction=${id}`);
+        } else {
+            xhttp.open('POST', `/bot/stakeouts/${guildid}/update?action=removekey&value=armory&faction=${id}`);
+        }
+
+        xhttp.send();
+    });
 });

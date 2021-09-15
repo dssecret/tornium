@@ -883,6 +883,56 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
+        if 'armory' in guild_stakeout['keys']:
+            if key is not None:
+                data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
+                               key=key,
+                               session=requests_session,
+                               fromts=utils.now() - 60)
+            else:
+                guild = random.choice(list(json.loads(stakeout.guilds).keys()))
+                guild = session.query(ServerModel).filter_by(sid=guild).first()
+                admin = random.choice(json.loads(guild.admins))
+                admin = session.query(UserModel).filter_by(tid=admin).first()
+                data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
+                               key=admin.key,
+                               session=requests_session,
+                               fromts=utils.now() - 60)
+
+            try:
+                data = data(blocking=True)
+            except Exception as e:
+                utils.get_logger().exception(e)
+                break
+
+            if len(data['armorynews']) == 0:
+                break
+
+            for news in data['armorynews'].values():
+                timestamp = news['timestamp']
+                news = utils.remove_html(news['news'])
+
+                if any(word in news.lower() for word in ['loaned', 'returned', 'retrieved']):
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Armory Change',
+                                'description': news,
+                                'timestamp': datetime.datetime.utcnow().isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp(timestamp)
+                                }
+                            }
+                        ]
+                    }
+
+                    try:
+                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                    except Exception as e:
+                        utils.get_logger().exception(e)
+                        return
+
+                    pass
 
     stakeout.lastupdate = utils.now()
     stakeout.data = json.dumps(data)
