@@ -258,7 +258,7 @@ def refresh_guilds():
             owner.servers = json.dumps(list(set(owner_servers)))
 
         for member in members:
-            member_discord = session.query(UserDiscordModel).filter_by(discord_id=member['user']['id'])
+            member_discord = session.query(UserDiscordModel).filter_by(discord_id=member['user']['id']).first()
 
             if member_discord is not None and member_discord.tid != 0:
                 user = session.query(UserModel).filter_by(member_discord.tid).first()
