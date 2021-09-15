@@ -41,6 +41,7 @@ else:
 def tornget(endpoint, key, tots=0, fromts=0, session=None):
     url = f'https://api.torn.com/{endpoint}&key={key}&comment=Tornium{"" if fromts == 0 else f"&from={fromts}"}' \
           f'{"" if tots == 0 else f"&to={tots}"}'
+    print(url)
 
     if session is None:  # Utilizes https://docs.python-requests.org/en/latest/user/advanced/#session-objects
         request = requests.get(url)
