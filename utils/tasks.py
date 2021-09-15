@@ -443,6 +443,10 @@ def user_stakeout(stakeout, requests_session=None, key=None):
         
     stakeout_data = json.loads(stakeout.data)
 
+    stakeout.lastupdate = utils.now()
+    stakeout.data = json.dumps(data)
+    session.flush()
+
     for guildid, guild_stakeout in json.loads(stakeout.guilds).items():
         if len(guild_stakeout['keys']) == 0:
             continue
@@ -577,10 +581,6 @@ def user_stakeout(stakeout, requests_session=None, key=None):
                 utils.get_logger().exception(e)
                 return
 
-    stakeout.lastupdate = utils.now()
-    stakeout.data = json.dumps(data)
-    session.flush()
-
 
 @huey.task()
 def faction_stakeout(stakeout, requests_session=None, key=None):
@@ -604,6 +604,10 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
         return
     
     stakeout_data = json.loads(stakeout.data)
+
+    stakeout.lastupdate = utils.now()
+    stakeout.data = json.dumps(data)
+    session.flush()
 
     for guildid, guild_stakeout in json.loads(stakeout.guilds).items():
         if len(guild_stakeout['keys']) == 0:
@@ -933,7 +937,3 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         return
 
                     pass
-
-    stakeout.lastupdate = utils.now()
-    stakeout.data = json.dumps(data)
-    session.flush()
