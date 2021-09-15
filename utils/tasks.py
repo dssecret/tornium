@@ -418,7 +418,7 @@ def update_faction_stakeouts():
     requests_session = requests.Session()
 
     for stakeout in session.query(FactionStakeoutModel).all():
-        faction_stakeout(stakeout.tid, requests_session=requests_session)()
+        faction_stakeout(stakeout.tid, requests_session=requests_session)(blocking=True)
 
 
 @huey.task()
@@ -892,13 +892,8 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
             server = session.query(ServerModel).filter_by(sid=guildid).first()
             faction = session.query(FactionModel).filter_by(tid=stakeout.tid).first()
 
-            print(stakeout.tid)
-            print(server.factions)
-            print(faction.guild)
-            print(guildid)
-
-            print(stakeout.tid in json.loads(server.factions))
-            print(faction.guild == int(guildid))
+            print(server.name)
+            print(faction.name)
 
             if stakeout.tid in json.loads(server.factions) and faction.guild == int(guildid):
                 if key is not None:
