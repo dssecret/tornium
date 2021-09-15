@@ -261,7 +261,7 @@ def refresh_guilds():
             member_discord = session.query(UserDiscordModel).filter_by(discord_id=member['user']['id']).first()
 
             if member_discord is not None and member_discord.tid != 0:
-                user = session.query(UserModel).filter_by(member_discord.tid).first()
+                user = session.query(UserModel).filter_by(tid=member_discord.tid).first()
                 user_servers = json.loads(user.servers)
 
                 for role in member['roles']:
@@ -891,7 +891,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
             server = session.query(ServerModel).filter_by(sid=guildid).first()
             faction = session.query(FactionModel).filter_by(tid=stakeout.tid).first()
 
-            if stakeout.tid in json.loads(server.factions) and faction.guild == guildid:
+            if stakeout.tid in json.loads(server.factions) and faction.guild == int(guildid):
                 if key is not None:
                     data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
                                    key=key,
