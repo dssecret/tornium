@@ -891,13 +891,13 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
             server = session.query(ServerModel).filter_by(sid=guildid).first()
             faction = session.query(FactionModel).filter_by(tid=stakeout.tid).first()
 
-            utils.get_logger().info(stakeout.tid)
-            utils.get_logger().info(server.factions)
-            utils.get_logger().info(faction.guild)
-            utils.get_logger().info(guildid)
+            print(stakeout.tid)
+            print(server.factions)
+            print(faction.guild)
+            print(guildid)
 
-            utils.get_logger().info(stakeout.tid in json.loads(server.factions))
-            utils.get_logger().info(faction.guild == int(guildid))
+            print(stakeout.tid in json.loads(server.factions))
+            print(faction.guild == int(guildid))
 
             if stakeout.tid in json.loads(server.factions) and faction.guild == int(guildid):
                 if key is not None:
@@ -913,6 +913,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
 
                 try:
                     data = data(blocking=True)
+                    print(data)
                 except Exception as e:
                     utils.get_logger().exception(e)
                     break
@@ -921,6 +922,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     break
 
                 for news in data['armorynews'].values():
+                    print(news)
                     timestamp = news['timestamp']
                     news = utils.remove_html(news['news'])
 
