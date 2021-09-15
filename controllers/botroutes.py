@@ -269,7 +269,9 @@ def stakeout_data(guildid: str):
                                lastupdate=utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update)),
                                keys=stakeout.guilds[guildid]['keys'],
                                guildid=guildid,
-                               tid=faction)
+                               tid=faction,
+                               armory=(int(faction) not in Server(guildid).factions or
+                                       Faction(faction).guild != int(guildid)))
     elif user:
         if int(user) not in server.user_stakeouts:
             raise Exception
@@ -326,6 +328,9 @@ def stakeout_update(guildid):
         elif user is not None and value not in ['level', 'status', 'flyingstatus', 'online', 'offline']:
             return jsonify({'error': f'User is set to {user} for a key that doesn\'t allow a user '
                                      f'ID to be passed.'}), 400
+        elif value == 'armory' and (int(faction) not in Server(guildid).factions or
+                                    Faction(faction).guild != int(guildid)):
+            return jsonify({'error': f'This requires the faction to be in the list of factions in the server.'}), 400
 
         if user is not None:
             stakeout = session.query(UserStakeoutModel).filter_by(tid=user).first()

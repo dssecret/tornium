@@ -894,12 +894,10 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                                session=requests_session,
                                fromts=utils.now() - 60)
             else:
-                guild = random.choice(list(json.loads(stakeout.guilds).keys()))
-                guild = session.query(ServerModel).filter_by(sid=guild).first()
-                admin = random.choice(json.loads(guild.admins))
-                admin = session.query(UserModel).filter_by(tid=admin).first()
+                faction = session.query(FactionModel).filter_by(tid=stakeout.tid).first()
+
                 data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
-                               key=admin.key,
+                               key=random.choice(json.loads(faction.keys)),
                                session=requests_session,
                                fromts=utils.now() - 60)
 

@@ -30,10 +30,12 @@
                         Member Activity
                     </label>
 
+                    {% if not armory %}
                     <label class="list-group-item">
                         <input class="form-check-input me-1" type="checkbox" value="" id="armory" aria-label="Armory" {%  if 'armory' in keys %} checked {% endif %}>
                         Armory
                     </label>
+                    {% endif %}
                 </div>
 
                 <button type="button" class="btn btn-danger mt-3">
