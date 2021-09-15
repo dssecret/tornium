@@ -891,13 +891,13 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
             server = session.query(ServerModel).filter_by(sid=guildid).first()
             faction = session.query(FactionModel).filter_by(tid=stakeout.tid).first()
 
-            print(stakeout.tid)
-            print(server.factions)
-            print(faction.guild)
-            print(guildid)
+            utils.get_logger().info(stakeout.tid)
+            utils.get_logger().info(server.factions)
+            utils.get_logger().info(faction.guild)
+            utils.get_logger().info(guildid)
 
-            print(stakeout.tid in json.loads(server.factions))
-            print(faction.guild == int(guildid))
+            utils.get_logger().info(stakeout.tid in json.loads(server.factions))
+            utils.get_logger().info(faction.guild == int(guildid))
 
             if stakeout.tid in json.loads(server.factions) and faction.guild == int(guildid):
                 if key is not None:
