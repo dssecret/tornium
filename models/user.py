@@ -161,7 +161,7 @@ class User(UserMixin):
         try:
             response = tornget(f'faction/?selections=positions', self.key)
             response(blocking=True)
-        except utils.TornError:
+        except:
             self.aa = False
             user.aa = False
             session.flush()
