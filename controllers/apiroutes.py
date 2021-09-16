@@ -80,7 +80,7 @@ def requires_scopes(func=None, scopes=None):
         session = session_local()
         client = redisdb.get_redis()
 
-        if not set(json.loads(session.query(KeyModel).filter_by(key=kwargs['key']).first().scopes)) & scopes:
+        if not set(json.loads(session.query(KeyModel).filter_by(key=kwargs['key']).first().scopes)) & scopes and kwargs['keytype'] == 'Tornium':
             return jsonify({
                 'code': 4004,
                 'name': 'InsufficientPermissions',
