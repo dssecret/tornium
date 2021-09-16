@@ -295,7 +295,7 @@ def banking():
     return render_template('faction/banking.html')
 
 
-@mod.route('faction/userbankingdata')
+@mod.route('/faction/userbankingdata')
 @login_required
 def userbankingdata():
     start = int(request.args.get('start'))
