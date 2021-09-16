@@ -255,11 +255,11 @@ def bot():
     return render_template('faction/bot.html', guildid=faction.guild, vault_config=faction.get_vault_config(), config=faction.get_config())
 
 
-@mod.route('/faction/banking')
+@mod.route('/faction/bankingaa')
 @aa_required
 @login_required
-def banking():
-    return render_template('faction/banking.html')
+def bankingaa():
+    return render_template('faction/bankingaa.html')
 
 
 @mod.route('/faction/bankingdata')
@@ -277,6 +277,40 @@ def bankingdata():
         timefulfilled = withdrawal['timefulfilled'] if withdrawal['timefulfilled'] != 0 else ''
 
         withdrawals.append([withdrawal["id"], f'${withdrawal["amount"]:,}', requester, withdrawal['timerequested'],
+                            fulfiller, timefulfilled])
+
+    withdrawals = withdrawals[start:start+length]
+    data = {
+        'draw': request.args.get('draw'),
+        'recordsTotal': len(faction.withdrawals),
+        'recordsFiltered': len(faction.withdrawals),
+        'data': withdrawals
+    }
+    return data
+
+
+@mod.route('/faction/banking')
+@login_required
+def banking():
+    return render_template('faction/banking.html')
+
+
+@mod.route('faction/userbankingdata')
+@login_required
+def userbankingdata():
+    start = int(request.args.get('start'))
+    length = int(request.args.get('length'))
+    faction = Faction(current_user.factiontid)
+    withdrawals = []
+
+    for withdrawal in faction.withdrawals:
+        if withdrawal["requester"] == current_user.tid:
+            continue
+        
+        fulfiller = f'{User(withdrawal["fulfiller"]).name} [{withdrawal["fulfiller"]}]' if withdrawal["fulfiller"] != 0 else ''
+        timefulfilled = withdrawal['timefulfilled'] if withdrawal['timefulfilled'] != 0 else ''
+
+        withdrawals.append([withdrawal["id"], f'${withdrawal["amount"]:,}', withdrawal['timerequested'],
                             fulfiller, timefulfilled])
 
     withdrawals = withdrawals[start:start+length]
