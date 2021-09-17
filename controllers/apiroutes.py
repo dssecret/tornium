@@ -80,7 +80,7 @@ def requires_scopes(func=None, scopes=None):
         session = session_local()
         client = redisdb.get_redis()
 
-        if not set(json.loads(session.query(KeyModel).filter_by(key=kwargs['key']).first().scopes)) & scopes and kwargs['keytype'] == 'Tornium':
+        if kwargs['keytype'] == 'Tornium' and not set(json.loads(session.query(KeyModel).filter_by(key=kwargs['key']).first().scopes)) & scopes:
             return jsonify({
                 'code': 4004,
                 'name': 'InsufficientPermissions',
@@ -107,22 +107,14 @@ def torn_key_required(func):
                 'code': 4001,
                 'name': 'NoAuthenticationInformation',
                 'message': 'Server failed to authenticate the request. No authentication code was provided.'
-            }), 401, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-            }
+            }), 401
         elif request.headers.get('Authorization').split(' ')[0] != 'Basic':
             return jsonify({
                 'code': 4003,
                 'name': 'InvalidAuthenticationType',
                 'message': 'Server failed to authenticate the request. The provided authentication type was not '
                            '"Basic" and therefore invalid.'
-            }), 401, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-            }
+            }), 401
 
         authorization = str(base64.b64decode(request.headers.get('Authorization').split(' ')[1]), 'utf-8').split(':')[0]
 
@@ -131,11 +123,7 @@ def torn_key_required(func):
                 'code': 4001,
                 'name': 'NoAuthenticationInformation',
                 'message': 'Server failed to authenticate the request. No authentication code was provided.'
-            }), 401, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-            }
+            }), 401
 
         session = session_local()
         user = session.query(UserModel).filter_by(key=authorization).first()
@@ -145,11 +133,7 @@ def torn_key_required(func):
                 'code': 4001,
                 'name': 'InvalidAuthenticationInformation',
                 'message': 'Server failed to authenticate the request. The provided authentication code was invalid.'
-            }), 401, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-            }
+            }), 401
 
         kwargs['user'] = user
         kwargs['keytype'] = 'Torn'
@@ -170,22 +154,14 @@ def tornium_key_required(func):
                 'code': 4001,
                 'name': 'NoAuthenticationInformation',
                 'message': 'Server failed to authenticate the request. No authentication code was provided.'
-            }), 401, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-            }
+            }), 401
         elif request.headers.get('Authorization').split(' ')[0] != 'Basic':
             return jsonify({
                 'code': 4003,
                 'name': 'InvalidAuthenticationType',
                 'message': 'Server failed to authenticate the request. The provided authentication type was not '
                            '"Basic" and therefore invalid.'
-            }), 401, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-            }
+            }), 401
 
         authorization = str(base64.b64decode(request.headers.get('Authorization').split(' ')[1]), 'utf-8').split(':')[0]
 
@@ -194,11 +170,7 @@ def tornium_key_required(func):
                 'code': 4001,
                 'name': 'NoAuthenticationInformation',
                 'message': 'Server failed to authenticate the request. No authentication code was provided.'
-            }), 401, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-            }
+            }), 401
 
         session = session_local()
         key = session.query(KeyModel).filter_by(key=authorization).first()
@@ -208,11 +180,7 @@ def tornium_key_required(func):
                 'code': 4001,
                 'name': 'InvalidAuthenticationInformation',
                 'message': 'Server failed to authenticate the request. The provided authentication code was invalid.'
-            }), 401, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-            }
+            }), 401
 
         kwargs['user'] = session.query(UserModel).filter_by(tid=key.ownertid).first()
         kwargs['keytype'] = 'Tornium'
@@ -226,29 +194,19 @@ def tornium_key_required(func):
 def key_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        client = redisdb.get_redis()
-
         if request.headers.get('Authorization') is None:
             return jsonify({
                 'code': 4001,
                 'name': 'NoAuthenticationInformation',
                 'message': 'Server failed to authenticate the request. No authentication code was provided.'
-            }), 401, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-            }
+            }), 401
         elif request.headers.get('Authorization').split(' ')[0] != 'Basic':
             return jsonify({
                 'code': 4003,
                 'name': 'InvalidAuthenticationType',
                 'message': 'Server failed to authenticate the request. The provided authentication type was not '
                            '"Basic" and therefore invalid.'
-            }), 401, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-            }
+            }), 401
 
         authorization = str(base64.b64decode(request.headers.get('Authorization').split(' ')[1]), 'utf-8').split(':')[0]
 
@@ -257,11 +215,7 @@ def key_required(func):
                 'code': 4001,
                 'name': 'NoAuthenticationInformation',
                 'message': 'Server failed to authenticate the request. No authentication code was provided.'
-            }), 401, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-            }
+            }), 401
 
         session = session_local()
         key = session.query(KeyModel).filter_by(key=authorization).first()
@@ -280,11 +234,7 @@ def key_required(func):
                 'code': 4001,
                 'name': 'InvalidAuthenticationInformation',
                 'message': 'Server failed to authenticate the request. The provided authentication code was invalid.'
-            }), 401, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-            }
+            }), 401
 
         return func(*args, **kwargs)
 
@@ -379,9 +329,11 @@ def banking_request(*args, **kwargs):
     session = session_local()
     data = json.loads(request.get_data().decode('utf-8'))
     client = redisdb.get_redis()
+    print(kwargs['user'].tid)
     user = User(kwargs['user'].tid)
 
-    amount_requested = data.get('amount_requested')
+    print(data.get('amount_requested'))
+    amount_requested = int(data.get('amount_requested'))
 
     if amount_requested is None:
         return jsonify({
@@ -525,7 +477,7 @@ def create_stakeout(stype, *args, **kwargs):
     elif tid is None:
         return jsonify({
             'code': 0,
-            'name': 'UnkownID',
+            'name': 'UnknownID',
             'message': 'Server failed to fulfill the request. There was no Torn ID provided but a Torn ID was '
                        'required.'
         }), 400, {

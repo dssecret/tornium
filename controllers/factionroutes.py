@@ -292,7 +292,7 @@ def bankingdata():
 @mod.route('/faction/banking')
 @login_required
 def banking():
-    return render_template('faction/banking.html')
+    return render_template('faction/banking.html', key=current_user.key)
 
 
 @mod.route('/faction/userbankingdata')
@@ -304,20 +304,19 @@ def userbankingdata():
     withdrawals = []
 
     for withdrawal in faction.withdrawals:
-        if withdrawal["requester"] == current_user.tid:
+        if withdrawal['requester'] != current_user.tid:
             continue
         
         fulfiller = f'{User(withdrawal["fulfiller"]).name} [{withdrawal["fulfiller"]}]' if withdrawal["fulfiller"] != 0 else ''
         timefulfilled = withdrawal['timefulfilled'] if withdrawal['timefulfilled'] != 0 else ''
 
-        withdrawals.append([withdrawal["id"], f'${withdrawal["amount"]:,}', withdrawal['timerequested'],
+        withdrawals.append([withdrawal['id'], f'${withdrawal["amount"]:,}', withdrawal['timerequested'],
                             fulfiller, timefulfilled])
 
-    withdrawals = withdrawals[start:start+length]
     data = {
         'draw': request.args.get('draw'),
-        'recordsTotal': len(faction.withdrawals),
-        'recordsFiltered': len(faction.withdrawals),
-        'data': withdrawals
+        'recordsTotal': len(withdrawals),
+        'recordsFiltered': len(withdrawals),
+        'data': withdrawals[start:start+length]
     }
     return data
