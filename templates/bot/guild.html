@@ -58,7 +58,7 @@
                         <p class="px-1 my-2">
                             {{ faction.name }}
 
-                            {% if server.sid == faction.guild %}
+                            {% if server.sid | int == faction.guild | int %}
                             <i class="far fa-check-circle" data-bs-toggle="tooltip" data-bs-placement="top"
                                title="{{ faction.name }} has been properly set up in {{ server.name }}."></i>
                             {% else %}
@@ -118,26 +118,27 @@
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js" integrity="sha512-2rNj2KJ+D8s1ceNasTIex6z4HWyOnEYLVC3FigGOmyQCZc2eBXKgOxQmo3oKLHyfcj53uz4QMsRCWNbLd32Q1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
-  $(document).ready(function(){
-    $('[data-bs-toggle="tooltip"]').tooltip({
-      container: '.list-group'
-    });
+    $(document).ready(function(){
+        $('[data-bs-toggle="tooltip"]').tooltip({
+            container: '.list-group'
+        });
 
-    $('#stakeoutcategory').on('keypress', function(e) {
-        if(e.which === 13) {
-            const id = $('#stakeoutcategory').val();
-            const xhttp = new XMLHttpRequest();
+        $('#stakeoutcategory').on('keypress', function(e) {
+            if(e.which === 13) {
+                const id = $('#stakeoutcategory').val();
+                const xhttp = new XMLHttpRequest();
 
-            xhttp.onload = function() {
-                window.location.reload();
+                xhttp.onload = function() {
+                    window.location.reload();
+                }
+
+                xhttp.open('POST', `/bot/stakeouts/{{ guildid }}/update?action=category&value=${id}`);
+                xhttp.send();
             }
-
-            xhttp.open('POST', `/bot/stakeouts/{{ guildid }}/update?action=category&value=${id}`);
-            xhttp.send();
-        }
+        });
     });
-  });
 </script>
 {% endblock %}
