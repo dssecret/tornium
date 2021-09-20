@@ -125,7 +125,7 @@ def stakeouts_dashboard(guildid: str):
         server_db = session.query(ServerModel).filter_by(sid=guildid).first()
 
         if request.form.get('factionid') is not None:
-            if int(request.form.get('factionid')) in server.faction_stakeouts:
+            if int(request.form.get('factionid')) not in server.faction_stakeouts:
                 stakeout = Stakeout(int(request.form.get('factionid')), user=False, key=current_user.key,
                                     guild=int(guildid))
                 server.faction_stakeouts.append(int(request.form.get('factionid')))
@@ -165,7 +165,7 @@ def stakeouts_dashboard(guildid: str):
                 flash(f'Faction ID {request.form.get("factionid")} is already being staked out in {server.name}.',
                       category='error')
         elif request.form.get('userid') is not None:
-            if int(request.form.get('factionid')) in server.user_stakeouts:
+            if int(request.form.get('factionid')) not in server.user_stakeouts:
                 stakeout = Stakeout(int(request.form.get('userid')), key=current_user.key, guild=int(guildid))
                 server.user_stakeouts.append(int(request.form.get('userid')))
                 server_db.userstakeouts = json.dumps(list(set(server.user_stakeouts)))
