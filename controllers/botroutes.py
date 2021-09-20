@@ -165,7 +165,7 @@ def stakeouts_dashboard(guildid: str):
                 flash(f'Faction ID {request.form.get("factionid")} is already being staked out in {server.name}.',
                       category='error')
         elif request.form.get('userid') is not None:
-            if int(request.form.get('factionid')) not in server.user_stakeouts:
+            if int(request.form.get('userid')) not in server.user_stakeouts:
                 stakeout = Stakeout(int(request.form.get('userid')), key=current_user.key, guild=int(guildid))
                 server.user_stakeouts.append(int(request.form.get('userid')))
                 server_db.userstakeouts = json.dumps(list(set(server.user_stakeouts)))
