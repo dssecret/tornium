@@ -13,6 +13,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+from models import settingsmodel
+settingsmodel.initialize()
+
 import datetime
 import json
 import math
