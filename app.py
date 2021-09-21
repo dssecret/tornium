@@ -49,7 +49,8 @@ app.session = scoped_session(session_local, scopefunc=flask._app_ctx_stack.__ide
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'authroutes.login'
-login_manager.session_protection = 'strong'
+login_manager.refresh_view = 'authroutes.login'
+login_manager.session_protection = 'basic'
 
 
 @login_manager.user_loader
