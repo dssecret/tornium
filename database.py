@@ -25,7 +25,7 @@ if redis.get('dev') == 'True':
     engine = create_engine('sqlite+pysqlite:///data.sql', connect_args={'check_same_thread': False})
 else:
     engine = create_engine(f'mysql+pymysql://{settingsmodel.get("settings", "username")}:'
-                           f'{settingsmodel.get("settings", "password")}@localhost/Tornium',
+                           f'{redis.get("password")}@localhost/Tornium',
                            pool_pre_ping=True, 
                            pool_recycle=3600)
 
