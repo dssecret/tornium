@@ -157,4 +157,4 @@ async def help(ctx):
 
 
 if __name__ == "__main__":
-    bot.run(settingsmodel.get('settings', 'bottoken'))
+    bot.run(settingsmodel.get('bottoken'))
