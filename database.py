@@ -17,9 +17,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from models import settingsmodel
+from redisdb import get_redis
 
-if settingsmodel.is_dev():
+if get_redis().get('dev') == 'False':
     engine = create_engine('sqlite+pysqlite:///data.sql', connect_args={'check_same_thread': False})
 else:
     engine = create_engine(f'mysql+pymysql://{settingsmodel.get("settings", "username")}:'
