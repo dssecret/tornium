@@ -34,7 +34,7 @@ from controllers.adminroutes import mod as admin_mod
 from controllers.statroutes import mod as stat_mod
 from controllers.apiroutes import mod as api_mod
 from database import session_local
-from redisdb import redis
+from redisdb import get_redis
 import utils
 
 logger = logging.getLogger('server')
