@@ -66,9 +66,9 @@ def initialize():
         data = json.load(file)
     
     redis = get_redis()
-    redis.set('dev', data['dev'])
-    redis.set('banlist', data['banlist'])
-    redis.set('useragentlist', data['useragentlist'])
+    redis.set('dev', str(data['dev']))
+    redis.set('banlist', json.dumps(data['banlist']))
+    redis.set('useragentlist', json.dumps(data['useragentlist']))
     redis.set('bottoken', data['bottoken'])
     redis.set('secret', data['secret'])
     redis.set('taskqueue', data['taskqueue'])
