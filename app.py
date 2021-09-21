@@ -43,7 +43,7 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 app = flask.Flask(__name__, instance_path=f'{os.getcwd()}/instance')  # Temp bug fix for https://youtrack.jetbrains.com/issue/PY-49984
-app.secret_key = settings.get("settings", "secret")
+app.secret_key = settings.get('secret')
 app.session = scoped_session(session_local, scopefunc=flask._app_ctx_stack.__ident_func__)
 
 login_manager = LoginManager()
@@ -64,7 +64,7 @@ def relative_time(s):
     return utils.rel_time(datetime.datetime.fromtimestamp(s))
 
 
-if settings.get("settings", "dev") and __name__ == "__main__":
+if settings.get("dev") and __name__ == "__main__":
     app.register_blueprint(base_mod)
     app.register_blueprint(dev_mod)
     app.register_blueprint(auth_mod)
@@ -77,7 +77,7 @@ if settings.get("settings", "dev") and __name__ == "__main__":
 
     app.run('localhost', 8000, debug=True)
 
-if not settings.get("settings", "dev"):
+if not settings.get("dev"):
     app.register_blueprint(base_mod)
     app.register_blueprint(auth_mod)
     app.register_blueprint(faction_mod)
