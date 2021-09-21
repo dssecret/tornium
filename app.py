@@ -13,6 +13,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+from models import settingsmodel as settings
+settings.initialize()
+
 import datetime
 import logging
 import os
@@ -31,10 +34,7 @@ from controllers.adminroutes import mod as admin_mod
 from controllers.statroutes import mod as stat_mod
 from controllers.apiroutes import mod as api_mod
 from database import session_local
-from models import settingsmodel as settings
 import utils
-
-settings.initialize()
 
 logger = logging.getLogger('server')
 logger.setLevel(logging.DEBUG)
