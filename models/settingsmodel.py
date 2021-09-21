@@ -83,7 +83,8 @@ def get(key: str, redis=None):
     :param key: The key in the JSON file whose value is to be returned
     """
     if redis is None:
-        get_redis().get(key)
+        redis = get_redis()
+        redis.get(key)
     else:
         redis.get(key)
     
@@ -98,7 +99,8 @@ def update(key: str, value, redis=None):
     """
     
     if redis is None:
-        get_redis().set(key, value)
+        redis = get_redis()
+        redis.set(key, value)
     else:
         redis.set(key, value)
 
