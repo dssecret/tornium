@@ -33,7 +33,12 @@ session_local = scoped_session(sessionmaker(autocommit=True, autoflush=False, bi
 base = declarative_base()
 
 from models.factionmodel import FactionModel
+from models.factionstakeoutmodel import FactionStakeoutModel
+from models.keymodel import KeyModel
 from models.servermodel import ServerModel
+from models.statmodel import StatModel
 from models.usermodel import UserModel
+from models.userstakeoutmodel import UserStakeoutModel
+
 
 base.metadata.create_all(engine)
