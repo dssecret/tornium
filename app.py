@@ -67,7 +67,7 @@ def relative_time(s):
     return utils.rel_time(datetime.datetime.fromtimestamp(s))
 
 
-if redis.get("dev") and __name__ == "__main__":
+if redis.get("dev") == "True" and __name__ == "__main__":
     app.register_blueprint(base_mod)
     app.register_blueprint(dev_mod)
     app.register_blueprint(auth_mod)
@@ -80,7 +80,7 @@ if redis.get("dev") and __name__ == "__main__":
 
     app.run('localhost', 8000, debug=True)
 
-if not redis.get("dev"):
+if redis.get("dev") == "False":
     app.register_blueprint(base_mod)
     app.register_blueprint(auth_mod)
     app.register_blueprint(faction_mod)
