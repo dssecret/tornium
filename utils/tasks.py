@@ -25,7 +25,6 @@ from huey import SqliteHuey, RedisHuey, crontab
 import requests
 
 from database import session_local
-from models import settingsmodel
 from models.factionmodel import FactionModel
 from models.factionstakeoutmodel import FactionStakeoutModel
 from models.servermodel import ServerModel
@@ -34,7 +33,7 @@ from models.usermodel import UserModel, UserDiscordModel
 from models.userstakeoutmodel import UserStakeoutModel
 import utils
 
-if settingsmodel.get('settings', 'taskqueue') == 'sqlite':
+if settingsmodel.get('taskqueue') == 'sqlite':
     huey = SqliteHuey()
 else:
     huey = RedisHuey(host='localhost', port=6379)
