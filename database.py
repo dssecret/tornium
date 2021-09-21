@@ -20,9 +20,8 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from redisdb import get_redis
 
 redis = get_redis()
-print(redis.get('dev'))
 
-if redis.get('dev') == 'False':
+if redis.get('dev') == 'True':
     engine = create_engine('sqlite+pysqlite:///data.sql', connect_args={'check_same_thread': False})
 else:
     engine = create_engine(f'mysql+pymysql://{settingsmodel.get("settings", "username")}:'
