@@ -34,6 +34,7 @@ from controllers.adminroutes import mod as admin_mod
 from controllers.statroutes import mod as stat_mod
 from controllers.apiroutes import mod as api_mod
 from database import session_local
+from redisdb import redis
 import utils
 
 logger = logging.getLogger('server')
@@ -42,8 +43,10 @@ handler = logging.FileHandler(filename='server.log', encoding='utf-8', mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
+redis = get_redis()
+
 app = flask.Flask(__name__, instance_path=f'{os.getcwd()}/instance')  # Temp bug fix for https://youtrack.jetbrains.com/issue/PY-49984
-app.secret_key = settings.get('secret')
+app.secret_key = redis.get('secret')
 app.session = scoped_session(session_local, scopefunc=flask._app_ctx_stack.__ident_func__)
 
 login_manager = LoginManager()
@@ -64,7 +67,7 @@ def relative_time(s):
     return utils.rel_time(datetime.datetime.fromtimestamp(s))
 
 
-if settings.get("dev") and __name__ == "__main__":
+if redis.get("dev") and __name__ == "__main__":
     app.register_blueprint(base_mod)
     app.register_blueprint(dev_mod)
     app.register_blueprint(auth_mod)
@@ -77,7 +80,7 @@ if settings.get("dev") and __name__ == "__main__":
 
     app.run('localhost', 8000, debug=True)
 
-if not settings.get("dev"):
+if not redis.get("dev"):
     app.register_blueprint(base_mod)
     app.register_blueprint(auth_mod)
     app.register_blueprint(faction_mod)
