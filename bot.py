@@ -26,7 +26,7 @@ from models import settingsmodel
 from models.faction import Faction
 from models.server import Server
 from models.user import DiscordUser, User
-from redis import get_redis
+from redisdb import get_redis
 
 settingsmodel.initialize()
 
