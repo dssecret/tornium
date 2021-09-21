@@ -26,6 +26,7 @@ from models import settingsmodel
 from models.faction import Faction
 from models.server import Server
 from models.user import DiscordUser, User
+from redis import get_redis
 
 settingsmodel.initialize()
 
@@ -157,4 +158,5 @@ async def help(ctx):
 
 
 if __name__ == "__main__":
-    bot.run(settingsmodel.get('bottoken'))
+    redis = get_redis()
+    bot.run(redis.get('bottoken'))
