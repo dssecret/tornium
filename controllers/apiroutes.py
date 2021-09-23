@@ -318,7 +318,42 @@ def create_key(*args, **kwargs):
         'ownertid': user.tid,
         'scopes': scopes,
         'expires': expires
-    })
+    }), 200, {
+        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+    }
+
+
+@mod.route('/api/keys', methods=['DELETE'])
+@torn_key_required
+@ratelimit
+def remove_key(*args, **kwargs):
+    user = User(kwargs['user'].tid)
+    session = session_local()
+    data = json.loads(request.get_data().decode('utf-8'))
+    key = data.get('key')
+    
+    if key is None:
+        return
+    
+    key = session.query(KeyModel).filter_by(key=key).first()
+    owner = key.tid
+    scopes = key.scopes
+    expires = key.expires
+    key.delete()
+    session.flush()
+    
+    return jsonify({
+        'key': key,
+        'ownerid': owner,
+        'scopes': json.loads(scopes),
+        'expires': expires
+    }), 200, {
+        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+    }
 
 
 @mod.route('/api/faction/banking', methods=['POST'])
@@ -329,7 +364,6 @@ def banking_request(*args, **kwargs):
     session = session_local()
     data = json.loads(request.get_data().decode('utf-8'))
     client = redisdb.get_redis()
-    print(kwargs['user'].tid)
     user = User(kwargs['user'].tid)
 
     print(data.get('amount_requested'))
