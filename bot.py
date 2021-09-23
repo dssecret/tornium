@@ -33,7 +33,7 @@ settingsmodel.initialize()
 
 botlogger = logging.getLogger('bot')
 botlogger.setLevel(logging.DEBUG)
-handler = handlers.TimedRotatingFileHandler(filename='bot.log', when='D', interval=1, backupCount=5, encoding='utf-8', mode='a')
+handler = handlers.TimedRotatingFileHandler(filename='bot.log', when='D', interval=1, backupCount=5, encoding='utf-8')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 botlogger.addHandler(handler)
 
