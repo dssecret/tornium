@@ -39,7 +39,7 @@ import utils
 
 logger = logging.getLogger('server')
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='server.log', encoding='utf-8', mode='a')
+handler = logging.handlers.TimedRotatingFileHandler(filename='server.log', when='D', interval=1, backupCount=5, encoding='utf-8', mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
