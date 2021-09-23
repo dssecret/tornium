@@ -93,9 +93,9 @@ def discordget(endpoint, session=None):
     url = f'https://discord.com/api/v9/{endpoint}'
 
     if session is None:
-        request = requests.get(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}'})
+        request = requests.get(url, headers={'Authorization': f'Bot {settingsmodel.get("bottoken")}'})
     else:
-        request = session.get(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}'})
+        request = session.get(url, headers={'Authorization': f'Bot {settingsmodel.get("bottoken")}'})
 
     if str(request.status_code)[:1] != '2':
         utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
@@ -120,11 +120,11 @@ def discordpost(endpoint, payload, session=None):
     url = f'https://discord.com/api/v9/{endpoint}'
 
     if session is None:
-        request = requests.post(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+        request = requests.post(url, headers={'Authorization': f'Bot {settingsmodel.get("bottoken")}',
                                               'Content-Type': 'application/json'},
                                 data=json.dumps(payload))
     else:
-        request = session.post(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+        request = session.post(url, headers={'Authorization': f'Bot {settingsmodel.get("bottoken")}',
                                              'Content-Type': 'application/json'},
                                data=json.dumps(payload))
 
@@ -151,10 +151,10 @@ def discorddelete(endpoint, session=None):
     url = f'https://discord.com/api/v9/{endpoint}'
 
     if session is None:
-        request = requests.delete(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+        request = requests.delete(url, headers={'Authorization': f'Bot {settingsmodel.get("bottoken")}',
                                                 'Content-Type': 'application/json'})
     else:
-        request = session.delete(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+        request = session.delete(url, headers={'Authorization': f'Bot {settingsmodel.get("bottoken")}',
                                                'Content-Type': 'application/json'})
 
     if str(request.status_code)[:1] != '2':
