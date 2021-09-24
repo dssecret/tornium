@@ -212,7 +212,7 @@ def refresh_factions():
         faction.last_members = utils.now()
 
         for member_id, member in faction_data['members'].items():
-            user = session.query(UserModel).filter_by(tid=int(member_id))
+            user = session.query(UserModel).filter_by(tid=int(member_id)).first()
             user.name = member['name']
             user.level = member['level']
             user.last_refresh = timestamp
