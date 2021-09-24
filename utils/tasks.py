@@ -213,6 +213,24 @@ def refresh_factions():
 
         for member_id, member in faction_data['members'].items():
             user = session.query(UserModel).filter_by(tid=int(member_id)).first()
+
+            if user is None:
+                user = UserModel(
+                    tid=int(member_id),
+                    name='',
+                    level=0,
+                    admin=False if int(member_id) != 2383326 else True,
+                    key='',
+                    battlescore='[]',
+                    discord_id=0,
+                    servers='[]',
+                    factionid=0,
+                    factionaa=False,
+                    last_refresh=faction.last_members,
+                    status='')
+                session.add(user)
+                session.flush()
+
             user.name = member['name']
             user.level = member['level']
             user.last_refresh = timestamp
