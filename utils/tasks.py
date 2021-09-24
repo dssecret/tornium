@@ -203,6 +203,7 @@ def refresh_factions():
         faction.capacity = faction_data['capacity']
         faction.leader = faction_data['leader']
         faction.coleader = faction_data['co-leader']
+        faction.last_members = utils.now()
 
         for member_id, member in faction_data['members'].items():
             user = session.query(UserModel).filter_by(tid=int(member_id))
