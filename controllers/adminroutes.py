@@ -70,6 +70,6 @@ def dashboard():
 def bot():
     if request.method == 'POST':
         if request.form.get('bottoken') is not None:
-            settingsmodel.update('settings', 'bottoken', request.form.get('bottoken'))
+            settingsmodel.update('bottoken', request.form.get('bottoken'))
 
     return render_template('admin/bot.html', bottoken=settingsmodel.get('settings', 'bottoken'))

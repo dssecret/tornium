@@ -15,6 +15,7 @@
 
 import asyncio
 import logging
+from logging import handlers
 import random
 
 import discord
@@ -26,12 +27,13 @@ from models import settingsmodel
 from models.faction import Faction
 from models.server import Server
 from models.user import DiscordUser, User
+from redisdb import get_redis
 
 settingsmodel.initialize()
 
 botlogger = logging.getLogger('bot')
 botlogger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='bot.log', encoding='utf-8', mode='w')
+handler = handlers.TimedRotatingFileHandler(filename='bot.log', when='D', interval=1, backupCount=5, encoding='utf-8')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 botlogger.addHandler(handler)
 
@@ -157,4 +159,5 @@ async def help(ctx):
 
 
 if __name__ == "__main__":
-    bot.run(settingsmodel.get('settings', 'bottoken'))
+    redis = get_redis()
+    bot.run(redis.get('bottoken'))

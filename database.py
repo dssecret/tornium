@@ -17,13 +17,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session
 
-from models import settingsmodel
+from redisdb import get_redis
 
-if settingsmodel.is_dev():
+redis = get_redis()
+
+if redis.get('dev') == 'True':
     engine = create_engine('sqlite+pysqlite:///data.sql', connect_args={'check_same_thread': False})
 else:
-    engine = create_engine(f'mysql+pymysql://{settingsmodel.get("settings", "username")}:'
-                           f'{settingsmodel.get("settings", "password")}@localhost/Tornium',
+    engine = create_engine(f'mysql+pymysql://{redis.get("username")}:'
+                           f'{redis.get("password")}@localhost/Tornium',
                            pool_pre_ping=True, 
                            pool_recycle=3600)
 
@@ -31,7 +33,12 @@ session_local = scoped_session(sessionmaker(autocommit=True, autoflush=False, bi
 base = declarative_base()
 
 from models.factionmodel import FactionModel
+from models.factionstakeoutmodel import FactionStakeoutModel
+from models.keymodel import KeyModel
 from models.servermodel import ServerModel
+from models.statmodel import StatModel
 from models.usermodel import UserModel
+from models.userstakeoutmodel import UserStakeoutModel
+
 
 base.metadata.create_all(engine)

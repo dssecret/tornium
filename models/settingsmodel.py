@@ -16,6 +16,8 @@
 import json
 import os
 
+from redisdb import get_redis
+
 
 def _read(file: str):
     """
@@ -59,74 +61,54 @@ def initialize():
             'password': ''
         }
         _write('settings', data)
+    
+    with open('settings.json', 'r') as file:
+        data = json.load(file)
+    
+    redis = get_redis()
+    redis.set('dev', str(data['dev']))
+    redis.set('banlist', json.dumps(data['banlist']))
+    redis.set('useragentlist', json.dumps(data['useragentlist']))
+    redis.set('bottoken', data['bottoken'])
+    redis.set('secret', data['secret'])
+    redis.set('taskqueue', data['taskqueue'])
+    redis.set('username', data['username'])
+    redis.set('password', data['password'])
 
 
-def write(file: str, data: dict):
-    """
-    Writes to the specified JSON file using the inputted (JSON formatted) data
-
-    :param file: The name of the file to be written to (not including the .json file type)
-    :param data: The JSON formatted data to be written to the specified file
-    """
-
-    if file not in _read('settings')['jsonfiles']:
-        raise ValueError
-
-    _write(file, data)
-
-
-def read(file: str):
-    """
-    Writes to the specified JSON file using the inputted (JSON formatted) data
-
-    :param file: The name of the file to be written to (not including the .json file type)
-    :param data: The JSON formatted data to be written to the specified file
-    """
-
-    if file not in _read('settings')['jsonfiles']:
-        raise ValueError
-
-    return _read(file)
-
-
-def get(file: str, key: str):
+def get(key: str, redis=None):
     """
     Returns the value of the specified key from teh specified JSON file
 
-    :param file: The base JSON file (without the .json file type) to be read
     :param key: The key in the JSON file whose value is to be returned
     """
+    if redis is None:
+        redis = get_redis()
+        redis.get(key)
+    else:
+        redis.get(key)
+    
 
-    if file not in _read('settings')['jsonfiles']:
-        raise ValueError
 
-    return _read(file).get(key)
-
-
-def update(file: str, key: str, value):
+def update(key: str, value, redis=None):
     """
     Updates the value of the specified key in the specified JSON file
 
-    :param file: The base JSON file (without the .json file type) to be udpated
     :param key: The key in the JSON file whose value is to be updated
     :param value: The value the of the key in the JSON file shall be changed to
     """
+    
+    if redis is None:
+        redis = get_redis()
+        redis.set(key, value)
+    else:
+        redis.set(key, value)
 
-    if file not in _read('settings')['jsonfiles']:
-        raise ValueError
-
-    data = _read(file)
+    data = _read('settings')
     data[key] = value
-    _write(file, data)
-
-
-def new_secret():
-    """
-    Creates a new secret key for the Flask application. NOTE: Also invalidates all stored flask_login session tokens.
-    """
-
-    update('settings', 'secret', str(os.urandom(32)))
+    _write('settings', data)
 
 
 def is_dev():
-    return get("settings", "dev")
+    redis = get_redis()
+    return redis.get("dev")

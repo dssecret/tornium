@@ -13,6 +13,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+from models import settingsmodel
+settingsmodel.initialize()
+
 import datetime
 import json
 import math
@@ -22,16 +25,16 @@ from huey import SqliteHuey, RedisHuey, crontab
 import requests
 
 from database import session_local
-from models import settingsmodel
 from models.factionmodel import FactionModel
 from models.factionstakeoutmodel import FactionStakeoutModel
 from models.servermodel import ServerModel
 from models.statmodel import StatModel
 from models.usermodel import UserModel, UserDiscordModel
 from models.userstakeoutmodel import UserStakeoutModel
+from redisdb import get_redis
 import utils
 
-if settingsmodel.get('settings', 'taskqueue') == 'sqlite':
+if settingsmodel.get('taskqueue') == 'sqlite':
     huey = SqliteHuey()
 else:
     huey = RedisHuey(host='localhost', port=6379)
@@ -89,11 +92,12 @@ def tornget(endpoint, key, tots=0, fromts=0, session=None):
 @huey.task()
 def discordget(endpoint, session=None):
     url = f'https://discord.com/api/v9/{endpoint}'
+    redis = get_redis()
 
     if session is None:
-        request = requests.get(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}'})
+        request = requests.get(url, headers={'Authorization': f'Bot {redis.get("bottoken")}'})
     else:
-        request = session.get(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}'})
+        request = session.get(url, headers={'Authorization': f'Bot {redis.get("bottoken")}'})
 
     if str(request.status_code)[:1] != '2':
         utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
@@ -116,13 +120,14 @@ def discordget(endpoint, session=None):
 @huey.task()
 def discordpost(endpoint, payload, session=None):
     url = f'https://discord.com/api/v9/{endpoint}'
+    redis = get_redis()
 
     if session is None:
-        request = requests.post(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+        request = requests.post(url, headers={'Authorization': f'Bot {redis.get("bottoken")}',
                                               'Content-Type': 'application/json'},
                                 data=json.dumps(payload))
     else:
-        request = session.post(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+        request = session.post(url, headers={'Authorization': f'Bot {redis.get("bottoken")}',
                                              'Content-Type': 'application/json'},
                                data=json.dumps(payload))
 
@@ -147,12 +152,13 @@ def discordpost(endpoint, payload, session=None):
 @huey.task()
 def discorddelete(endpoint, session=None):
     url = f'https://discord.com/api/v9/{endpoint}'
+    redis = get_redis()
 
     if session is None:
-        request = requests.delete(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+        request = requests.delete(url, headers={'Authorization': f'Bot {redis.get("bottoken")}',
                                                 'Content-Type': 'application/json'})
     else:
-        request = session.delete(url, headers={'Authorization': f'Bot {settingsmodel.get("settings", "bottoken")}',
+        request = session.delete(url, headers={'Authorization': f'Bot {redis.get("bottoken")}',
                                                'Content-Type': 'application/json'})
 
     if str(request.status_code)[:1] != '2':
