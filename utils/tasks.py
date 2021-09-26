@@ -18,6 +18,8 @@ settingsmodel.initialize()
 
 import datetime
 import json
+import logging
+from logging import handlers
 import math
 import random
 
@@ -38,6 +40,12 @@ if settingsmodel.get('taskqueue') == 'sqlite':
     huey = SqliteHuey()
 else:
     huey = RedisHuey(host='localhost', port=6379)
+
+logger = logging.getLogger('server')
+logger.setLevel(logging.DEBUG)
+handler = handlers.TimedRotatingFileHandler(filename='server.log', when='D', interval=1, backupCount=5, encoding='utf-8')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 
 @huey.task()
@@ -83,7 +91,7 @@ def tornget(endpoint, key, tots=0, fromts=0, session=None):
             db_session.flush()
 
         utils.get_logger().info(f'The Torn API has responded with error code {request["error"]["code"]} '
-                                f'({request["error"]["error"]}) to {endpoint}).')
+                                f'({request["error"]["error"]}) to {url if get_redis().get("debug") == "True" else endpoint}).')
         raise utils.TornError(request["error"]["code"])
 
     return request
@@ -909,6 +917,71 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                                 'description': f'Member {member["name"]} of faction {data["name"]} is now '
                                                f'{data["members"][memberid]["last_action"]["status"]} from '
                                                f'{member["last_action"]["status"]}.',
+                                'timestamp': datetime.datetime.utcnow().isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp()
+                                }
+                            }
+                        ]
+                    }
+                    try:
+                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                    except Exception as e:
+                        utils.get_logger().exception(e)
+                        return
+        if 'assault' in guild_stakeout['keys'] and data['territory_wars'] != stakeout_data['territory_wars']:
+            for war in data['territory_wars']:
+                existing = False
+
+                for old_war in stakeout_data['territory_wars']:
+                    if old_war['territory'] == war['territory']:
+                        existing = True
+                        break
+
+                if not existing:
+                    defending = session.query(FactionModel).filter_by(tid=war["defending_faction"]).first()
+                    assulting = session.query(FactionModel).filter_by(tid=war["assaulting_faction"]).first()
+
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Territory Assaulted',
+                                'description': f'Territory {war["territory"]} of faction '
+                                               f'{war["defending_faction"] if defending is None else defending.name}'
+                                               f' has been assaulted by faction '
+                                               f'{war["assaulting_faction"] if assulting is None else assulting.name}.',
+                                'timestamp': datetime.datetime.fromtimestamp(war["start_time"]).isoformat(),
+                                'footer': {
+                                    'text': utils.torn_timestamp(war["start_time"])
+                                }
+                            }
+                        ]
+                    }
+                    try:
+                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                    except Exception as e:
+                        utils.get_logger().exception(e)
+                        return
+            for war in stakeout_data['territory_wars']:
+                existing = False
+
+                for new_war in data['territory_wars']:
+                    if new_war['territory'] == war['territory']:
+                        existing = True
+                        break
+
+                if not existing:
+                    defending = session.query(FactionModel).filter_by(tid=war["defending_faction"]).first()
+                    assulting = session.query(FactionModel).filter_by(tid=war["assaulting_faction"]).first()
+                    payload = {
+                        'embeds': [
+                            {
+                                'title': 'Territory Assault Ended',
+                                'description': f'The assault of territory {war["territory"]} of faction '
+                                               f'{war["defending_faction"] if defending is None else defending.name}'
+                                               f' by faction '
+                                               f'{war["assaulting_faction"] if assulting is None else assulting.name}.'
+                                               f'has ended.',
                                 'timestamp': datetime.datetime.utcnow().isoformat(),
                                 'footer': {
                                     'text': utils.torn_timestamp()
