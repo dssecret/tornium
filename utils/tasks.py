@@ -89,6 +89,17 @@ def tornget(endpoint, key, tots=0, fromts=0, session=None):
                 server.admins = json.dumps(server_admins)
 
             db_session.flush()
+        elif request['error']['code'] == 7:
+            db_session = session_local()
+            user = db_session.query(UserModel).filter_by(key=key).first()
+            faction = db_session.query(FactionModel).filter_by(tid=user.factiontid).first()
+            faction_keys = json.loads(faction.keys)
+
+            if key in faction_keys:
+                faction.remove(key)
+
+            faction.keys = json.dumps(faction_keys)
+            db_session.flush()
 
         utils.get_logger().info(f'The Torn API has responded with error code {request["error"]["code"]} '
                                 f'({request["error"]["error"]}) to {url if get_redis().get("debug") == "True" else endpoint}).')
