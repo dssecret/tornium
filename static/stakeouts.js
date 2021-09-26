@@ -196,6 +196,23 @@ $(document).ready(function() {
         xhttp.send();
     });
 
+    $(document).on('change', '#assault', function() {
+        const xhttp = new XMLHttpRequest();
+        const id = $('#faction-modal').attr('data-id');
+
+        xhttp.onload = function() {
+            factiontable.ajax.reload();
+        }
+
+        if ($('#assault')[0].checked) {
+            xhttp.open('POST', `/bot/stakeouts/${guildid}/update?action=addkey&value=assault&faction=${id}`);
+        } else {
+            xhttp.open('POST', `/bot/stakeouts/${guildid}/update?action=removekey&value=assault&faction=${id}`);
+        }
+
+        xhttp.send();
+    })
+
     $(document).on('change', '#armory', function() {
         const xhttp = new XMLHttpRequest();
         const id = $('#faction-modal').attr('data-id');

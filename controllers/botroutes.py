@@ -18,12 +18,10 @@ import json
 
 from flask import Blueprint, render_template, abort, request, redirect, flash, jsonify
 from flask_login import current_user, login_required
-from is_safe_url import is_safe_url
 
 from database import session_local
 from models.faction import Faction
 from models.factionstakeoutmodel import FactionStakeoutModel
-from models.settingsmodel import get
 from models.server import Server
 from models.servermodel import ServerModel
 from models.stakeout import Stakeout
@@ -222,14 +220,16 @@ def stakeouts(guildid: str, stype: int):
         for stakeout in server.user_stakeouts:
             stakeout = Stakeout(int(stakeout), key=current_user.key)
             stakeouts.append(
-                [stakeout.tid, stakeout.guilds[guildid]['keys'], utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update))]
+                [stakeout.tid, stakeout.guilds[guildid]['keys'],
+                 utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update))]
             )
     elif stype == 1:  # faction
         filtered = len(server.faction_stakeouts)
         for stakeout in server.faction_stakeouts:
             stakeout = Stakeout(int(stakeout), user=False, key=current_user.key)
             stakeouts.append(
-                [stakeout.tid, stakeout.guilds[guildid]['keys'], utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update))]
+                [stakeout.tid, stakeout.guilds[guildid]['keys'],
+                 utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update))]
             )
     else:
         filtered = 0
@@ -322,7 +322,8 @@ def stakeout_update(guildid):
 
         session.flush()
     elif action == 'addkey':
-        if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity', 'armory']:
+        if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity', 'armory',
+                                                 'assault']:
             return jsonify({'error': f'Faction is set to {faction} for a key that doesn\'t allow a faction '
                                      f'ID to be passed.'}), 400
         elif user is not None and value not in ['level', 'status', 'flyingstatus', 'online', 'offline']:
@@ -346,7 +347,8 @@ def stakeout_update(guildid):
         stakeout.guilds = json.dumps(guilds)
         session.flush()
     elif action == 'removekey':
-        if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity', 'armory']:
+        if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity', 'armory',
+                                                 'assault']:
             return jsonify({'error': f'Faction is set to {faction} for a key that doesn\'t allow a faction '
                                      f'ID to be passed.'}), 400
         elif user is not None and value not in ['level', 'status', 'flyingstatus', 'online', 'offline']:
