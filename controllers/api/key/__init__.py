@@ -97,3 +97,33 @@ def create_key(*args, **kwargs):
         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
         'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }
+
+
+@torn_key_required
+@ratelimit
+def remove_key(*args, **kwargs):
+    user = User(kwargs['user'].tid)
+    session = session_local()
+    data = json.loads(request.get_data().decode('utf-8'))
+    key = data.get('key')
+    
+    if key is None:
+        return
+    
+    key = session.query(KeyModel).filter_by(key=key).first()
+    owner = key.tid
+    scopes = key.scopes
+    expires = key.expires
+    key.delete()
+    session.flush()
+    
+    return jsonify({
+        'key': key,
+        'ownerid': owner,
+        'scopes': json.loads(scopes),
+        'expires': expires
+    }), 200, {
+        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+    }
