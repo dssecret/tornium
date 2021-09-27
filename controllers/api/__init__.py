@@ -28,3 +28,4 @@ mod.add_url_route('/api/key', view_func=key.delete_key, methods=['DELETE'])
 
 # /api/faction
 mod.add_url_route('/api/faction/banking', view_func=faction.banking_request, methods=['POST'])
+mod.add_url_route('/api/faction/stakeout/<string:stype>', view_func=faction.create_stakeout, methods=['POST'])
