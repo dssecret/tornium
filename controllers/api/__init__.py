@@ -21,3 +21,4 @@ mod = Blueprint('apiroutes', __name__)
 
 mod.add_url_route('/api/key', view_func=key.test_key, methods=['GET'])
 mod.add_url_route('/api/key', view_func=key.create_key, methods=['POST'])
+mod.add_url_route('/api/key', view_func=key.delete_key, methods=['DELETE'])
