@@ -19,9 +19,9 @@ settingsmodel.initialize()
 import datetime
 import json
 import logging
-from logging import handlers
 import math
 import random
+import time
 
 from huey import SqliteHuey, RedisHuey, crontab
 import requests
@@ -43,7 +43,7 @@ else:
 
 logger = logging.getLogger('server')
 logger.setLevel(logging.DEBUG)
-handler = handlers.TimedRotatingFileHandler(filename='server.log', when='D', interval=1, backupCount=5, encoding='utf-8')
+handler = logging.FileHandler(filename='server.log', encoding='utf-8', mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
@@ -52,6 +52,17 @@ logger.addHandler(handler)
 def tornget(endpoint, key, tots=0, fromts=0, session=None):
     url = f'https://api.torn.com/{endpoint}&key={key}&comment=Tornium{"" if fromts == 0 else f"&from={fromts}"}' \
           f'{"" if tots == 0 else f"&to={tots}"}'
+
+    redis = get_redis()
+    if redis.setnx(key, 100):
+        redis.expire(key, 60 - datetime.datetime.utcnow().second)
+    if redis.ttl(key) < 0:
+        redis.expire(key, 1)
+
+    if redis.get(key) and int(redis.get(key)) > 0:
+        redis.decrby(key, 1)
+    else:
+        time.sleep(60 - datetime.datetime.utcnow().second)
 
     if session is None:  # Utilizes https://docs.python-requests.org/en/latest/user/advanced/#session-objects
         request = requests.get(url)
