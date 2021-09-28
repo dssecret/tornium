@@ -1,3 +1,5 @@
+const guildid = document.currentScript.getAttribute('data-guildid');
+
 $(document).ready(function(){
     $('[data-bs-toggle="tooltip"]').tooltip({
         container: '.list-group'
@@ -12,7 +14,7 @@ $(document).ready(function(){
                 window.location.reload();
             }
 
-            xhttp.open('POST', `/bot/stakeouts/{{ guildid }}/update?action=category&value=${id}`);
+            xhttp.open('POST', `/bot/stakeouts/${guildid}/update?action=category&value=${id}`);
             xhttp.send();
         }
     });
