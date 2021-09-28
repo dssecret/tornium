@@ -25,7 +25,6 @@ from flask_login import LoginManager
 from sqlalchemy.orm import scoped_session
 
 from controllers import mod as base_mod
-from controllers.devroutes import mod as dev_mod
 from controllers.authroutes import mod as auth_mod
 from controllers.factionroutes import mod as faction_mod
 from controllers.botroutes import mod as bot_mod
@@ -69,7 +68,6 @@ def relative_time(s):
 
 if redis.get("dev") == "True" and __name__ == "__main__":
     app.register_blueprint(base_mod)
-    app.register_blueprint(dev_mod)
     app.register_blueprint(auth_mod)
     app.register_blueprint(faction_mod)
     app.register_blueprint(bot_mod)
@@ -87,6 +85,5 @@ if redis.get("dev") == "False":
     app.register_blueprint(bot_mod)
     app.register_blueprint(error_mod)
     app.register_blueprint(admin_mod)
-    app.register_blueprint(dev_mod)
     app.register_blueprint(stat_mod)
     app.register_blueprint(api_mod)
