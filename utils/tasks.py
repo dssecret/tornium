@@ -107,7 +107,7 @@ def tornget(endpoint, key, tots=0, fromts=0, session=None):
             faction_keys = json.loads(faction.keys)
 
             if key in faction_keys:
-                faction.remove(key)
+                faction_keys.remove(key)
 
             faction.keys = json.dumps(faction_keys)
             db_session.flush()
