@@ -13,11 +13,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from flask import jsonify
+from flask import jsonify, request
 
 from controllers.api.decorators import *
 from database import session_local
 from models.keymodel import KeyModel
+from models.user import User
 from redisdb import get_redis
 import utils
 

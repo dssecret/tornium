@@ -15,17 +15,20 @@
 
 from flask import Blueprint
 
-from controllers.api import faction
 from controllers.api import key
+from controllers.api import stakeout
+from controllers.api.faction import banking
 
 mod = Blueprint('apiroutes', __name__)
 
 
 # /api/key
-mod.add_url_route('/api/key', view_func=key.test_key, methods=['GET'])
-mod.add_url_route('/api/key', view_func=key.create_key, methods=['POST'])
-mod.add_url_route('/api/key', view_func=key.delete_key, methods=['DELETE'])
+mod.add_url_rule('/api/key', view_func=key.test_key, methods=['GET'])
+mod.add_url_rule('/api/key', view_func=key.create_key, methods=['POST'])
+mod.add_url_rule('/api/key', view_func=key.remove_key, methods=['DELETE'])
 
 # /api/faction
-mod.add_url_route('/api/faction/banking', view_func=faction.banking_request, methods=['POST'])
-mod.add_url_route('/api/faction/stakeout/<string:stype>', view_func=faction.create_stakeout, methods=['POST'])
+mod.add_url_rule('/api/faction/banking', view_func=banking.banking_request, methods=['POST'])
+
+# /api/stakeout
+mod.add_url_rule('/api/stakeout/<string:stype>', view_func=stakeout.create_stakeout, methods=['POST'])
