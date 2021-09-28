@@ -1,4 +1,4 @@
-const guildid = document.currentScript.getAttribute('key');
+const key = document.currentScript.getAttribute('data-key');
 
 $(document).ready(function() {
     var table = $('#banking-table').DataTable({
@@ -33,23 +33,31 @@ $(document).ready(function() {
             var response = xhttp.response;
 
             document.getElementById('toast-title').innerHTML = "Banking Request Successfully Sent";
-            document.getElementById('toast-body').innerHTML = `Banking Request ${response["id"]} for ${response["amount"]} has been successfully submitted to the server.`
+            document.getElementById('toast-body').innerHTML = `Banking Request #${response["id"]} for 
+            \$${response["amount"]} has been successfully submitted to the server.`
 
-            var toastElList = [].slice.call(document.querySelectorAll('.toast'))
-            var toastList = toastElList.map(function (toastEl) {
-                return new bootstrap.Toast(toastEl, option)
-            })
+            var toastElement = document.getElementById('toast');
+            var toast = new bootstrap.Toast(toastElement, {
+                animation: true,
+                autohide: true,
+                delay: 30000
+            });
+            toast.show();
         }
         xhttp.onerror = function() {
             var response = xhttp.response;
 
             document.getElementById('toast-title').innerHTML = "Banking Request Failed";
-            document.getElementById('toast-body').innerHTML = `The Tornium API server has responded with \"${response["message"]} to the submitted banking request.\"`
+            document.getElementById('toast-body').innerHTML = `The Tornium API server has responded with 
+            \"${response["message"]} to the submitted banking request.\"`
 
-            var toastElList = [].slice.call(document.querySelectorAll('.toast'))
-            var toastList = toastElList.map(function (toastEl) {
-                return new bootstrap.Toast(toastEl, option)
-            })
+            var toastElement = document.getElementById('toast');
+            var toast = new bootstrap.Toast(toastElement, {
+                animation: true,
+                autohide: true,
+                delay: 30000
+            });
+            toast.show();
         }
 
         xhttp.responseType = "json";
