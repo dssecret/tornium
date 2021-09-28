@@ -27,5 +27,7 @@ def index():
 @mod.route('/robots.txt')
 @mod.route('/bot/stakeouts.js')
 @mod.route('/bot/guild.js')
+@mod.route('/faction/banking.js')
+@mod.route('/faction/bankingaa.js')
 def static():
     return send_from_directory('static', request.path[1:])
