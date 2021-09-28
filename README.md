@@ -1,5 +1,5 @@
 # Tornium
-Tornium is a website and Discord bot for [Torn City](https://torn.com).
+[Tornium](https://torn.deek.sh) is a website and Discord bot for [Torn City](https://torn.com).
 
 ## Installation
 

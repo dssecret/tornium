@@ -33,7 +33,7 @@ from controllers.botroutes import mod as bot_mod
 from controllers.errors import mod as error_mod
 from controllers.adminroutes import mod as admin_mod
 from controllers.statroutes import mod as stat_mod
-from controllers.apiroutes import mod as api_mod
+from controllers.api import mod as api_mod
 from database import session_local
 from redisdb import get_redis
 import utils
