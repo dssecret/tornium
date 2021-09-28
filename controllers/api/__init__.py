@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from flask import Blueprint
+from flask import Blueprint, render_template
 
 from controllers.api import key
 from controllers.api import stakeout
@@ -32,3 +32,8 @@ mod.add_url_rule('/api/faction/banking', view_func=banking.banking_request, meth
 
 # /api/stakeout
 mod.add_url_rule('/api/stakeout/<string:stype>', view_func=stakeout.create_stakeout, methods=['POST'])
+
+
+@mod.route('/api')
+def index():
+    return render_template('api/index.html')
