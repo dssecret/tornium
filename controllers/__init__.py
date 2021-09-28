@@ -25,6 +25,7 @@ def index():
 
 
 @mod.route('/robots.txt')
-@mod.route('/stakeouts.js')
+@mod.route('/bot/stakeouts.js')
+@mod.route('/bot/guild.js')
 def static():
     return send_from_directory('static', request.path[1:])
