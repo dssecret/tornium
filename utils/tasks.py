@@ -82,7 +82,7 @@ def tornget(endpoint, key, tots=0, fromts=0, session=None):
             user = db_session.query(UserModel).filter_by(key=key).first()
             user.key = ''
 
-            faction = db_session.query(FactionModel).fitler_by(tid=user.factiontid).first()
+            faction = db_session.query(FactionModel).fitler_by(tid=user.factionid).first()
             faction_keys = json.loads(faction.keys)
 
             if key in faction_keys:
@@ -103,7 +103,7 @@ def tornget(endpoint, key, tots=0, fromts=0, session=None):
         elif request['error']['code'] == 7:
             db_session = session_local()
             user = db_session.query(UserModel).filter_by(key=key).first()
-            faction = db_session.query(FactionModel).filter_by(tid=user.factiontid).first()
+            faction = db_session.query(FactionModel).filter_by(tid=user.factionid).first()
             faction_keys = json.loads(faction.keys)
 
             if key in faction_keys:
