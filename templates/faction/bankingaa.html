@@ -56,20 +56,5 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-<script type="text/javascript">
-    $(document).ready(function() {
-        var table = $('#banking-table').DataTable({
-            "processing": true,
-            "serverSide": true,
-            "ordering": false,
-            "responsive": true,
-            "ajax": {
-                url: "/faction/bankingdata"
-            }
-        });
-
-        $.fn.dataTable.ext.pager.numbers_length = 5;
-    });
-</script>
+<script src="/faction/bankingaa.js">
 {% endblock %}
