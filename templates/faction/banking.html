@@ -51,6 +51,16 @@
     </div>
 </div>
 
+<div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+        <strong class="me-auto" id="toast-title"></strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+        Hello, world! This is a toast message.
+    </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script type="text/javascript">
@@ -82,7 +92,31 @@
             } else if (stringvalue.endsWith("b")) {
                 value *= 1000000000;
             }
+            
+            xhttp.onload = function() {
+                var response = xhttp.response;
+                
+                document.getElementById('toast-title').innerHTML = "Banking Request Successfully Sent";
+                document.getElementById('toast-body').innerHTML = `Banking Request ${response["id"]} for ${response["amount"]} has been successfully submitted to the server.`
+                
+                var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+                var toastList = toastElList.map(function (toastEl) {
+                    return new bootstrap.Toast(toastEl, option)
+                })
+            }
+            xhttp.onerror = function() {
+                var response = xhttp.response;
+                
+                document.getElementById('toast-title').innerHTML = "Banking Request Failed";
+                document.getElementById('toast-body').innerHTML = `The Tornium API server has responded with \"${response["message"]} to the submitted banking request.\"`
+                
+                var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+                var toastList = toastElList.map(function (toastEl) {
+                    return new bootstrap.Toast(toastEl, option)
+                })
+            }
 
+            xhttp.responseType = "json";
             xhttp.open("POST", "/api/faction/banking");
             xhttp.setRequestHeader("Authorization", `Basic ${btoa("{{ key }}:")}`);
             xhttp.setRequestHeader("Content-Type", "application/json");
