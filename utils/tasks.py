@@ -209,6 +209,35 @@ def discorddelete(endpoint, session=None):
     return request_json
 
 
+def torn_stats_get(endpoint, key, session=None):
+    url = f'https://www.tornstats.com/api/v1/{key}/{endpoint}'
+
+    redis = get_redis()
+    if redis.get(f'ts-{key}') is None:
+        redis.set(f'ts-{key}', 15)
+        redis.expire(f'ts-{key}', 60 - datetime.datetime.utcnow().second)
+    if redis.ttl(f'ts-{key}') < 0:
+        redis.expire(f'ts-{key}', 1)
+
+    if int(redis.get(f'ts-{key}')) > 0:
+        redis.decrby(f'ts-{key}', 1)
+    else:
+        time.sleep(60 - datetime.datetime.utcnow().second)
+
+    if session is None:  # Utilizes https://docs.python-requests.org/en/latest/user/advanced/#session-objects
+        request = requests.get(url)
+    else:
+        request = session.get(url)
+
+    if request.status_code != 200:
+        utils.get_logger().warning(f'The Torn API has responded with status code {request.status_code} to endpoint '
+                                   f'"{endpoint}".')
+        raise utils.NetworkingError(request.status_code)
+
+    request = request.json()
+    return request
+
+
 @huey.periodic_task(crontab(minute='0'))
 def refresh_factions():
     session = session_local()
@@ -241,6 +270,16 @@ def refresh_factions():
         faction.coleader = faction_data['co-leader']
         faction.last_members = utils.now()
 
+        keys = []
+
+        leader = session.query(UserModel).filter_by(tid=faction.leader).first()
+        coleader = session.query(UserModel).filter_by(tid=faction.coleader).first()
+
+        if leader is not None and leader.key != '':
+            keys.append(leader.key)
+        if coleader is not None and coleader.key != '':
+            keys.append(coleader.key)
+
         for member_id, member in faction_data['members'].items():
             user = session.query(UserModel).filter_by(tid=int(member_id)).first()
 
@@ -267,6 +306,22 @@ def refresh_factions():
             user.factiontid = faction_data['ID']
             user.status = member['last_action']['status']
             user.last_action = member['last_action']['relative']
+
+            if user.key == '' and len(keys) != 0:
+                try:
+                    user_data = torn_stats_get(f'spy/{user.tid}', random.choice(keys), session=requests_session)
+                except Exception as e:
+                    utils.get_logger().exception(e)
+                    continue
+
+                if not user_data['status']:
+                    continue
+                elif not user_data['spy']['status']:
+                    continue
+                elif user_data['spy']['type'] != 'faction-share':
+                    continue
+
+                user.battlescore = json.dumps([user_data['spy']['target_score'], timestamp])
 
     session.flush()
 
