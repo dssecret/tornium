@@ -1,3 +1,5 @@
+const guildid = document.currentScript.getAttribute('key');
+
 $(document).ready(function() {
     var table = $('#banking-table').DataTable({
         "processing": true,
@@ -52,7 +54,7 @@ $(document).ready(function() {
 
         xhttp.responseType = "json";
         xhttp.open("POST", "/api/faction/banking");
-        xhttp.setRequestHeader("Authorization", `Basic ${btoa("{{ key }}:")}`);
+        xhttp.setRequestHeader("Authorization", `Basic ${btoa(`${key}:`)}`);
         xhttp.setRequestHeader("Content-Type", "application/json");
         xhttp.send(JSON.stringify({
             'amount_requested': value,
