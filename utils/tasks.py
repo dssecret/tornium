@@ -293,7 +293,7 @@ def refresh_factions():
                     battlescore='[]',
                     discord_id=0,
                     servers='[]',
-                    factionid=0,
+                    factionid=faction.tid,
                     factionaa=False,
                     last_refresh=faction.last_members,
                     status='')
