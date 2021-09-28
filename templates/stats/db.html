@@ -42,29 +42,5 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-<script type="text/javascript">
-    $(document).ready(function() {
-        var table = $('#stats-table').DataTable({
-            "processing": true,
-            "serverSide": true,
-            "ordering": false,
-            "responsive": true,
-            "ajax": {
-                url: "/stats/dbdata"
-            }
-        });
-
-        $('#stats-table tbody').on('click', 'tr', function() {
-            const xhttp = new XMLHttpRequest();
-            xhttp.onload = function() {
-                document.getElementById('modal').innerHTML = this.responseText;
-                var modal = new bootstrap.Modal($('#stats-modal'));
-                modal.show();
-            }
-            xhttp.open('GET', '/stats/userdata?user=' + table.row(this).data()[0]);
-            xhttp.send();
-        })
-    });
-</script>
+<script src="/stats/db.js">
 {% endblock %}
