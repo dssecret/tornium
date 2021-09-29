@@ -32,24 +32,11 @@ $(document).ready(function() {
         xhttp.onload = function() {
             var response = xhttp.response;
 
-            document.getElementById('toast-title').innerHTML = "Banking Request Successfully Sent";
-            document.getElementById('toast-body').innerHTML = `Banking Request ${response["id"]} for ${response["amount"]} has been successfully submitted to the server.`
-
-            var toastElList = [].slice.call(document.querySelectorAll('.toast'))
-            var toastList = toastElList.map(function (toastEl) {
-                return new bootstrap.Toast(toastEl, option)
-            })
-        }
-        xhttp.onerror = function() {
-            var response = xhttp.response;
-
-            document.getElementById('toast-title').innerHTML = "Banking Request Failed";
-            document.getElementById('toast-body').innerHTML = `The Tornium API server has responded with \"${response["message"]} to the submitted banking request.\"`
-
-            var toastElList = [].slice.call(document.querySelectorAll('.toast'))
-            var toastList = toastElList.map(function (toastEl) {
-                return new bootstrap.Toast(toastEl, option)
-            })
+            if("code" in response) {
+                generateToast("Banking Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted banking request.\"`);
+            } else {
+                generateToast("Banking Request Successfully Sent", `Banking Request ${response["id"]} for ${response["amount"]} has been successfully submitted to the server.`);
+            }
         }
 
         xhttp.responseType = "json";
