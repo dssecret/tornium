@@ -40,8 +40,10 @@
         {% endif %}
     {% endwith %}
     
-    <div class="toast-container">
-        
+    <div aria-live="polite" aria-atomic="true" class="position-relative" style="z-index: 10">
+        <div class="toast-container position-absolute top-0 end-0 mx-3 my-3" id="toast-container">
+
+        </div>
     </div>
 
     {% block content %}{% endblock %}
@@ -51,6 +53,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.0.2/js/bootstrap.min.js" integrity="sha512-a6ctI6w1kg3J4dSjknHj3aWLEbjitAXAjLDRUxo2wyYmDFRcz2RJuQr5M3Kt8O/TtUSp8n2rAyaXYy1sjoKmrQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js" integrity="sha512-2rNj2KJ+D8s1ceNasTIex6z4HWyOnEYLVC3FigGOmyQCZc2eBXKgOxQmo3oKLHyfcj53uz4QMsRCWNbLd32Q1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     
-    <script src="/toast.js">
+    <script src="/toast.js"></script>
 </body>
 </html>
