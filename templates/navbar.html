@@ -44,7 +44,7 @@
 
             {% if not current_user.is_authenticated %}
             <form class="d-flex" method="POST" action="/login">
-                <input class="form-control me-2" type="password" aria-label="Key" id="key" name="key" placeholder="Enter your Torn API key">
+                <input class="form-control" type="password" aria-label="Key" id="key" name="key" placeholder="Enter your Torn API key">
                 <button class="btn btn-outline-success" type="submit">
                     <i class="fas fa-sign-in-alt"></i>
                     Submit
