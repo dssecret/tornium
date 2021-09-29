@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 
-{% include 'navbar.html' %}
+{% block content %}
 
+{% include 'navbar.html' %}
 {% include 'bot/navbar.html' %}
 
-{% block content %}
 <div class="row">
     <div class="py-3 px-3 col text-end">
         {% if server.config['stakeouts'] == 0 %}
