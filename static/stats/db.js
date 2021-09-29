@@ -14,13 +14,13 @@ You should have received a copy of the GNU Affero General Public License
 along with Tornium.  If not, see <https://www.gnu.org/licenses/>. */
 
 $(document).ready(function() {
-    var table = $('#banking-table').DataTable({
+    var table = $('#stats-table').DataTable({
         "processing": true,
         "serverSide": true,
         "ordering": false,
         "responsive": true,
         "ajax": {
-            url: "/faction/bankingdata"
+            url: "/stats/dbdata"
         }
     });
 
