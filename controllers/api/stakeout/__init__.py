@@ -124,7 +124,8 @@ def create_stakeout(stype, *args, **kwargs):
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
     elif stype == 'faction' and keys is not None and not set(keys) & {'territory', 'members', 'memberstatus',
-                                                                      'memberactivity', 'armory', 'assault'}:
+                                                                      'memberactivity', 'armory', 'assault',
+                                                                      'armorydeposit'}:
         return jsonify({
             'code': 0,
             'name': 'InvalidStakeoutKey',

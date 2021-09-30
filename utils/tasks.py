@@ -1120,3 +1120,52 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                             return
 
                         pass
+        if 'armorydeposit' in guild_stakeout['keys']:
+            server = session.query(ServerModel).filter_by(sid=guildid).first()
+            faction = session.query(FactionModel).filter_by(tid=stakeout.tid).first()
+            if stakeout.tid in json.loads(server.factions) and faction.guild == int(guildid):
+                if key is not None:
+                    data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
+                                   key=key,
+                                   session=requests_session,
+                                   fromts=utils.now() - 60)
+                else:
+                    data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
+                                   key=random.choice(json.loads(faction.keys)),
+                                   session=requests_session,
+                                   fromts=utils.now() - 60)
+
+                try:
+                    data = data(blocking=True)
+                except Exception as e:
+                    utils.get_logger().exception(e)
+                    break
+
+                if len(data['armorynews']) == 0:
+                    break
+
+                for news in data['armorynews'].values():
+                    timestamp = news['timestamp']
+                    news = utils.remove_html(news['news'])
+
+                    if any(word in news.lower() for word in ['deposited']):
+                        payload = {
+                            'embeds': [
+                                {
+                                    'title': 'Armory Deposit',
+                                    'description': news,
+                                    'timestamp': datetime.datetime.utcnow().isoformat(),
+                                    'footer': {
+                                        'text': utils.torn_timestamp(timestamp)
+                                    }
+                                }
+                            ]
+                        }
+
+                        try:
+                            discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        except Exception as e:
+                            utils.get_logger().exception(e)
+                            return
+
+                        pass

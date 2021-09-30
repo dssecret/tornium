@@ -244,4 +244,21 @@ $(document).ready(function() {
 
         xhttp.send();
     });
+
+    $(document).on('change', '#armorydeposit', function() {
+        const xhttp = new XMLHttpRequest();
+        const id = $('#faction-modal').attr('data-id');
+
+        xhttp.onload = function() {
+            factiontable.ajax.reload();
+        }
+
+        if ($('#armorydeposit')[0].checked) {
+            xhttp.open('POST', `/bot/stakeouts/${guildid}/update?action=addkey&value=armorydeposit&faction=${id}`);
+        } else {
+            xhttp.open('POST', `/bot/stakeouts/${guildid}/update?action=removekey&value=armorydeposit&faction=${id}`);
+        }
+
+        xhttp.send();
+    });
 });
