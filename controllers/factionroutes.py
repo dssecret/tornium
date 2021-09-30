@@ -25,6 +25,7 @@ from database import session_local
 from models.faction import Faction
 from models.factionmodel import FactionModel
 from models.user import User
+from models.usermodel import UserModel
 import utils
 from utils.tasks import tornget
 
@@ -50,24 +51,10 @@ def index():
 @mod.route('/faction/members')
 @login_required
 def members():
-    key = current_user.get_key()
-    try:
-        factionmembers = tornget('faction/?selections=', key)
-        factionmembers = factionmembers(blocking=True)
-    except TaskException as e:
-        if 'TornError' in str(e):
-            return utils.handle_torn_error(str(e))
-        else:
-            raise e
+    session = session_local()
+    faction_members = session.query(UserModel).filter_by(factionid=current_user.factiontid).all()
 
-    members = []
-
-    for member in factionmembers['members']:
-        user = User(int(member))
-        # user.refresh(key=key)
-        members.append(user)
-
-    return render_template('faction/members.html', members=members)
+    return render_template('faction/members.html', members=faction_members)
 
 
 @mod.route('/faction/targets', methods=['GET', 'POST'])
