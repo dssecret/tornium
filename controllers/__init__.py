@@ -26,6 +26,7 @@ def index():
 
 @mod.route('/robots.txt')
 @mod.route('/toast.js')
+@mod.route('/favicon.svg')
 @mod.route('/bot/stakeouts.js')
 @mod.route('/bot/guild.js')
 @mod.route('/faction/banking.js')
