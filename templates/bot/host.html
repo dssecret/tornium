@@ -40,12 +40,109 @@ Tornium - Bot Hosting
                 of the faction's Discord features (there can be more than one faction in a server). A faction AA 
                 member will be required to visit the <a href="/faction/bot">faction's bot dashboard</a> and add 
                 the Discord server's ID to the faction. Once this is done, under the server's bot dashboard, 
-                the faction will have a check next to the name indicating that the faction has been added.
+                the faction will have a <i class="far fa-check-circle"></i> next to the name indicating that the 
+                faction has been added.
             </p>
             
             <p class="card-text">
-                NOTE: The API keys of logged-in AA members of a faction are used for private faction data (data only accessible through AA keys).
+                NOTE: The API keys of logged-in AA members of a faction are used for private faction data (data 
+                only accessible through AA keys).
             </p>
+        </div>
+    </div>
+    
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Stakeout Hosting Instructions</h5>
+            <p class="card-text">
+                For stakeouts to be run (and to be able to create stakeouts), the stakeout feature needs to be 
+                enabled in the <a href="/bot/dashboard">bot dashboard</a> by a logged-in server administrator. A
+                stakeout category can also be added (optionally) to set the Discord category that stakeout categories 
+                are created under. At this time, stakeouts follow the base category permissions. If a category is 
+                not set by a server administrator, the stakeout channels will be created at the top of the server 
+                under no category.
+            </p>
+            <p class="card-text">
+                Once stakeouts have been enabled and set up in the <a href="/bot/dashboard">bot dashboard</a>, a 
+                server administrator can enter the server stakeouts page by the clicking on the "Go to 
+                Guild Stakeouts" button at the top of the bot dashboard. Once at the server stakeouts page, a server 
+                administrator can create a faction or user stakeout by going to the respective section and entering the 
+                respective faction or user they wish to be staked out. If the stakeout has been successfully created, a 
+                channel in your Discord server beginning "faction-" or "user-" will be created in the specified category 
+                from above. By default, all stakeouts are created with no stakeout keys (the changes that can be watched 
+                for by the stakeouts); stakeout keys can be added by clicking on the respective faction or user and 
+                selecting the keys (that are described below) that are wanted. To remove the stakeout, click the remove 
+                button after the list of stakeout keys to be selected, and the stakeout will be removed and the stakeout 
+                channel in the server will be deleted.
+            </p>
+            
+            <p>
+                <b>NOTE:</b> The stakeout will not be created if the bot lacks the necessary permissions, if the stakeout 
+                is not valid, et al. Please contact tiksan [2383326] on
+                <a href="https://www.torn.com/profiles.php?XID=2383326">Torn</a> or on
+                <a href="https://discordapp.com/users/695828257949352028">Discord</a> if you have anyt questions.
+            </p>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    Faction Stakeout Keys
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        Territory - gains or losses of a territory by a faction in addition to a racket changing, leveling, 
+                        downgrading, or appearing on a territory
+                    </li>
+                    <li class="list-group-item">
+                        Members - members leaving or joining a faction
+                    </li>
+                    <li class="list-group-item">
+                        Member Status - members of faction leaving or entering the hospital, flying, landing, or entering 
+                        the jail
+                    </li>
+                    <li class="list-group-item">
+                        Member Activity - members of a faction coming online or going offline (idle counts for both depending 
+                        on last activity time)
+                    </li>
+                    <li class="list-group-item">
+                        Assault - an assault upon a faction's territories (does not include raids upon a faction currently)
+                    </li>
+                    <li class="list-group-item">
+                        Armory - withdrawals, returnals, and retrievals of armor, weapons, and temporaries from a faction's armory
+                        <b>NOTE:</b> The stakeouted out faction must have set their current server to the server with this stakeout 
+                        for this stakeout to work.
+                    </li>
+                    <li class="list-group-item">
+                        Armory Deposit - deposits of weapons, armor, temporaries, boosters, et al. to the the faction's armory
+                        <b>NOTE:</b> The stakeouted out faction must have set their current server to the server with this stakeout 
+                        for this stakeout to work.
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    User Stakeout Keys
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        Level - increases (or decreases for the rare occasion) of a user's level
+                    </li>
+                    <li class="list-group-item">
+                        Status - changes in a user's in-game status (in hospital, in jail, et al.)
+                        <b>NOTE:</b> Does not include flying status changes such as flying and landed. Those changes are watched 
+                        with the below Flying Status stakeout key.
+                    </li>
+                    <li class="list-group-item">
+                        Flying Status - changes in a user's in-game flying status (i.e. landed or flying)
+                    </li>
+                    <li class="list-group-item">
+                        Online - a user coming online
+                    </li>
+                    <li class="list-group-item">
+                        Offline - a user going offline
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
