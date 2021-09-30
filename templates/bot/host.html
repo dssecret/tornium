@@ -8,21 +8,27 @@ Tornium - Bot Hosting
 {% include 'navbar.html' %}
 {% include 'bot/navbar.html' %}
 
-<div class="px-3 py-3">
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title">Basic Hosting Instructions</h5>
-            <p class="card-text">
-                In order to host the Tornium Bot on your Discord server, first invite the bot to your server through
-                <a href="https://discord.com/api/oauth2/authorize?client_id=862748725574762526&permissions=201337904&scope=bot">this link</a>
-                (or <a href="https://discord.com/api/oauth2/authorize?client_id=862748725574762526&permissions=8&scope=bot">this link</a>
-                for administrator permissions). If the first link is chosen, there may be issues in the future with
-                additional permission needing to be given to the bot.
-            </p>
+<div class="px-3 py-3 accordian" id="accordian">
+    <div class="accordian-item">
+        <h2 class="accordian-header" id="header-basic">
+            <button class="accordian-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-basic" aria-expanded="true" aria-controls="collapseBasic">
+                Basic Hosting Instructions
+            </button>
+        </h2>
+        <div class="accordian-collapse collapse show" id="collapse-basic" aria-labelledby="Basic Hosting Instructions" data-bs-example="accordian">
+            <div class="accordian-body">
+                <p>
+                    In order to host the Tornium Bot on your Discord server, first invite the bot to your server through
+                    <a href="https://discord.com/api/oauth2/authorize?client_id=862748725574762526&permissions=201337904&scope=bot">this link</a>
+                    (or <a href="https://discord.com/api/oauth2/authorize?client_id=862748725574762526&permissions=8&scope=bot">this link</a>
+                    for administrator permissions). If the first link is chosen, there may be issues in the future with
+                    additional permission needing to be given to the bot.
+                </p>
 
-            <p class="card-text">
-                For a full list of commands and instructions, please check out <a href="/bot/documentation">the documentation</a>.
-            </p>
+                <p>
+                    For a full list of commands and instructions, please check out <a href="/bot/documentation">the documentation</a>.
+                </p>
+            </div>
         </div>
     </div>
 
