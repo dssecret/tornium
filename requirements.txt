@@ -1,5 +1,5 @@
 alembic==1.6.5
-cryptography==3.4.8
+cryptography==35.0.0
 discord.py == 1.7.3
 flask == 2.0.1
 flask-cors == 3.0.10
