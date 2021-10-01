@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 
 from controllers.api import key
 from controllers.api import stakeout
@@ -32,6 +32,15 @@ mod.add_url_rule('/api/faction/banking', view_func=banking.banking_request, meth
 
 # /api/stakeout
 mod.add_url_rule('/api/stakeout/<string:stype>', view_func=stakeout.create_stakeout, methods=['POST'])
+
+
+@mod.after_request
+def after_request(response):
+    if request.url_root not in ['/api']:
+        header = response.headers
+        header['Access-Control-Allow-Origin'] = '*'
+
+    return response
 
 
 @mod.route('/api')
