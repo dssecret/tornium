@@ -17,6 +17,7 @@ from flask import jsonify, request
 
 from controllers.api.decorators import *
 from database import session_local
+from models.factionmodel import FactionModel
 from models.factionstakeoutmodel import FactionStakeoutModel
 from models.keymodel import KeyModel
 from models.servermodel import ServerModel
@@ -66,6 +67,7 @@ def create_stakeout(stype, *args, **kwargs):
 
     guildid = int(guildid)
     tid = int(tid)
+    guild = session.query(ServerModel).filter_by(sid=guildid).first()
 
     if stype not in ['faction', 'user']:
         return jsonify({
@@ -89,6 +91,17 @@ def create_stakeout(stype, *args, **kwargs):
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
+    if json.loads(guild.config)['stakeoutconfig'] != 1:
+        return jsonify({
+            'code': 0,
+            'name': 'InvalidRequest',
+            'message': 'Server failed to fulfill the request. The provided server ID has not enabled stakeouts. '
+                       'Contact a server administrator in order to enable this feature.'
+        }), 403, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
     elif stype == 'user' and session.query(UserStakeoutModel).filter_by(tid=tid).first() is not None and str(guildid) \
             in json.loads(session.query(UserStakeoutModel).filter_by(tid=tid).first().guilds):
         return jsonify({
@@ -107,10 +120,10 @@ def create_stakeout(stype, *args, **kwargs):
             'name': 'StakeoutAlreadyExists',
             'message': 'Server failed to fulfill the request. The provided faction ID is already being staked'
         }), 400, {
-                   'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-                   'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                   'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-               }
+               'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+               'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+               'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+           }
     elif stype == 'user' and keys is not None and not set(keys) & {'level', 'status', 'flyingstatus', 'online',
                                                                    'offline'}:
         return jsonify({
@@ -143,7 +156,6 @@ def create_stakeout(stype, *args, **kwargs):
         user=True if stype == 'user' else False,
         key=kwargs['user'].key
     )
-    guild = session.query(ServerModel).filter_by(sid=guildid).first()
 
     if stype == 'user':
         stakeouts = json.loads(guild.userstakeouts)
