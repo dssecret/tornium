@@ -322,7 +322,7 @@ def refresh_factions():
 
                 user.battlescore = json.dumps([user_data['spy']['target_score'], utils.now()])
 
-        if faction.chain_config['od']:
+        if faction.chainconfig['od']:
             try:
                 faction_od = tornget('faction/?selections=contributors',
                                      stat='drugoverdoses',
@@ -333,9 +333,9 @@ def refresh_factions():
                 utils.get_logger().exception(e)
                 continue
 
-            if len(faction.chain_od) != 0:
+            if len(faction.chainod) != 0:
                 for tid, user_od in json.loads(faction_od)['contributors']['drugoverdoses'].items():
-                    if user_od != json.loads(faction.chain_od).get(tid):
+                    if user_od != json.loads(faction.chainod).get(tid):
                         payload = {
                             'embeds': [
                                 {
@@ -351,12 +351,12 @@ def refresh_factions():
                         }
 
                         try:
-                            discordpost(f'channels/{faction.chain_config["odchannel"]}/messages', payload=payload)()
+                            discordpost(f'channels/{faction.chainconfig["odchannel"]}/messages', payload=payload)()
                         except Exception as e:
                             utils.get_logger().exception(e)
                             continue
 
-            faction.chain_od = json.dumps(faction_od['contributors']['drugoverdoses'])
+            faction.chainod = json.dumps(faction_od['contributors']['drugoverdoses'])
 
     session.flush()
 
