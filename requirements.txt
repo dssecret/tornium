@@ -2,6 +2,7 @@ alembic==1.6.5
 cryptography==3.4.8
 discord.py == 1.7.2
 flask == 2.0.1
+flask-cors == 3.0.10
 flask-login == 0.5.0
 huey == 2.3.2
 is-safe-url == 1.0

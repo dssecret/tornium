@@ -21,6 +21,7 @@ import logging
 import os
 
 import flask
+from flask_cors import CORS
 from flask_login import LoginManager
 from sqlalchemy.orm import scoped_session
 
@@ -47,6 +48,8 @@ redis = get_redis()
 app = flask.Flask(__name__, instance_path=f'{os.getcwd()}/instance')  # Temp bug fix for https://youtrack.jetbrains.com/issue/PY-49984
 app.secret_key = redis.get('secret')
 app.session = scoped_session(session_local, scopefunc=flask._app_ctx_stack.__ident_func__)
+
+cors = CORS(app, resources={r'/api/*': {'origins': '*'}})
 
 login_manager = LoginManager()
 login_manager.init_app(app)
