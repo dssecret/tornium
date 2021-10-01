@@ -8,5 +8,5 @@ huey == 2.4.1
 is-safe-url == 1.0
 pymysql==1.0.2
 redis == 3.5.3
-requests == 2.25.1
+requests == 2.26.0
 sqlalchemy == 1.4.25
