@@ -49,9 +49,9 @@ logger.addHandler(handler)
 
 
 @huey.task()
-def tornget(endpoint, key, tots=0, fromts=0, session=None):
+def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
     url = f'https://api.torn.com/{endpoint}&key={key}&comment=Tornium{"" if fromts == 0 else f"&from={fromts}"}' \
-          f'{"" if tots == 0 else f"&to={tots}"}'
+          f'{"" if tots == 0 else f"&to={tots}"}{stat if stat == "" else f"stat={stat}"}'
 
     redis = get_redis()
     if redis.setnx(key, 100):
@@ -243,7 +243,6 @@ def refresh_factions():
     session = session_local()
     requests_session = requests.Session()
     factions = []
-    timestamp = utils.now()
 
     for faction in session.query(FactionModel).all():
         if len(json.loads(faction.keys)) == 0:
@@ -302,7 +301,7 @@ def refresh_factions():
 
             user.name = member['name']
             user.level = member['level']
-            user.last_refresh = timestamp
+            user.last_refresh = utils.now()
             user.factiontid = faction_data['ID']
             user.status = member['last_action']['status']
             user.last_action = member['last_action']['relative']
@@ -321,7 +320,43 @@ def refresh_factions():
                 elif user_data['spy']['type'] != 'faction-share':
                     continue
 
-                user.battlescore = json.dumps([user_data['spy']['target_score'], timestamp])
+                user.battlescore = json.dumps([user_data['spy']['target_score'], utils.now()])
+
+        if faction.chain_config['od']:
+            try:
+                faction_od = tornget('faction/?selections=contributors',
+                                     stat='drugoverdoses',
+                                     key=random.choice(faction.keys),
+                                     session=requests_session)
+                faction_od = faction_od(blocking=True)
+            except Exception as e:
+                utils.get_logger().exception(e)
+                continue
+
+            if len(faction.chain_od) != 0:
+                for tid, user_od in json.loads(faction_od)['contributors']['drugoverdoses'].items():
+                    if user_od != json.loads(faction.chain_od).get(tid):
+                        payload = {
+                            'embeds': [
+                                {
+                                    'title': 'User Overdose',
+                                    'description': f'User {session.query(UserModel).filter_by(tid=tid).first().name} of '
+                                                   f'faction {faction.name} has overdosed.',
+                                    'timestamp': datetime.datetime.utcnow().isoformat(),
+                                    'footer': {
+                                        'text': utils.torn_timestamp()
+                                    }
+                                }
+                            ]
+                        }
+
+                        try:
+                            discordpost(f'channels/{faction.chain_config["odchannel"]}/messages', payload=payload)()
+                        except Exception as e:
+                            utils.get_logger().exception(e)
+                            continue
+
+            faction.chain_od = json.dumps(faction_od['contributors']['drugoverdoses'])
 
     session.flush()
 

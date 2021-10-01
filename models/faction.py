@@ -57,7 +57,9 @@ class Faction:
                 config='{"vault": 0, "stat": 1}',
                 vaultconfig='{"banking": 0, "banker": 0, "withdrawal": 0}',
                 targets='{}',
-                statconfig='{"global": 0}'
+                statconfig='{"global": 0}',
+                chainconfig='{"od": 0, "odchannel": 0}',
+                chainod='{}'
             )
 
             try:
@@ -93,6 +95,9 @@ class Faction:
         self.targets = json.loads(faction.targets)
 
         self.stat_config = json.loads(faction.statconfig)
+
+        self.chain_config = json.loads(faction.chainconfig)
+        self.chain_od = json.loads(faction.chainod)
 
     def get_tid(self):
         """
@@ -142,6 +147,12 @@ class Faction:
             return {}
 
         return self.stat_config
+
+    def get_chain_config(self):
+        if self.guild == 0:
+            return {}
+
+        return self.chain_config
 
     def get_config(self):
         if self.guild == 0:

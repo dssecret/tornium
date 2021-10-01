@@ -307,3 +307,48 @@ def userbankingdata():
         'data': withdrawals[start:start+length]
     }
     return data
+
+
+@mod.route('/faction/chain', methods=['GET', 'POST'])
+@login_required
+def chain():
+    faction = Faction(current_user.factiontid)
+
+    if request.method == 'POST':
+        session = session_local()
+        faction_model = session.query(FactionModel).filter_by(tid=current_user.factiontid).first()
+
+        if request.form.get('odchannel') is not None:
+            try:
+                channel = utils.tasks.discordget(f'channels/{request.form.get("odchannel")}')
+                channel = channel(blocking=True)
+            except TaskException as e:
+                e = str(e)
+                if 'DiscordError' in e:
+                    return utils.handle_discord_error(e)
+                elif 'NetworkingError' in e:
+                    return render_template('errors/error.html', title='Discord Networking Error',
+                                           error=f'The Discord API has responded with HTTP error code '
+                                                 f'{utils.remove_str(e)}.')
+                else:
+                    raise e
+
+            print(channel)
+
+            config = faction.get_chain_config()
+            config['odchannel'] = int(channel['id'])
+            faction_model.chainconfig = json.dumps(config)
+            session.flush()
+        elif (request.form.get('odenabled') is not None) ^ (request.form.get('oddisabled') is not None):
+            config = faction.chain_config
+
+            if request.form.get('odenabled') is not None:
+                config['od'] = 1
+                faction_model.chainconfig = json.dumps(config)
+                session.flush()
+            if request.form.get('oddisabled') is not None:
+                config['od'] = 0
+                faction_model.chainconfig = json.dumps(config)
+                session.flush()
+
+    return render_template('faction/chain.html', faction=faction)

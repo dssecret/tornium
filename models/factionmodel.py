@@ -44,6 +44,9 @@ class FactionModel(base):
         targets = Column(String)  # String of dictionary of targets
 
         statconfig = Column(String)  # String of dictionary of target config
+
+        chainconfig = Column(String)  # String of dictionary of chain config
+        chainod = Column(String)  # String of dictionary of faction member overdoses
     else:
         tid = Column(BIGINT, primary_key=True)
         name = Column(TEXT)
@@ -65,3 +68,6 @@ class FactionModel(base):
         targets = Column(LONGTEXT)  # String of dictionary of targets
 
         statconfig = Column(TEXT)  # String of dictionary of target config
+
+        chainconfig = Column(TEXT)  # String of dictionary of chain config
+        chainod = Column(TEXT)  # String of dictionary of faction member overdoses
