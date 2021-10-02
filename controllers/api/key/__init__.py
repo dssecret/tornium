@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+import secrets
+
 from flask import jsonify, request
 
 from controllers.api.decorators import *
@@ -49,9 +51,9 @@ def create_key(*args, **kwargs):
     scopes = data.get('scopes')
     expires = data.get('expires')
 
-    if expires is not None and expires <= utils.now():
-        client = redisdb.get_redis()
+    client = redisdb.get_redis()
 
+    if expires is not None and expires <= utils.now():
         return jsonify({
             'code': 0,
             'name': 'InvalidExpiryTimestamp',
@@ -67,8 +69,6 @@ def create_key(*args, **kwargs):
 
     for scope in scopes:
         if scope not in []:
-            client = redisdb.get_redis()
-
             return jsonify({
                 'code': 0,
                 'name': 'InvalidScope',
@@ -107,6 +107,7 @@ def remove_key(*args, **kwargs):
     session = session_local()
     data = json.loads(request.get_data().decode('utf-8'))
     key = data.get('key')
+    client = redisdb.get_redis()
     
     if key is None:
         return
