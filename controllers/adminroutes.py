@@ -72,4 +72,4 @@ def bot():
         if request.form.get('bottoken') is not None:
             settingsmodel.update('bottoken', request.form.get('bottoken'))
 
-    return render_template('admin/bot.html', bottoken=settingsmodel.get('settings', 'bottoken'))
+    return render_template('admin/bot.html', bottoken=settingsmodel.get('bottoken'))
