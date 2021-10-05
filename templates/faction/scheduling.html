@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Tornium - Chain Watch Scheduling
+{% endblock %}
+
+{% block content %}
+
+{% include 'navbar.html' %}
+{% include 'faction/navbar.html' %}
+
+<div class="px-3 py-3">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Chain Watch Scheduling</h5>
+            <p class="card-text">This feature can generate a possible chain watching schedule based on inputted intervals 
+                of availability for faction members. This feature uses a random walk algorithm to generate the chain 
+                watching schedule, therefore with each run of the algorithm, different schedules may be outputted. For 
+                more information about how this algorithm works, please check out <a href="#">this</a>.
+            </p>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Chain Watch Schedules</h5>
+            
+            <table id="schedule-table" class="table table-striped table-bordered responsive">
+                <thead>
+                    <tr>
+                        <th>Schedule ID</th>
+                        <th>Time Created</th>
+                        <th>Time Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+            
+            <button type="button" class="btn btn-success" id="create-schedule">
+                Create a new schedule.
+            </button>
+            
+            <button type="button" class="btn btn-primary" id="import-schedule">
+                <div class="input-group mb-3">
+                    <input type="file" class="form-control" id="import-schedule-file">
+                    <label class="input-group-text" for="import-schedule-file">Upload Schedule</label>
+                </div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="/faction/scheduling.js">
+{% endblock %}
