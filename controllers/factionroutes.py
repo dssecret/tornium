@@ -24,6 +24,7 @@ from huey.exceptions import TaskException
 from database import session_local
 from models.faction import Faction
 from models.factionmodel import FactionModel
+from models.chainschedule import ChainSchedule
 from models.user import User
 from models.usermodel import UserModel
 import utils
@@ -357,4 +358,8 @@ def chain():
 @mod.route('/faction/schedule', methods=['GET'])
 @login_required
 def schedule():
+    if request.args.get('uuid') is not None:
+        schedule = ChainSchedule(request.args.get('uuid'), factiontid=current_user.factiontid)
+        return schedule.file
+    
     return render_template('faction/schedule.html')
