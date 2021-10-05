@@ -14,13 +14,13 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 from sqlalchemy import Column, Integer, String
-from sqlalchemy.dialects.mysql import BIGINT, INTEGER
+from sqlalchemy.dialects.mysql import VARCHAR, INTEGER
 
 from database import base
 from models.settingsmodel import is_dev
 
 
-class SchedulesModel(base):
+class ScheduleModel(base):
     __tablename__ = 'Schedules'
 
     if is_dev():

@@ -24,7 +24,7 @@ from huey.exceptions import TaskException
 from database import session_local
 from models.faction import Faction
 from models.factionmodel import FactionModel
-from models.chainschedule import ChainSchedule
+from models.schedule import ChainSchedule
 from models.user import User
 from models.usermodel import UserModel
 import utils
