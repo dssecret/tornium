@@ -35,13 +35,11 @@ def login():
     global torn_user
 
     try:
-        torn_user = tornget(endpoint='user/?selections=', key=request.form['key'])
-        torn_user = torn_user(blocking=True)
-    except TaskException as e:
-        if 'TornError' in str(e):
-            return utils.handle_torn_error(str(e))
-        else:
-            raise e
+        torn_user = tornget.call_local(endpoint='user/?selections=', key=request.form['key'])
+    except utils.TornError as e:
+        return utils.handle_torn_error(str(e))
+    except Exception as e:
+        raise e
 
     user = User(torn_user['player_id'])
 

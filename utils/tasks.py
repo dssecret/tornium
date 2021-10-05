@@ -14,6 +14,7 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 from models import settingsmodel
+
 settingsmodel.initialize()
 
 import datetime
@@ -324,11 +325,10 @@ def refresh_factions():
 
         if faction.chainconfig['od']:
             try:
-                faction_od = tornget('faction/?selections=contributors',
-                                     stat='drugoverdoses',
-                                     key=random.choice(faction.keys),
-                                     session=requests_session)
-                faction_od = faction_od(blocking=True)
+                faction_od = tornget.call_local('faction/?selections=contributors',
+                                                stat='drugoverdoses',
+                                                key=random.choice(faction.keys),
+                                                session=requests_session)
             except Exception as e:
                 utils.get_logger().exception(e)
                 continue
@@ -443,7 +443,7 @@ def refresh_users():
         except Exception as e:
             utils.get_logger().exception(e)
             continue
-        
+
         user = session.query(UserModel).filter_by(tid=user_data['player_id']).first()
         user.factiontid = user_data['faction']['faction_id']
         user.name = user_data['name']
@@ -580,21 +580,19 @@ def user_stakeout(stakeout, requests_session=None, key=None):
     session = session_local()
     stakeout = session.query(UserStakeoutModel).filter_by(tid=stakeout).first()
 
-    if key is not None:
-        data = tornget(f'user/{stakeout.tid}?selections=', key=key, session=requests_session)
-    else:
-        guild = random.choice(list(json.loads(stakeout.guilds).keys()))
-        guild = session.query(ServerModel).filter_by(sid=guild).first()
-        admin = random.choice(json.loads(guild.admins))
-        admin = session.query(UserModel).filter_by(tid=admin).first()
-        data = tornget(f'user/{stakeout.tid}?selections=', key=admin.key, session=requests_session)
-
     try:
-        data = data(blocking=True)
+        if key is not None:
+            data = tornget.call_local(f'user/{stakeout.tid}?selections=', key=key, session=requests_session)
+        else:
+            guild = random.choice(list(json.loads(stakeout.guilds).keys()))
+            guild = session.query(ServerModel).filter_by(sid=guild).first()
+            admin = random.choice(json.loads(guild.admins))
+            admin = session.query(UserModel).filter_by(tid=admin).first()
+            data = tornget.call_local(f'user/{stakeout.tid}?selections=', key=admin.key, session=requests_session)
     except Exception as e:
         utils.get_logger().exception(e)
         return
-        
+
     stakeout_data = json.loads(stakeout.data)
 
     stakeout.lastupdate = utils.now()
@@ -742,21 +740,19 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
     session = session_local()
     stakeout = session.query(FactionStakeoutModel).filter_by(tid=stakeout).first()
 
-    if key is not None:
-        data = tornget(f'faction/{stakeout.tid}?selections=basic,territory', key=key, session=requests_session)
-    else:
-        guild = random.choice(list(json.loads(stakeout.guilds).keys()))
-        guild = session.query(ServerModel).filter_by(sid=guild).first()
-        admin = random.choice(json.loads(guild.admins))
-        admin = session.query(UserModel).filter_by(tid=admin).first()
-        data = tornget(f'faction/{stakeout.tid}?selections=basic,territory', key=admin.key, session=requests_session)
-
     try:
-        data = data(blocking=True)
+        if key is not None:
+            data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=key, session=requests_session)
+        else:
+            guild = random.choice(list(json.loads(stakeout.guilds).keys()))
+            guild = session.query(ServerModel).filter_by(sid=guild).first()
+            admin = random.choice(json.loads(guild.admins))
+            admin = session.query(UserModel).filter_by(tid=admin).first()
+            data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=admin.key, session=requests_session)
     except Exception as e:
         utils.get_logger().exception(e)
         return
-    
+
     stakeout_data = json.loads(stakeout.data)
 
     stakeout.lastupdate = utils.now()
@@ -987,7 +983,8 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                 if memberid not in data['members']:
                     continue
 
-                if member['last_action']['status'] in ('Offline', 'Idle') and data['members'][memberid]['last_action']['status'] == 'Online':
+                if member['last_action']['status'] in ('Offline', 'Idle') and data['members'][memberid]['last_action'][
+                    'status'] == 'Online':
                     if data["members"][memberid]["last_action"]["status"] == "Idle" and \
                             datetime.datetime.now(datetime.timezone.utc).timestamp() - \
                             data["members"][memberid]["last_action"]["timestamp"] < 300:
@@ -1110,19 +1107,17 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
             server = session.query(ServerModel).filter_by(sid=guildid).first()
             faction = session.query(FactionModel).filter_by(tid=stakeout.tid).first()
             if stakeout.tid in json.loads(server.factions) and faction.guild == int(guildid):
-                if key is not None:
-                    data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
-                                   key=key,
-                                   session=requests_session,
-                                   fromts=utils.now() - 60)
-                else:
-                    data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
-                                   key=random.choice(json.loads(faction.keys)),
-                                   session=requests_session,
-                                   fromts=utils.now() - 60)
-
                 try:
-                    data = data(blocking=True)
+                    if key is not None:
+                        data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
+                                                  key=key,
+                                                  session=requests_session,
+                                                  fromts=utils.now() - 60)
+                    else:
+                        data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
+                                                  key=random.choice(json.loads(faction.keys)),
+                                                  session=requests_session,
+                                                  fromts=utils.now() - 60)
                 except Exception as e:
                     utils.get_logger().exception(e)
                     break
@@ -1159,19 +1154,17 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
             server = session.query(ServerModel).filter_by(sid=guildid).first()
             faction = session.query(FactionModel).filter_by(tid=stakeout.tid).first()
             if stakeout.tid in json.loads(server.factions) and faction.guild == int(guildid):
-                if key is not None:
-                    data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
-                                   key=key,
-                                   session=requests_session,
-                                   fromts=utils.now() - 60)
-                else:
-                    data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
-                                   key=random.choice(json.loads(faction.keys)),
-                                   session=requests_session,
-                                   fromts=utils.now() - 60)
-
                 try:
-                    data = data(blocking=True)
+                    if key is not None:
+                        data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
+                                                  key=key,
+                                                  session=requests_session,
+                                                  fromts=utils.now() - 60)
+                    else:
+                        data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
+                                                  key=random.choice(json.loads(faction.keys)),
+                                                  session=requests_session,
+                                                  fromts=utils.now() - 60)
                 except Exception as e:
                     utils.get_logger().exception(e)
                     break

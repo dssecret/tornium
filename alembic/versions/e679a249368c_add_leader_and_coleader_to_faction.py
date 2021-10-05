@@ -16,7 +16,6 @@ from database import session_local
 from models.factionmodel import FactionModel
 from utils.tasks import tornget
 
-
 # revision identifiers, used by Alembic.
 revision = 'e679a249368c'
 down_revision = '47e85b111fd4'
@@ -35,10 +34,9 @@ def upgrade():
             continue
 
         try:
-            faction_data = tornget(f'faction/{faction.tid}?selections=',
-                                   random.choice(json.loads(faction.keys)),
-                                   session=requests_session)
-            faction_data = faction_data(blocking=True)
+            faction_data = tornget.call_local(f'faction/{faction.tid}?selections=',
+                                              random.choice(json.loads(faction.keys)),
+                                              session=requests_session)
         except:
             continue
 

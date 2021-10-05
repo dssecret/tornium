@@ -76,13 +76,11 @@ def targets():
                 return render_template('faction/targets.html', targets=faction.targets)
 
             try:
-                torn_user = tornget(f'user/{request.form.get("targetid")}?selections=', current_user.key)
-                torn_user = torn_user.get(blocking=True)
-            except TaskException as e:
-                if 'TornError' in str(e):
-                    return utils.handle_torn_error(str(e))
-                else:
-                    raise e
+                torn_user = tornget.call_local(f'user/{request.form.get("targetid")}?selections=', current_user.key)
+            except utils.TornError as e:
+                return utils.handle_torn_error(str(e))
+            except Exception as e:
+                raise e
 
             faction.targets[torn_user['player_id']] = {
                 'last_update': utils.now(),
@@ -121,13 +119,11 @@ def refresh_target(tid):
     faction = Faction(current_user.factiontid)
 
     try:
-        torn_user = tornget(f'user/{tid}?selections=', current_user.key)
-        torn_user = torn_user(blocking=True)
-    except TaskException as e:
-        if 'TornError' in str(e):
-            return utils.handle_torn_error(str(e))
-        else:
-            raise e
+        torn_user = tornget.call_local(f'user/{tid}?selections=', current_user.key)
+    except utils.TornError as e:
+        return utils.handle_torn_error(str(e))
+    except Exception as e:
+        raise e
 
     faction.targets[str(torn_user['player_id'])]['name'] = torn_user['name']
     faction.targets[str(torn_user['player_id'])]['level'] = torn_user['level']
@@ -153,17 +149,15 @@ def bot():
 
         if request.form.get('guildid') is not None:
             try:
-                data = utils.tasks.discordget(f'guilds/{request.form.get("guildid")}')
-                data(blocking=True)
-            except TaskException as e:
-                if 'DiscordError' in str(e):
-                    return utils.handle_discord_error(str(e))
-                elif 'NetworkingError' in str(e):
-                    return render_template('errors/error.html', title='Discord Networking Error',
-                                           error=f'The Discord API has responded with HTTP error code '
-                                                 f'{utils.remove_str(str(e))}.')
-                else:
-                    raise e
+                data = utils.tasks.discordget.call_local(f'guilds/{request.form.get("guildid")}')
+            except utils.DiscordError as e:
+                return utils.handle_discord_error(str(e))
+            except utils.NetworkingError as e:
+                return render_template('errors/error.html', title='Discord Networking Error',
+                                       error=f'The Discord API has responded with HTTP error code '
+                                             f'{utils.remove_str(str(e))}.')
+            except Exception as e:
+                raise e
 
             faction.guild = request.form.get('guildid')
             faction_model.guild = request.form.get('guildid')

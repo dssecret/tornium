@@ -38,8 +38,7 @@ class DiscordUser:
         user = session.query(UserDiscordModel).filter_by(discord_id=did).first()
 
         if user is None:
-            torn_user = tornget(f'user/{did}?selections=discord', key)
-            torn_user = torn_user(blocking=True)
+            torn_user = tornget.call_local(f'user/{did}?selections=discord', key)
 
             user = UserDiscordModel(
                 discord_id=did,
@@ -111,10 +110,9 @@ class User(UserMixin):
             session = session_local()
 
             if key == self.get_key():
-                user_data = tornget(f'user/?selections=profile,battlestats,discord', key)
+                user_data = tornget.call_local(f'user/?selections=profile,battlestats,discord', key)
             else:
-                user_data = tornget(f'user/{self.tid}?selections=profile,discord', key)
-            user_data = user_data(blocking=True)
+                user_data = tornget.call_local(f'user/{self.tid}?selections=profile,discord', key)
 
             user = session.query(UserModel).filter_by(tid=self.tid).first()
             user.factionid = user_data['faction']['faction_id']
@@ -155,12 +153,10 @@ class User(UserMixin):
         session = session_local()
         user = session.query(UserModel).filter_by(tid=self.tid).first()
 
-        faction_data = tornget(f'faction/?selections=', self.key)
-        faction_data = faction_data(blocking=True)
+        faction_data = tornget.call_local(f'faction/?selections=', self.key)
 
         try:
-            response = tornget(f'faction/?selections=positions', self.key)
-            response(blocking=True)
+            tornget.call_local(f'faction/?selections=positions', self.key)
         except:
             self.aa = False
             user.aa = False

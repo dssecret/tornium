@@ -38,8 +38,7 @@ class Faction:
         session = session_local()
         faction = session.query(FactionModel).filter_by(tid=tid).first()
         if faction is None:
-            faction_data = tornget(f'faction/{tid}?selections=basic', key if key != "" else current_user.key)
-            faction_data = faction_data(blocking=True)
+            faction_data = tornget.call_local(f'faction/{tid}?selections=basic', key if key != "" else current_user.key)
 
             now = utils.now()
 
@@ -63,8 +62,7 @@ class Faction:
             )
 
             try:
-                result = tornget(f'faction/{tid}?selections=positions', key if key != "" else current_user.key)
-                result(blocking=True)
+                tornget.call_local(f'faction/{tid}?selections=positions', key if key != "" else current_user.key)
                 keys = json.loads(faction.keys)
                 keys.append(key if key != "" else current_user.key)
                 keys = json.dumps(keys)
@@ -122,8 +120,7 @@ class Faction:
         if key is None:
             key = random.choice(self.get_keys())
 
-        factionmembers = tornget('faction/?selections=', key)
-        factionmembers = factionmembers(blocking=True)
+        factionmembers = tornget.call_local('faction/?selections=', key)
 
         for memberid, member in factionmembers['members'].values():
             user = User(memberid)

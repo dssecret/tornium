@@ -83,7 +83,7 @@ def banking_request(*args, **kwargs):
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
 
-    vault_balances = utils.tasks.tornget(f'faction/?selections=donations', faction.rand_key())(blocking=True)
+    vault_balances = utils.tasks.tornget.call_local(f'faction/?selections=donations', faction.rand_key())
 
     if str(user.tid) in vault_balances['donations']:
         if amount_requested > vault_balances['donations'][str(user.tid)]['money_balance']:
