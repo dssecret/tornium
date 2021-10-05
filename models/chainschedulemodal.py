@@ -24,10 +24,10 @@ class SchedulesModel(base):
     __tablename__ = 'Schedules'
 
     if is_dev():
-        uuid = Column(Integer, primary_key=True)
+        uuid = Column(String, primary_key=True)
         factiontid = Column(Integer)
     else:
-        uuid = Column(BIGINT, primary_key=True)
+        uuid = Column(VARCHAR(36), primary_key=True)
         factiontid = Column(INTEGER)
         
         
