@@ -352,3 +352,9 @@ def chain():
                 session.flush()
 
     return render_template('faction/chain.html', faction=faction)
+
+
+@mod.route('/faction/schedule', methods=['GET'])
+@login_required
+def schedule():
+    return render_template('faction/schedule.html')
