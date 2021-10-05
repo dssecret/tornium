@@ -29,5 +29,3 @@ class SchedulesModel(base):
     else:
         uuid = Column(VARCHAR(36), primary_key=True)
         factiontid = Column(INTEGER)
-        
-        
