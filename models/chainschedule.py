@@ -13,5 +13,39 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+from database import session_local
+from chainschedulemodel import ChainScheduleModel
+
 
 class ChainSchedule:
+    def __init__(self, uuid, factiontid=None):
+        session = session_local()
+        schedule = session.query(ChainScheduleModel).filter_by(uuid=uuid).first()
+        
+        if schedule is None and factiontid is None:
+            raise Exception
+        elif schedule is None:
+            scheudle = ChainScheduleModel(
+                uuid=uuid,
+                factiontid=factiontid
+            )
+            
+            with open(f'schedule/{uuid}, 'w') as file:
+                json.dump({
+                    'uuid': uuid,
+                    'factiontid': factiontid,
+                    'activity': [],
+                    'schedule': []
+                }, file)
+            
+            session.add(schedule)
+            session.flush()
+        
+        self.uuid = uuid
+        self.factiontid = schedule.factiontid
+        
+        with open(f'schedule/{uuid}) as file:
+            self.file = json.load(file)
+        
+        self.activity = self.file['activity']
+        self.schedule = self.file['schedule']
