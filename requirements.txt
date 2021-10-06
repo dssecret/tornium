@@ -1,4 +1,4 @@
-alembic==1.7.3
+alembic==1.7.4
 cryptography==35.0.0
 discord.py == 1.7.3
 flask == 2.0.2
