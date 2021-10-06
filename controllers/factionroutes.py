@@ -359,9 +359,12 @@ def chain():
 @mod.route('/faction/schedule', methods=['GET'])
 @login_required
 def schedule():
-    if request.args.get('uuid') is not None:
+    if request.args.get('uuid') is not None and request.args.get('watchers') is None:
         schedule = Schedule(request.args.get('uuid'), factiontid=current_user.factiontid)
-        return schedule.file
+        return render_template('faction/schedulemodal.html')
+    elif request.args.get('uuid') is not None and request.args.get('watchers') is not None:
+        schedule = Schedule(request.args.get('uuid'), factiontid=current_user.factiontid)
+        return schedule.schedule
     
     return render_template('faction/schedule.html', key=current_user.key)
 
