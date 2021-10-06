@@ -33,8 +33,9 @@ $(document).ready(function() {
             xhttp = new XMLHttpRequest();
             
             xhttp.onload = function() {
-                createWatcherTimeline(this.responseText);
+                createWatcherTimeline(xhttp.response);
             }
+            xhttp.responseType = 'json';
             xhttp.open('GET', '/faction/schedule?uuid=' + table.row(this).data()[0] + '&watchers=True');
             xhttp.send();
         }
