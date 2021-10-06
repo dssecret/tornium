@@ -14,12 +14,14 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
+import os
 
 from database import session_local
 from models.schedulemodal import ScheduleModel
+import utils
 
 
-class ChainSchedule:
+class Schedule:
     def __init__(self, uuid, factiontid=None):
         session = session_local()
         schedule = session.query(ScheduleModel).filter_by(uuid=uuid).first()
@@ -31,11 +33,17 @@ class ChainSchedule:
                 uuid=uuid,
                 factiontid=factiontid
             )
+
+            if not os.path.exists(f'{os.getcwd()}/schedule'):
+                os.makedirs(f'{os.getcwd()}/schedule')
             
-            with open(f'schedule/{uuid}', 'w') as file:
+            with open(f'{os.getcwd()}/schedule/{uuid}.json', 'x') as file:
                 json.dump({
                     'uuid': uuid,
+                    'name': uuid,
                     'factiontid': factiontid,
+                    'timecreated': utils.now(),
+                    'timeupdated': utils.now(),
                     'activity': [],
                     'schedule': []
                 }, file)
@@ -46,8 +54,11 @@ class ChainSchedule:
         self.uuid = uuid
         self.factiontid = schedule.factiontid
         
-        with open(f'schedule/{uuid}') as file:
+        with open(f'{os.getcwd()}/schedule/{uuid}.json') as file:
             self.file = json.load(file)
-        
+
+        self.name = self.file['name']
+        self.time_created = self.file['timecreated']
+        self.time_updated = self.file['timeupdated']
         self.activity = self.file['activity']
         self.schedule = self.file['schedule']

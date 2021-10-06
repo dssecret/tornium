@@ -13,8 +13,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from math import ceil
 from functools import wraps
+import os
 import json
 
 from flask import Blueprint, render_template, abort, request, flash, redirect
@@ -24,7 +24,8 @@ from huey.exceptions import TaskException
 from database import session_local
 from models.faction import Faction
 from models.factionmodel import FactionModel
-from models.schedule import ChainSchedule
+from models.schedule import Schedule
+from models.schedulemodal import ScheduleModel
 from models.user import User
 from models.usermodel import UserModel
 import utils
@@ -359,7 +360,36 @@ def chain():
 @login_required
 def schedule():
     if request.args.get('uuid') is not None:
-        schedule = ChainSchedule(request.args.get('uuid'), factiontid=current_user.factiontid)
+        schedule = Schedule(request.args.get('uuid'), factiontid=current_user.factiontid)
         return schedule.file
     
-    return render_template('faction/schedule.html')
+    return render_template('faction/schedule.html', key=current_user.key)
+
+
+@mod.route('/faction/scheduledata')
+@login_required
+def schedule_data():
+    start = int(request.args.get('start'))
+    length = int(request.args.get('length'))
+    faction = Faction(current_user.factiontid)
+    session = session_local()
+    schedules = []
+
+    for schedule in session.query(ScheduleModel).filter_by(factiontid=faction.tid).all():
+        with open(f'{os.getcwd()}/schedule/{schedule.uuid}.json') as file:
+            data = json.load(file)
+            schedules.append([
+                schedule.uuid,
+                data['name'],
+                utils.torn_timestamp(data['timecreated']),
+                utils.torn_timestamp(data['timeupdated']),
+                ""
+            ])
+
+    data = {
+        'draw': request.args.get('draw'),
+        'recordsTotal': session.query(ScheduleModel).count(),
+        'recordsFiltered': len(schedules),
+        'data': schedules[start:start + length]
+    }
+    return data

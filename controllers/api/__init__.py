@@ -17,7 +17,7 @@ from flask import Blueprint, render_template
 
 from controllers.api import key
 from controllers.api import stakeout
-from controllers.api.faction import banking
+from controllers.api.faction import banking, schedule
 
 mod = Blueprint('apiroutes', __name__)
 
@@ -29,6 +29,7 @@ mod.add_url_rule('/api/key', view_func=key.remove_key, methods=['DELETE'])
 
 # /api/faction
 mod.add_url_rule('/api/faction/banking', view_func=banking.banking_request, methods=['POST'])
+mod.add_url_rule('/api/faction/schedule', view_func=schedule.create_schedule, methods=['POST'])
 
 # /api/stakeout
 mod.add_url_rule('/api/stakeout/<string:stype>', view_func=stakeout.create_stakeout, methods=['POST'])

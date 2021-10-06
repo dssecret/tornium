@@ -16,12 +16,12 @@ Tornium - Chain Watch Scheduling
             <p class="card-text">This feature can generate a possible chain watching schedule based on inputted intervals 
                 of availability for faction members. This feature uses a random walk algorithm to generate the chain 
                 watching schedule, therefore with each run of the algorithm, different schedules may be outputted. For 
-                more information about how this algorithm works, please check out <a href="#">this</a>.
+                more information about how this algorithm works, please check <a href="#">this</a> out.
             </p>
         </div>
     </div>
     
-    <div class="card">
+    <div class="card mt-3">
         <div class="card-body">
             <h5 class="card-title">Chain Watch Schedules</h5>
             
@@ -29,6 +29,7 @@ Tornium - Chain Watch Scheduling
                 <thead>
                     <tr>
                         <th>Schedule ID</th>
+                        <th>Schedule Name</th>
                         <th>Time Created</th>
                         <th>Time Last Updated</th>
                         <th>Actions</th>
@@ -38,20 +39,25 @@ Tornium - Chain Watch Scheduling
 
                 </tbody>
             </table>
-            
-            <button type="button" class="btn btn-success" id="create-schedule">
-                Create a new schedule.
-            </button>
-            
-            <button type="button" class="btn btn-primary" id="import-schedule">
-                <div class="input-group mb-3">
-                    <input type="file" class="form-control" id="import-schedule-file">
-                    <label class="input-group-text" for="import-schedule-file">Upload Schedule</label>
+
+            <div class="row">
+                <div class="col-sm-6 col-md-4 col-lg-2 my-2 mr-2">
+                    <button type="button" class="btn btn-success" id="create-schedule">
+                        Create schedule
+                    </button>
                 </div>
-            </button>
+
+                <div class="col-sm-12 col-md-8 col-lg-4 my-2">
+                    <div class="input-group mb-3">
+                        <input type="file" class="form-control" id="import-schedule-file">
+                        <label class="input-group-text" for="import-schedule-file">Import Schedule</label>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<script src="/faction/scheduling.js">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="/faction/schedule.js" data-key="{{ key }}"></script>
 {% endblock %}
