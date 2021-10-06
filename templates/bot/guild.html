@@ -28,7 +28,7 @@ Tornium - Bot Dashboard
         <div class="card-body">
             <h5 class="card-title">Basic Setup</h5>
             <p class="card-text">
-                Various basic settings (such as the prefix) that can be changed for this particular Discord guild.
+                Various basic settings (such as the prefix) that can be changed for this particular Discord guild. Only single character prefixes are accepted.
             </p>
 
             <div class="col-sm-12 col-md-8 col-lg-4">
@@ -45,13 +45,14 @@ Tornium - Bot Dashboard
             <h5 class="card-title">Factions</h5>
             <p class="card-text">
                 The factions located in the particular Discord guild.
+                Add the faction to the server to indicate the the server administration accepts the faction in the server; however, for any features to be run by the faction in the server, the server ID will need to be added in the <a href="/faction/bot">faction bot dashboard</a>.
             </p>
 
             <div class="col-sm-12 col-md-8 col-lg-4">
                 <form class="form-floating" method="POST" action="/bot/dashboard/{{ server.sid }}">
                     <input class="form-control" id="factionid" name="factionid" placeholder="Enter the Torn Faction ID">
                     <label for="factionid">Faction ID</label>
-                    <button class="btn btn-primary mt-2" type="submit">Add</button>
+                    <button class="btn btn-primary my-2" type="submit">Add</button>
                 </form>
             </div>
 
@@ -94,6 +95,7 @@ Tornium - Bot Dashboard
             <h5 class="card-title">Stakeouts</h5>
             <p class="card-text">
                 The stakeouts that are run in the particular Discord guild.
+                The stakeout category is the category in which the stakeout channels are automatically created in the server. By default, the stakeout channels are created at the top of the server without a category (but can be moved or renamed).
             </p>
 
             <div class="col-sm-12 col-md-8 col-lg-4 mb-3">
@@ -104,7 +106,7 @@ Tornium - Bot Dashboard
             </div>
 
             {% if server.config['stakeouts'] == 0 %}
-            <button type="button" class="btn btn-primary active">
+            <button type="button" class="btn btn-primary">
                 <a href="/bot/stakeouts/{{ guildid }}/update?action=enable" style="color: white;">Enabled</a>
             </button>
             <button type="button" class="btn btn-primary" disabled>
@@ -114,7 +116,7 @@ Tornium - Bot Dashboard
             <button type="button" class="btn btn-primary" disabled>
                 <a href="#" style="color: white;">Enabled</a>
             </button>
-            <button type="button" class="btn btn-primary active">
+            <button type="button" class="btn btn-primary">
                 <a href="/bot/stakeouts/{{ guildid }}/update?action=disable" style="color: white;">Disabled</a>
             </button>
             {% endif %}
