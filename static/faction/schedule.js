@@ -29,6 +29,14 @@ $(document).ready(function() {
             document.getElementById('modal').innerHTML = this.responseText;
             var modal = new bootstrap.Modal($('#schedule-modal'));
             modal.show();
+            
+            xhttp = new XMLHttpRequest();
+            
+            xhttp.onload = function() {
+                create_watcher_timeline(this.responseText);
+            }
+            xhttp.open('GET', '/faction/schedule?uuid=' + table.row(this).data()[0] + '&watchers=True');
+            xhttp.send();
         }
         xhttp.open('GET', '/faction/schedule?uuid=' + table.row(this).data()[0]);
         xhttp.send();
