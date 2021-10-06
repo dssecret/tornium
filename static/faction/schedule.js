@@ -33,7 +33,7 @@ $(document).ready(function() {
             xhttp = new XMLHttpRequest();
             
             xhttp.onload = function() {
-                create_watcher_timeline(this.responseText);
+                createWatcherTimeline(this.responseText);
             }
             xhttp.open('GET', '/faction/schedule?uuid=' + table.row(this).data()[0] + '&watchers=True');
             xhttp.send();
