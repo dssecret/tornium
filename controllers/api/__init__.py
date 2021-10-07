@@ -30,6 +30,7 @@ mod.add_url_rule('/api/key', view_func=key.remove_key, methods=['DELETE'])
 # /api/faction
 mod.add_url_rule('/api/faction/banking', view_func=banking.banking_request, methods=['POST'])
 mod.add_url_rule('/api/faction/schedule', view_func=schedule.create_schedule, methods=['POST'])
+mod.add_url_rule('/api/faction/schedule', view_func=schedule.delete_schedule, methods=['DELETE'])
 
 # /api/stakeout
 mod.add_url_rule('/api/stakeout/<string:stype>', view_func=stakeout.create_stakeout, methods=['POST'])

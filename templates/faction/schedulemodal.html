@@ -1,8 +1,8 @@
-div class="modal fade" id="schedule-modal" tabindex="-1" aria-labelledby="schedule-modal" aria-hidden="true">
+<div class="modal fade" id="schedule-modal" tabindex="-1" aria-labelledby="schedule-modal" aria-hidden="true" data-uuid="{{ sid }}">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modal-label">Chain Watching Schedule #{{ sid }}</h5>
+                <h5 class="modal-title" id="modal-label">Chain Watching Schedule {{ sid }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
@@ -24,6 +24,11 @@ div class="modal fade" id="schedule-modal" tabindex="-1" aria-labelledby="schedu
                 <div class="watcher-timeline">
                     
                 </div>
+
+                <button type="button" class="btn btn-danger mt-3" id="delete-schedule" onclick="deleteSchedule()">
+                    <i class="fas fa-trash-alt"></i>
+                    Remove
+                </button>
             </div>
         </div>
     </div>

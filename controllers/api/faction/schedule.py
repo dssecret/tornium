@@ -45,3 +45,35 @@ def create_schedule(*args, **kwargs):
        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }
+
+
+@key_required
+@ratelimit
+@requires_scopes(scopes={'admin', 'write:faction', 'faction:admin'})
+def delete_schedule(*args, **kwargs):
+    client = redisdb.get_redis()
+    data = json.loads(request.get_data().decode('utf-8'))
+    user = User(kwargs['user'].tid)
+
+    if not user.aa:
+        return jsonify({
+            'code': 4005,
+            'name': 'InsufficientFactionPermissions',
+            'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
+                       'for an AA level request.'
+        }), 403, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    Schedule(uuid=data['uuid'], factiontid=user.factiontid).delete()
+    return {
+        'code': 0,
+        'name': 'OK',
+        'message': 'Server request was successful.'
+    }, 200, {
+        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+    }

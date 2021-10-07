@@ -21,6 +21,8 @@ from models.schedulemodal import ScheduleModel
 import utils
 
 
+# All timestamps refer to a 30 minute interval starting at that timestamp
+
 class Schedule:
     def __init__(self, uuid, factiontid=None):
         session = session_local()
@@ -44,9 +46,9 @@ class Schedule:
                     'factiontid': factiontid,
                     'timecreated': utils.now(),
                     'timeupdated': utils.now(),
-                    'activity': [],
-                    'schedule': []
-                }, file)
+                    'activity': {},
+                    'schedule': {}
+                }, file, indent=4)
             
             session.add(schedule)
             session.flush()
@@ -62,3 +64,22 @@ class Schedule:
         self.time_updated = self.file['timeupdated']
         self.activity = self.file['activity']
         self.schedule = self.file['schedule']
+
+    def update_activity(self, tid, activity):
+        self.activity[tid] = activity
+        self.file['activity'] = self.activity
+
+        with open(f'{os.getcwd()}/schedule/{self.uuid}.json') as file:
+            json.dump(self.file, file, indent=4)
+
+    def delete(self):
+        session = session_local()
+        schedule = session.query(ScheduleModel).filter_by(uuid=self.uuid).first()
+        session.delete(schedule)
+
+        if os.path.isfile(f'{os.getcwd()}/schedule/{self.uuid}.json'):
+            os.remove(f'{os.getcwd()}/schedule/{self.uuid}.json')
+        else:
+            raise Exception
+
+        session.flush()

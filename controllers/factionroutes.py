@@ -17,7 +17,7 @@ from functools import wraps
 import os
 import json
 
-from flask import Blueprint, render_template, abort, request, flash, redirect
+from flask import Blueprint, render_template, abort, request, flash, redirect, jsonify
 from flask_login import login_required, current_user
 from huey.exceptions import TaskException
 
@@ -361,10 +361,10 @@ def chain():
 def schedule():
     if request.args.get('uuid') is not None and request.args.get('watchers') is None:
         schedule = Schedule(request.args.get('uuid'), factiontid=current_user.factiontid)
-        return render_template('faction/schedulemodal.html')
+        return render_template('faction/schedulemodal.html', sid=schedule.name)
     elif request.args.get('uuid') is not None and request.args.get('watchers') is not None:
         schedule = Schedule(request.args.get('uuid'), factiontid=current_user.factiontid)
-        return schedule.schedule
+        return jsonify(schedule.schedule)
     
     return render_template('faction/schedule.html', key=current_user.key)
 
@@ -385,8 +385,7 @@ def schedule_data():
                 schedule.uuid,
                 data['name'],
                 utils.torn_timestamp(data['timecreated']),
-                utils.torn_timestamp(data['timeupdated']),
-                ""
+                utils.torn_timestamp(data['timeupdated'])
             ])
 
     data = {
