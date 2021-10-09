@@ -78,7 +78,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
     request = request.json()
 
     if 'error' in request:
-        if request['error']['code'] == 13 or request['error']['code'] == 10:
+        if request['error']['code'] == 13 or request['error']['code'] == 10 or request['error']['code'] == 2:
             db_session = session_local()
             user = db_session.query(UserModel).filter_by(key=key).first()
             user.key = ''
