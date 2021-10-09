@@ -323,7 +323,7 @@ def refresh_factions():
 
                 user.battlescore = json.dumps([user_data['spy']['target_score'], utils.now()])
 
-        if faction.chainconfig['od']:
+        if json.loads(faction.chainconfig)['od']:
             try:
                 faction_od = tornget.call_local('faction/?selections=contributors',
                                                 stat='drugoverdoses',
@@ -333,7 +333,7 @@ def refresh_factions():
                 utils.get_logger().exception(e)
                 continue
 
-            if len(faction.chainod) != 0:
+            if len(json.loads(faction.chainod)) != 0:
                 for tid, user_od in json.loads(faction_od)['contributors']['drugoverdoses'].items():
                     if user_od != json.loads(faction.chainod).get(tid):
                         payload = {
