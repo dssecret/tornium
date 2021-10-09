@@ -1113,6 +1113,8 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                                                   key=key,
                                                   session=requests_session,
                                                   fromts=utils.now() - 60)
+                    elif len(json.loads(faction.keys)):
+                        break
                     else:
                         data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
                                                   key=random.choice(json.loads(faction.keys)),
@@ -1160,6 +1162,8 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                                                   key=key,
                                                   session=requests_session,
                                                   fromts=utils.now() - 60)
+                    elif len(json.loads(faction.keys)):
+                        break
                     else:
                         data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
                                                   key=random.choice(json.loads(faction.keys)),
