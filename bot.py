@@ -68,65 +68,24 @@ async def on_message(message):
     server = Server(message.guild.id)
 
     if len(server.admins) == 0:
-        embed = discord.Embed()
-        embed.title = 'No Server Admins Stored'
-        embed.description = f'There are no server admins stored for {message.guild.name}; therefore an admin will ' \
-                            f'need to log in to the [dashboard](https://torn.deek.sh/) for an admin to be added for ' \
-                            f'the bot to be operational.'
-        message = await message.channel.send(embed=embed)
-        await asyncio.sleep(30)
-        await message.delete()
-        return None
+        await bot.process_commands(message)
 
-    user = DiscordUser(message.author.id, User(random.choice(server.admins)).key)
+    for faction in server.factions:
+        faction = Faction(faction)
 
-    if len(server.factions) > 1:
-        if user.tid == 0:
+        if faction.get_vault_config().get('withdrawal') == 0:
+            continue
+
+        if message.channel.id == faction.get_vault_config().get('withdrawal') and message.clean_content[0] != server.prefix:
             await message.delete()
             embed = discord.Embed()
-            embed.title = 'Requires Verification'
-            embed.description = 'You are required to be verified officially through the ' \
-                                '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
-                                'utilize this bot. If you have recently verified, please ' \
-                                'wait for a minute or two before trying again.'
-            await message.author.send(embed=embed)
+            embed.title = "Bot Channel"
+            embed.description = "This channel is only for vault withdrawals. Please do not post any other messages in" \
+                                " this channel."
+            message = await message.channel.send(embed=embed)
+            await asyncio.sleep(30)
+            await message.delete()
             return None
-
-        user = User(user.tid)
-
-        if user.factiontid == 0:
-            user.refresh(key=User(random.choice(server.admins)).key, force=True)
-
-            if user.factiontid == 0:
-                embed = discord.Embed()
-                embed.title = 'Faction ID Error'
-                embed.description = f'The faction ID of {message.author.name} is not set regardless of the ' \
-                                    f'forced refresh.'
-                message = await message.channel.send(embed=embed)
-                await asyncio.sleep(30)
-                await message.delete()
-                return None
-
-        faction = Faction(user.factiontid)
-    elif len(server.factions) == 0:
-        if message.clean_content[0] == server.prefix:
-            await bot.process_commands(message)
-            return None
-        else:
-            return None
-    else:
-        faction = Faction(server.factions[0])
-
-    if message.channel.id == faction.get_vault_config()['withdrawal'] and message.clean_content[0] != server.prefix:
-        await message.delete()
-        embed = discord.Embed()
-        embed.title = "Bot Channel"
-        embed.description = "This channel is only for vault withdrawals. Please do not post any other messages in" \
-                            " this channel."
-        message = await message.channel.send(embed=embed)
-        await asyncio.sleep(30)
-        await message.delete()
-        return None
 
     await bot.process_commands(message)
 
