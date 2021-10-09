@@ -114,7 +114,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
             db_session.flush()
 
         utils.get_logger().info(f'The Torn API has responded with error code {request["error"]["code"]} '
-                                f'({request["error"]["error"]}) to {url if get_redis().get("debug") == "True" else endpoint}).')
+                                f'({request["error"]["error"]}) to {url}).')
         raise utils.TornError(request["error"]["code"])
 
     return request
