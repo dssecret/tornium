@@ -38,11 +38,59 @@ $(document).ready(function() {
             xhttp = new XMLHttpRequest();
             
             xhttp.onload = function() {
+                var response = xhttp.response;
+
+                if("code" in response) {
+                    generateToast("Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
+                }
+
                 var watchersTable = $('#possible-watchers-table').DataTable({
                     "processing": true,
                     "ordering": false,
                     "responsive": true,
                     "searching": false
+                });
+
+                $('#form-add-activity').submit(function(e) {
+                    e.preventDefault();
+                    console.log(this)
+                });
+
+                $('#form-add-user').submit(function(e) {
+                    e.preventDefault();
+
+                    xhttp = new XMLHttpRequest();
+                    xhttp.onload = function() {
+                        var response = xhttp.response;
+
+                        if("code" in response) {
+                            generateToast("Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
+                        } else {
+                            $('#schedule-table').DataTable().ajax.reload();
+                        }
+                    };
+
+                    xhttp.responseType = 'json';
+                    xhttp.open('POST', '/api/faction/schedule/watcher');
+                    xhttp.setRequestHeader("Authorization", `Basic ${btoa(`${key}:`)}`);
+                    xhttp.setRequestHeader("Content-Type", "application/json");
+                    xhttp.send(JSON.stringify({
+                        'uuid': id,
+                        'tid': this.tid.value,
+                        'weight': this.weight.value
+                    }))
+                });
+
+                $("#fromdatepicker").flatpickr({
+                    enableTime: true,
+                    dateFormat: "m/d H:i TCT",
+                    minuteIncrement: 30
+                });
+
+                $("#todatepicker").flatpickr({
+                    enableTime: true,
+                    dateFormat: "m/d H:i TCT",
+                    minuteIncrement: 30
                 });
 
                 // createWatcherSchedule(xhttp.response);

@@ -47,6 +47,7 @@ class Schedule:
                     'timecreated': utils.now(),
                     'timeupdated': utils.now(),
                     'activity': {},
+                    'weight': {},
                     'schedule': {}
                 }, file, indent=4)
             
@@ -63,14 +64,25 @@ class Schedule:
         self.time_created = self.file['timecreated']
         self.time_updated = self.file['timeupdated']
         self.activity = self.file['activity']
+        self.weight = self.file['weight']
         self.schedule = self.file['schedule']
 
-    def update_activity(self, tid, activity):
-        self.activity[tid] = activity
-        self.file['activity'] = self.activity
+    def add_activity(self, tid, activity=None):
+        if activity is None:
+            if tid in self.activity:
+                raise Exception
+            self.activity[tid] = []
+        else:
+            if tid in self.activity:
+                self.activity[tid].append(activity)
+            else:
+                self.activity[tid] = [activity]
 
-        with open(f'{os.getcwd()}/schedule/{self.uuid}.json') as file:
-            json.dump(self.file, file, indent=4)
+        self.update_file()
+
+    def set_weight(self, tid, weight):
+        self.weight[tid] = weight
+        self.update_file()
 
     def delete(self):
         session = session_local()
@@ -83,3 +95,14 @@ class Schedule:
             raise Exception
 
         session.flush()
+
+    def update_file(self):
+        self.file['name'] = self.name
+        self.file['timecreated'] = self.time_created
+        self.file['timeupdated'] = utils.now()
+        self.file['activity'] = self.activity
+        self.file['weight'] = self.weight
+        self.file['schedule'] = self.schedule
+
+        with open(f'{os.getcwd()}/schedule/{self.uuid}.json', 'w') as file:
+            json.dump(self.file, file, indent=4)
