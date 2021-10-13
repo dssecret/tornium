@@ -20,6 +20,7 @@ from flask import send_file
 
 from controllers.api.decorators import *
 from models.schedule import Schedule
+from models.schedulemodel import ScheduleModel
 from models.user import User
 
 
@@ -248,4 +249,13 @@ def get_schedule(uuid, *args, **kwargs):
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
     else:
-        return 501
+        session = session_local()
+        schedules = []
+        for schedule in session.query(ScheduleModel).filter_by(factiontid=user.factiontid):
+            schedules.append(schedule.uuid)
+
+        return jsonify(schedules), 200, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }

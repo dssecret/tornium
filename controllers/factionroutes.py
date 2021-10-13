@@ -25,7 +25,7 @@ from database import session_local
 from models.faction import Faction
 from models.factionmodel import FactionModel
 from models.schedule import Schedule
-from models.schedulemodal import ScheduleModel
+from models.schedulemodel import ScheduleModel
 from models.user import User
 from models.usermodel import UserModel
 import utils

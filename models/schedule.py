@@ -19,7 +19,7 @@ import os
 from flask_login import current_user
 
 from database import session_local
-from models.schedulemodal import ScheduleModel
+from models.schedulemodel import ScheduleModel
 import utils
 
 
