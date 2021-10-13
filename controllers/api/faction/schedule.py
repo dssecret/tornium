@@ -13,7 +13,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 import uuid
+
+from flask import send_file
 
 from controllers.api.decorators import *
 from models.schedule import Schedule
@@ -110,3 +113,139 @@ def add_chain_watcher(*args, **kwargs):
        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }
+
+
+@key_required
+@ratelimit
+@requires_scopes(scopes={'admin', 'write:faction', 'faction:admin'})
+def remove_chain_watcher(*args, **kwargs):
+    client = redisdb.get_redis()
+    data = json.loads(request.get_data().decode('utf-8'))
+    user = User(kwargs['user'].tid)
+
+    if not user.aa:
+        return jsonify({
+            'code': 4005,
+            'name': 'InsufficientFactionPermissions',
+            'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
+                       'for an AA level request.'
+        }), 403, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    schedule = Schedule(uuid=data['uuid'], factiontid=user.factiontid)
+    schedule.remove_user(data['tid'])
+
+    return schedule.file, 200, {
+        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+    }
+
+
+@key_required
+@ratelimit
+@requires_scopes(scopes={'admin', 'write:faction', 'faction:admin'})
+def add_chain_availability(*args, **kwargs):
+    client = redisdb.get_redis()
+    data = json.loads(request.get_data().decode('utf-8'))
+    user = User(kwargs['user'].tid)
+
+    if not user.aa:
+        return jsonify({
+            'code': 4005,
+            'name': 'InsufficientFactionPermissions',
+            'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
+                       'for an AA level request.'
+        }), 403, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    if data.get('from') is None or data.get('to') is None:
+        return jsonify({
+            'code': 0,
+            'name': 'GeneralError',
+            'message': 'Sever failed to fulfill the request. The from and to values are required for this endpoint.'
+        }), 400, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+    elif data.get('to') <= data.get('from'):
+        return jsonify({
+            'code': 0,
+            'name': 'GeneralError',
+            'message': 'Sever failed to fulfill the request. The to value must be greater than the from value.'
+        }), 400, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    schedule = Schedule(uuid=data['uuid'], factiontid=user.factiontid)
+    schedule.add_activity(tid=data['tid'], activity=f'{data["from"]}-{data["to"]}')
+
+    return schedule.file, 200, {
+        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+    }
+
+
+@key_required
+@ratelimit
+@requires_scopes(scopes={'admin', 'read:faction', 'faction:admin'})
+def get_schedule(uuid, *args, **kwargs):
+    client = redisdb.get_redis()
+    user = User(kwargs['user'].tid)
+
+    if not user.aa:
+        return jsonify({
+            'code': 4005,
+            'name': 'InsufficientFactionPermissions',
+            'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
+                       'for an AA level request.'
+        }), 403, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    if uuid is not None:
+        try:
+            schedule = Schedule(uuid=uuid, factiontid=user.factiontid)
+        except Exception:
+            return jsonify({
+                'code': 0,
+                'name': 'GeneralError',
+                'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
+                           'due to a cross-faction request.'
+            }), 403, {
+                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            }
+
+        if schedule.factiontid != user.factiontid:
+            return jsonify({
+                'code': 0,
+                'name': 'GeneralError',
+                'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
+                           'due to a cross-faction request.'
+            }), 403, {
+                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            }
+
+        return send_file(f'{os.getcwd()}/schedule/{uuid}.json'), 200, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+    else:
+        return 501

@@ -31,7 +31,10 @@ mod.add_url_rule('/api/key', view_func=key.remove_key, methods=['DELETE'])
 mod.add_url_rule('/api/faction/banking', view_func=banking.banking_request, methods=['POST'])
 mod.add_url_rule('/api/faction/schedule', view_func=schedule.create_schedule, methods=['POST'])
 mod.add_url_rule('/api/faction/schedule', view_func=schedule.delete_schedule, methods=['DELETE'])
+mod.add_url_rule('/api/faction/schedule/watcher/<string:uuid>', view_func=schedule.get_schedule, methods=['GET'])
 mod.add_url_rule('/api/faction/schedule/watcher', view_func=schedule.add_chain_watcher, methods=['POST'])
+mod.add_url_rule('/api/faction/schedule/watcher', view_func=schedule.remove_chain_watcher, methods=['DELETE'])
+mod.add_url_rule('/api/faction/schedule/activity', view_func=schedule.add_chain_availability, methods=['POST'])
 
 # /api/stakeout
 mod.add_url_rule('/api/stakeout/<string:stype>', view_func=stakeout.create_stakeout, methods=['POST'])

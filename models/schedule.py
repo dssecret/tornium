@@ -16,6 +16,8 @@
 import json
 import os
 
+from flask_login import current_user
+
 from database import session_local
 from models.schedulemodal import ScheduleModel
 import utils
@@ -56,6 +58,9 @@ class Schedule:
         
         self.uuid = uuid
         self.factiontid = schedule.factiontid
+
+        if current_user.factiontid != self.factiontid and factiontid != self.factiontid:
+            raise Exception
         
         with open(f'{os.getcwd()}/schedule/{uuid}.json') as file:
             self.file = json.load(file)
@@ -78,6 +83,11 @@ class Schedule:
             else:
                 self.activity[tid] = [activity]
 
+        self.update_file()
+
+    def remove_user(self, tid):
+        self.activity.pop(tid, None)
+        self.weight.pop(tid, None)
         self.update_file()
 
     def set_weight(self, tid, weight):

@@ -34,15 +34,11 @@ $(document).ready(function() {
             document.getElementById('modal').innerHTML = this.responseText;
             var modal = new bootstrap.Modal($('#schedule-modal'));
             modal.show();
-            
+
             xhttp = new XMLHttpRequest();
-            
+
             xhttp.onload = function() {
                 var response = xhttp.response;
-
-                if("code" in response) {
-                    generateToast("Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
-                }
 
                 var watchersTable = $('#possible-watchers-table').DataTable({
                     "processing": true,
@@ -51,10 +47,9 @@ $(document).ready(function() {
                     "searching": false
                 });
 
-                $('#form-add-activity').submit(function(e) {
-                    e.preventDefault();
-                    console.log(this)
-                });
+                response.forEach(function(user) {
+                    watchersTable.row.add(user).draw();
+                })
 
                 $('#form-add-user').submit(function(e) {
                     e.preventDefault();
@@ -66,7 +61,7 @@ $(document).ready(function() {
                         if("code" in response) {
                             generateToast("Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
                         } else {
-                            $('#schedule-table').DataTable().ajax.reload();
+                            watchersTable.ajax.reload();
                         }
                     };
 
@@ -81,15 +76,83 @@ $(document).ready(function() {
                     }))
                 });
 
+                $('#form-add-activity').submit(function(e) {
+                    e.preventDefault();
+
+                    xhttp = new XMLHttpRequest();
+                    xhttp.onload = function() {
+                        var response = xhttp.response;
+
+                        if("code" in response) {
+                            generateToast("Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
+                        } else {
+                            watchersTable.clear().draw()
+                            for(let user in response['activity']) {
+                                watchersTable.row.add([
+                                    user,
+                                    response['activity'][user],
+                                    response['weight'][user]
+                                ]).draw()
+                            }
+                        }
+                    }
+
+                    xhttp.responseType = 'json';
+                    xhttp.open('POST', '/api/faction/schedule/activity');
+                    xhttp.setRequestHeader("Authorization", `Basic ${btoa(`${key}:`)}`);
+                    xhttp.setRequestHeader("Content-Type", "application/json");
+                    xhttp.send(JSON.stringify({
+                        'uuid': id,
+                        'tid': this.tid.value,
+                        'from': this.fromdatepicker.value,
+                        'to': this.todatepicker.value
+                    }))
+                })
+
+                $('#form-remove-user').submit(function(e) {
+                    e.preventDefault();
+
+                    xhttp = new XMLHttpRequest();
+                    xhttp.onload = function() {
+                        var response = xhttp.response;
+
+                        if("code" in response) {
+                            generateToast("Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
+                        } else {
+                            watchersTable.clear().draw()
+                            for(let user in response['activity']) {
+                                watchersTable.row.add([
+                                    user,
+                                    response['activity'][user],
+                                    response['weight'][user]
+                                ]).draw()
+                            }
+                        }
+                    }
+
+                    xhttp.responseType = 'json';
+                    xhttp.open('DELETE', '/api/faction/schedule/watcher');
+                    xhttp.setRequestHeader("Authorization", `Basic ${btoa(`${key}:`)}`);
+                    xhttp.setRequestHeader("Content-Type", "application/json");
+                    xhttp.send(JSON.stringify({
+                        'uuid': id,
+                        'tid': this.tid.value
+                    }))
+                })
+
                 $("#fromdatepicker").flatpickr({
                     enableTime: true,
-                    dateFormat: "m/d H:i TCT",
+                    dateFormat: "U",
+                    altInput: true,
+                    altFormat: "m/d H:i TCT",
                     minuteIncrement: 30
                 });
 
                 $("#todatepicker").flatpickr({
                     enableTime: true,
-                    dateFormat: "m/d H:i TCT",
+                    dateFormat: "U",
+                    altInput: true,
+                    altFormat: "m/d H:i TCT",
                     minuteIncrement: 30
                 });
 
@@ -146,4 +209,28 @@ function deleteSchedule() {
     xhttp.send(JSON.stringify({
         'uuid': document.getElementById('schedule-modal').getAttribute('data-uuid')
     }));
+}
+
+function exportSchedule() {
+    const xhttp = new XMLHttpRequest();
+    xhttp.onload = function() {
+        var response = xhttp.response;
+
+        if("code" in response && response["code"] !== 0) {
+            generateToast("Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
+        } else {
+            var element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8, ' + encodeURIComponent(JSON.stringify(response)));
+            element.setAttribute('download', `${document.getElementById('schedule-modal').getAttribute('data-uuid')}.json`);
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+    }
+
+    xhttp.responseType = "json";
+    xhttp.open("GET", `/api/faction/schedule/watcher/${document.getElementById('schedule-modal').getAttribute('data-uuid')}`);
+    xhttp.setRequestHeader("Authorization", `Basic ${btoa(`${key}:`)}`);
+    xhttp.setRequestHeader("Content-Type", "application/json");
+    xhttp.send();
 }

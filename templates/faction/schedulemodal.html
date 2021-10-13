@@ -53,9 +53,32 @@
                     </div>
 
                     <div class="accordion-item">
+                        <h2 class="accordion-header" id="remove-user">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-remove-user" aria-expanded="true" aria-controls="collapseRemoveUser">
+                                Remove Possible Chain Watcher
+                            </button>
+                        </h2>
+                        <div class="accordion-collapse collapse" id="collapse-remove-user" aria-labelledby="Remove User">
+                            <div class="accordion-body">
+                                <form id="form-remove-user">
+                                    <div class="form-floating my-3">
+                                        <input type="text" class="form-control" id="tid" name="tid" placeholder="Enter the Torn User ID">
+                                        <label for="tid" class="form-label">Torn ID</label>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="fas fa-trash-alt"></i>
+                                        Remove
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
                         <h2 class="accordion-header" id="add-activity">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-add-activity" aria-expanded="true" aria-controls="collapseAddActivity">
-                                Add User Activity
+                                Add User Availability
                             </button>
                         </h2>
                         <div class="accordion-collapse collapse" id="collapse-add-activity" aria-labelledby="Add User Activity">
@@ -96,6 +119,10 @@
                 <button type="button" class="btn btn-danger mt-3" id="delete-schedule" onclick="deleteSchedule()">
                     <i class="fas fa-trash-alt"></i>
                     Remove
+                </button>
+                <button type="button" class="btn btn-primary mt-3" id="export-schedule" onclick="exportSchedule()">
+                    <i class="fas fa-file-export"></i>
+                    Export
                 </button>
             </div>
         </div>

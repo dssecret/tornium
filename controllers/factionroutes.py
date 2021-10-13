@@ -364,7 +364,12 @@ def schedule():
         return render_template('faction/schedulemodal.html', sid=schedule.name)
     elif request.args.get('uuid') is not None and request.args.get('watchers') is not None:
         schedule = Schedule(request.args.get('uuid'), factiontid=current_user.factiontid)
-        return jsonify(schedule.schedule)
+        data = []
+
+        for tid, userdata in schedule.activity.items():
+            data.append([tid, userdata, schedule.weight[tid]])
+
+        return jsonify(data)
     
     return render_template('faction/schedule.html', key=current_user.key)
 
