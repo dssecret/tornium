@@ -111,8 +111,8 @@ $(document).ready(function() {
                     xhttp.send(JSON.stringify({
                         'uuid': id,
                         'tid': this.tid.value,
-                        'from': this.fromdatepicker.value,
-                        'to': this.todatepicker.value
+                        'from': this.fromdatepicker.value - new Date().getTimezoneOffset() * 60,
+                        'to': this.todatepicker.value - new Date().getTimezoneOffset() * 60
                     }))
                 })
 
@@ -165,8 +165,8 @@ $(document).ready(function() {
                     xhttp.setRequestHeader("Content-Type", "application/json");
                     xhttp.send(JSON.stringify({
                         'uuid': id,
-                        'from': this.fromts.value,
-                        'to': this.tots.value
+                        'from': this.fromts.value - new Date().getTimezoneOffset() * 60,
+                        'to': this.tots.value - new Date().getTimezoneOffset() * 60
                     }))
                 });
 

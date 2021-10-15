@@ -367,7 +367,15 @@ def schedule():
         data = []
 
         for tid, userdata in schedule.activity.items():
-            data.append([tid, userdata, schedule.weight[tid]])
+            modified_userdata = []
+
+            for activity in userdata:
+                activity = [int(activity.split('-')[0]), int(activity.split('-')[1])]
+                activity[0] = utils.torn_timestamp(activity[0])
+                activity[1] = utils.torn_timestamp(activity[1])
+                modified_userdata.append(f'{activity[0]} to {activity[1]}')
+
+            data.append([f'{User(tid).name} [{tid}]', modified_userdata, schedule.weight[tid]])
 
         return jsonify(data)
     

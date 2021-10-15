@@ -188,6 +188,35 @@ def add_chain_availability(*args, **kwargs):
         }
 
     schedule = Schedule(uuid=data['uuid'], factiontid=user.factiontid)
+
+    if int(data['from']) < schedule.fromts or int(data['to']) > schedule.tots:
+        return jsonify({
+            'code': 0,
+            'name': 'GeneralError',
+            'message': 'Sever failed to fulfill the request. The interval must be within the specified chain '
+                       'interval or the chain interval must be set.'
+        }), 400, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    for activity in schedule.activity[data['tid']]:
+        fromts = int(activity.split('-')[0])
+        tots = int(activity.split('-')[1])
+
+        if data['from'] <= tots and data['to'] >= fromts:
+            return jsonify({
+                'code': 0,
+                'name': 'GeneralError',
+                'message': 'Sever failed to fulfill the request. The interval must be within the specified chain '
+                           'interval or the chain interval must be set.'
+            }), 400, {
+                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            }
+
     schedule.add_activity(tid=data['tid'], activity=f'{data["from"]}-{data["to"]}')
 
     return schedule.file, 200, {
