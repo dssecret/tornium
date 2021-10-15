@@ -61,7 +61,14 @@ $(document).ready(function() {
                         if("code" in response) {
                             generateToast("Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
                         } else {
-                            watchersTable.ajax.reload();
+                            watchersTable.clear().draw()
+                            for(let user in response['activity']) {
+                                watchersTable.row.add([
+                                    user,
+                                    response['activity'][user],
+                                    response['weight'][user]
+                                ]).draw()
+                            }
                         }
                     };
 
