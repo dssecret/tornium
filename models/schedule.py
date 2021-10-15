@@ -50,7 +50,9 @@ class Schedule:
                     'timeupdated': utils.now(),
                     'activity': {},
                     'weight': {},
-                    'schedule': {}
+                    'schedule': {},
+                    'from': 0,
+                    'to': 0
                 }, file, indent=4)
             
             session.add(schedule)
@@ -71,6 +73,8 @@ class Schedule:
         self.activity = self.file['activity']
         self.weight = self.file['weight']
         self.schedule = self.file['schedule']
+        self.fromts = self.file['from']
+        self.tots = self.file['to']
 
     def add_activity(self, tid, activity=None):
         if activity is None:
@@ -113,6 +117,17 @@ class Schedule:
         self.file['activity'] = self.activity
         self.file['weight'] = self.weight
         self.file['schedule'] = self.schedule
+        self.file['from'] = self.fromts
+        self.file['to'] = self.tots
 
         with open(f'{os.getcwd()}/schedule/{self.uuid}.json', 'w') as file:
             json.dump(self.file, file, indent=4)
+
+    def greedy(self):
+        pass
+
+    def annealing(self):
+        pass
+
+    def generate(self, tots, fromts, version='annealing'):
+        pass

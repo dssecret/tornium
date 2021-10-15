@@ -110,10 +110,41 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="schedule-setup">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-schedule-setup" aria-expanded="true" aria-controls="collapseGenerateSchedule">
+                                Generate Schedule
+                            </button>
+                        </h2>
+                        <div class="accordion-collapse collapse" id="collapse-schedule-setup" aria-labelledby="Generate Schedule">
+                            <div class="accordion-body">
+                                <form id="form-schedule-setup">
+                                    <div class="row my-3">
+                                        <div class="col-sm-12 col-md-8 col-lg-4">
+                                            <div class="form-floating">
+                                                <input type="text" class="form-control flatpickr flatpickr-input active" id="fromts" name="fromts" readonly="readonly">
+                                                <label for="fromts" class="form-label">Select from datetime in TCT</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-sm-12 col-md-8 col-lg-4">
+                                            <div class="form-floating">
+                                                <input type="text" class="form-control flatpickr flatpickr-input active" id="tots" name="tots" readonly="readonly">
+                                                <label for="tots" class="form-label">Select to datetime in TCT</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary">Submit</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
+
                 <div class="watcher-timeline">
-                    
+
                 </div>
 
                 <button type="button" class="btn btn-danger mt-3" id="delete-schedule" onclick="deleteSchedule()">
@@ -123,6 +154,10 @@
                 <button type="button" class="btn btn-primary mt-3" id="export-schedule" onclick="exportSchedule()">
                     <i class="fas fa-file-export"></i>
                     Export
+                </button>
+                <button type="button" class="btn btn-primary mt-3" id="run-scheduler" onclick="runScheduler()">
+                    <i class="fas fa-play"></i>
+                    Run Scheduler
                 </button>
             </div>
         </div>

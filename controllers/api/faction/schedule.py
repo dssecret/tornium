@@ -199,6 +199,59 @@ def add_chain_availability(*args, **kwargs):
 
 @key_required
 @ratelimit
+@requires_scopes(scopes={'admin', 'write:faction', 'faction:admin'})
+def schedule_setup(*args, **kwargs):
+    client = redisdb.get_redis()
+    data = json.loads(request.get_data().decode('utf-8'))
+    user = User(kwargs['user'].tid)
+
+    if not user.aa:
+        return jsonify({
+            'code': 4005,
+            'name': 'InsufficientFactionPermissions',
+            'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
+                       'for an AA level request.'
+        }), 403, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    if data.get('from') is None or data.get('to') is None:
+        return jsonify({
+            'code': 0,
+            'name': 'GeneralError',
+            'message': 'Sever failed to fulfill the request. The from and to values are required for this endpoint.'
+        }), 400, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+    elif data.get('to') <= data.get('from'):
+        return jsonify({
+            'code': 0,
+            'name': 'GeneralError',
+            'message': 'Sever failed to fulfill the request. The to value must be greater than the from value.'
+        }), 400, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    schedule = Schedule(uuid=data['uuid'], factiontid=user.factiontid)
+    schedule.fromts = int(data.get('from'))
+    schedule.tots = int(data.get('to'))
+    schedule.update_file()
+
+    return schedule.file, 200, {
+        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+    }
+
+
+@key_required
+@ratelimit
 @requires_scopes(scopes={'admin', 'read:faction', 'faction:admin'})
 def get_schedule(uuid, *args, **kwargs):
     client = redisdb.get_redis()

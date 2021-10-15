@@ -140,7 +140,38 @@ $(document).ready(function() {
                     }))
                 })
 
+                $('#form-schedule-setup').submit(function(e) {
+                    e.preventDefault();
+
+                    xhttp = new XMLHttpRequest();
+                    xhttp.onload = function() {
+                        var response = xhttp.response;
+
+                        if("code" in response) {
+                            generateToast("Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
+                        }
+                    }
+
+                    xhttp.responseType = 'json';
+                    xhttp.open('POST', '/api/faction/schedule/setup');
+                    xhttp.setRequestHeader("Authorization", `Basic ${btoa(`${key}:`)}`);
+                    xhttp.setRequestHeader("Content-Type", "application/json");
+                    xhttp.send(JSON.stringify({
+                        'uuid': id,
+                        'from': this.fromts.value,
+                        'to': this.tots.value
+                    }))
+                });
+
                 $("#fromdatepicker").flatpickr({
+                    enableTime: true,
+                    dateFormat: "U",
+                    altInput: true,
+                    altFormat: "m/d H:i TCT",
+                    minuteIncrement: 30
+                });
+
+                $("#fromts").flatpickr({
                     enableTime: true,
                     dateFormat: "U",
                     altInput: true,
@@ -156,7 +187,13 @@ $(document).ready(function() {
                     minuteIncrement: 30
                 });
 
-                // createWatcherSchedule(xhttp.response);
+                $("#tots").flatpickr({
+                    enableTime: true,
+                    dateFormat: "U",
+                    altInput: true,
+                    altFormat: "m/d H:i TCT",
+                    minuteIncrement: 30
+                });
             }
             xhttp.responseType = 'json';
             xhttp.open('GET', '/faction/schedule?uuid=' + id + '&watchers=True');
@@ -230,6 +267,19 @@ function exportSchedule() {
 
     xhttp.responseType = "json";
     xhttp.open("GET", `/api/faction/schedule/watcher/${document.getElementById('schedule-modal').getAttribute('data-uuid')}`);
+    xhttp.setRequestHeader("Authorization", `Basic ${btoa(`${key}:`)}`);
+    xhttp.setRequestHeader("Content-Type", "application/json");
+    xhttp.send();
+}
+
+function runScheduler() {
+    const xhttp = new XMLHttpRequest();
+    xhttp.onload = function() {
+        var response = xhttp.response;
+    }
+
+    xhttp.responseType = "json";
+    xhttp.open("POST", `/api/faction/schedule/${document.getElementById('schedule-modal').getAttribute('data-uuid')}`);
     xhttp.setRequestHeader("Authorization", `Basic ${btoa(`${key}:`)}`);
     xhttp.setRequestHeader("Content-Type", "application/json");
     xhttp.send();
