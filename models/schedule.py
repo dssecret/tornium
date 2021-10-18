@@ -14,16 +14,18 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 import json
+import math
 import os
 
 from flask_login import current_user
 
 from database import session_local
 from models.schedulemodel import ScheduleModel
+from models.user import User
 import utils
 
 
-# All timestamps refer to a 30 minute interval starting at that timestamp
+# 10-12 refers to starting at 10 ending at 12 or [10, 12) mathematically
 
 class Schedule:
     def __init__(self, uuid, factiontid=None):
@@ -123,8 +125,29 @@ class Schedule:
         with open(f'{os.getcwd()}/schedule/{self.uuid}.json', 'w') as file:
             json.dump(self.file, file, indent=4)
 
+    def __calculate_weight(self, interval, tid):
+        start = int(interval.split('-')[0])
+        end = int(interval.split('-')[1])
+
+        experience = math.log10(User(tid).chain_hits)  # TODO: Add support in tasks
+        length = (end - start) / 3600
+        normal_weight = math.pow(math.e, (- (length - 2) ** 2)/(2 * 0.5 ** 2))/(0.5 * math.sqrt(2 * math.pi))
+        return experience * self.weight[tid] * normal_weight
+
     def greedy(self):
-        pass
+        interval = ''
+        user = 0
+        max_weight = 0
+
+        for user in self.activity:
+            for activity in user:
+                if (max_weight == 0 or activity.split('-')[0] <= interval.split('-')[0]) and \
+                        self.__calculate_weight(activity, user) > max_weight:
+                    interval = activity
+                    max_weight = self.__calculate_weight(activity, user)
+                    user = user
+
+        schedule = [[interval, user]]
 
     def annealing(self):
         pass

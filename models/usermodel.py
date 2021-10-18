@@ -37,6 +37,7 @@ class UserModel(base):
 
         factionid = Column(Integer)
         factionaa = Column(Boolean)
+        chain_hits = Column(Integer)
 
         status = Column(String)
         last_action = Column(String)
@@ -54,6 +55,7 @@ class UserModel(base):
 
         factionid = Column(INTEGER)
         factionaa = Column(BIT(1))
+        chain_hits = Column(INTEGER)
 
         status = Column(TEXT)
         last_action = Column(TEXT)
