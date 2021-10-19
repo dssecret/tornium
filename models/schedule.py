@@ -134,23 +134,7 @@ class Schedule:
         normal_weight = math.pow(math.e, (- (length - 2) ** 2)/(2 * 0.5 ** 2))/(0.5 * math.sqrt(2 * math.pi))
         return experience * self.weight[tid] * normal_weight
 
-    def greedy(self):
-        interval = ''
-        user = 0
-        max_weight = 0
+    def generate(self, tots, fromts):
+        
 
-        for user in self.activity:
-            for activity in user:
-                if (max_weight == 0 or activity.split('-')[0] <= interval.split('-')[0]) and \
-                        self.__calculate_weight(activity, user) > max_weight:
-                    interval = activity
-                    max_weight = self.__calculate_weight(activity, user)
-                    user = user
-
-        schedule = [[interval, user]]
-
-    def annealing(self):
-        pass
-
-    def generate(self, tots, fromts, version='annealing'):
         pass
