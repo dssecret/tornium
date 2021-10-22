@@ -19,7 +19,6 @@ from flask import Blueprint, render_template, abort, request
 from flask_login import login_required, current_user
 
 from redisdb import get_redis
-from models import settingsmodel
 import utils.tasks
 
 
@@ -29,7 +28,7 @@ mod = Blueprint('adminroutes', __name__)
 def admin_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if (not current_user.is_authenticated or not current_user.is_admin()) and not settingsmodel.is_dev():
+        if (not current_user.is_authenticated or not current_user.is_admin()) and not get_redis().get('dev'):
             return abort(403)
         else:
             return f(*args, **kwargs)

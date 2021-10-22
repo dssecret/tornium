@@ -17,13 +17,13 @@ from sqlalchemy import Column, Integer, Float, String
 from sqlalchemy.dialects.mysql import INTEGER, FLOAT, TEXT
 
 from database import base
-from models.settingsmodel import is_dev
+from redisdb import get_redis
 
 
 class StatModel(base):
     __tablename__ = 'Stats'
 
-    if is_dev():
+    if get_redis().get('dev'):
         statid = Column(Integer, primary_key=True)
         tid = Column(Integer)
         battlescore = Column(Float)

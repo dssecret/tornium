@@ -17,13 +17,13 @@ from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.dialects.mysql import BIGINT, INTEGER, TEXT, BIT, VARCHAR, MEDIUMTEXT
 
 from database import base
-from models.settingsmodel import is_dev
+from redisdb import get_redis
 
 
 class UserModel(base):
     __tablename__ = 'Users'
 
-    if is_dev():
+    if get_redis().get('dev'):
         tid = Column(Integer, primary_key=True)
         name = Column(String)
         level = Column(Integer)
@@ -62,7 +62,7 @@ class UserModel(base):
 class UserDiscordModel(base):
     __tablename__ = 'DiscordUsers'
 
-    if is_dev():
+    if get_redis().get('dev'):
         discord_id = Column(Integer, primary_key=True)
         tid = Column(Integer)
     else:

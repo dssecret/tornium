@@ -17,13 +17,13 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects.mysql import BIGINT, MEDIUMTEXT
 
 from database import base
-from models.settingsmodel import is_dev
+from redisdb import get_redis
 
 
 class UserStakeoutModel(base):
     __tablename__ = 'UserStakeouts'
 
-    if is_dev():
+    if get_redis().get('dev'):
         tid = Column(Integer, primary_key=True)  # The faction ID of the stakeout
         data = Column(String)  # String of data from the Torn API
         guilds = Column(String)  # String of list of keys to be watched

@@ -17,13 +17,13 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects.mysql import VARCHAR, BIGINT, MEDIUMTEXT
 
 from database import base
-from models.settingsmodel import is_dev
+from redisdb import get_redis
 
 
 class KeyModel(base):
     __tablename__ = 'Keys'
 
-    if is_dev():
+    if get_redis().get('dev'):
         key = Column(String, primary_key=True)
         ownertid = Column(Integer)
         scopes = Column(String)  # String of list of scopes

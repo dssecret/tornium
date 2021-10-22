@@ -17,13 +17,13 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects.mysql import BIGINT, TEXT, MEDIUMTEXT, TINYTEXT
 
 from database import base
-from models.settingsmodel import is_dev
+from redisdb import get_redis
 
 
 class ServerModel(base):
     __tablename__ = 'Servers'
 
-    if is_dev():
+    if get_redis().get('dev'):
         sid = Column(Integer, primary_key=True)
         name = Column(String)
         admins = Column(String)  # String of list of admin ids

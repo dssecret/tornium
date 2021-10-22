@@ -13,10 +13,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from models import settingsmodel as settings
-settings.initialize()
-
 import datetime
+import json
 import logging
 import os
 
@@ -24,6 +22,39 @@ import flask
 from flask_cors import CORS
 from flask_login import LoginManager
 from sqlalchemy.orm import scoped_session
+
+from redisdb import get_redis
+
+try:
+    file = open('settings.json')
+    file.close()
+except FileNotFoundError:
+    data = {
+        'jsonfiles': ['settings'],
+        'dev': False,
+        'banlist': [],
+        'useragentlist': [],
+        'bottoken': '',
+        'secret': str(os.urandom(32)),
+        'taskqueue': 'redis',
+        'username': 'tornium',
+        'password': ''
+    }
+    with open(f'settings.json', 'w') as file:
+        json.dump(data, file, indent=4)
+
+with open('settings.json', 'r') as file:
+    data = json.load(file)
+
+redis = get_redis()
+redis.set('dev', str(data['dev']))
+redis.set('banlist', json.dumps(data['banlist']))
+redis.set('useragentlist', json.dumps(data['useragentlist']))
+redis.set('bottoken', data['bottoken'])
+redis.set('secret', data['secret'])
+redis.set('taskqueue', data['taskqueue'])
+redis.set('username', data['username'])
+redis.set('password', data['password'])
 
 from controllers import mod as base_mod
 from controllers.authroutes import mod as auth_mod
@@ -34,7 +65,6 @@ from controllers.adminroutes import mod as admin_mod
 from controllers.statroutes import mod as stat_mod
 from controllers.api import mod as api_mod
 from database import session_local
-from redisdb import get_redis
 import utils
 
 logger = logging.getLogger('server')
@@ -42,8 +72,6 @@ logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='server.log', encoding='utf-8', mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
-
-redis = get_redis()
 
 app = flask.Flask(__name__, instance_path=f'{os.getcwd()}/instance')  # Temp bug fix for https://youtrack.jetbrains.com/issue/PY-49984
 app.secret_key = redis.get('secret')

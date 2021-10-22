@@ -17,13 +17,13 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects.mysql import BIGINT, TEXT, INTEGER, LONGTEXT
 
 from database import base
-from models.settingsmodel import is_dev
+from redisdb import get_redis
 
 
 class FactionModel(base):
     __tablename__ = 'Factions'
 
-    if is_dev():
+    if get_redis().get('dev'):
         tid = Column(Integer, primary_key=True)
         name = Column(String)
         respect = Column(Integer)

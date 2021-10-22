@@ -13,19 +13,49 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from models import settingsmodel
-
-settingsmodel.initialize()
-
 import datetime
 import json
 import logging
 import math
+import os
 import random
 import time
 
 from huey import SqliteHuey, RedisHuey, crontab
 import requests
+
+from redisdb import get_redis
+
+try:
+    file = open('settings.json')
+    file.close()
+except FileNotFoundError:
+    data = {
+        'jsonfiles': ['settings'],
+        'dev': False,
+        'banlist': [],
+        'useragentlist': [],
+        'bottoken': '',
+        'secret': str(os.urandom(32)),
+        'taskqueue': 'redis',
+        'username': 'tornium',
+        'password': ''
+    }
+    with open(f'settings.json', 'w') as file:
+        json.dump(data, file, indent=4)
+
+with open('settings.json', 'r') as file:
+    data = json.load(file)
+
+redis = get_redis()
+redis.set('dev', str(data['dev']))
+redis.set('banlist', json.dumps(data['banlist']))
+redis.set('useragentlist', json.dumps(data['useragentlist']))
+redis.set('bottoken', data['bottoken'])
+redis.set('secret', data['secret'])
+redis.set('taskqueue', data['taskqueue'])
+redis.set('username', data['username'])
+redis.set('password', data['password'])
 
 from database import session_local
 from models.factionmodel import FactionModel
@@ -34,10 +64,9 @@ from models.servermodel import ServerModel
 from models.statmodel import StatModel
 from models.usermodel import UserModel, UserDiscordModel
 from models.userstakeoutmodel import UserStakeoutModel
-from redisdb import get_redis
 import utils
 
-if settingsmodel.get('taskqueue') == 'sqlite':
+if redis.get('taskqueue') == 'sqlite':
     huey = SqliteHuey()
 else:
     huey = RedisHuey(host='localhost', port=6379)

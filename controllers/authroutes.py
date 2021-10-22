@@ -15,11 +15,10 @@
 
 from flask import Blueprint, request, redirect, render_template, abort, url_for
 from flask_login import logout_user, login_user
-from huey.exceptions import TaskException
 from is_safe_url import is_safe_url
 
 from models.user import User
-from models.settingsmodel import get
+from redisdb import get_redis
 import utils
 from utils.tasks import tornget
 
@@ -54,7 +53,7 @@ def login():
     if next is None or next == 'None':
         return redirect(url_for('baseroutes.index'))
 
-    if not get('dev'):
+    if not get_redis().get('dev'):
         if not is_safe_url(next, {'torn.deek.sh'}):
             abort(400)
     return redirect(next or url_for('baseroutes.index'))
