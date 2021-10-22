@@ -531,7 +531,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
                 continue
             elif attack['modifiers']['fair_fight'] == 3:  # 3x FF can be greater than the defender battlescore indicated
                 continue
-            elif attack['timestamp_ended'] > last_timestamp:
+            elif attack['timestamp_ended'] < last_timestamp:
                 continue
 
             user = session.query(UserModel).filter_by(tid=attack['attacker_id']).first()
