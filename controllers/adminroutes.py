@@ -18,8 +18,9 @@ from functools import wraps
 from flask import Blueprint, render_template, abort, request
 from flask_login import login_required, current_user
 
-import utils.tasks
+from redisdb import get_redis
 from models import settingsmodel
+import utils.tasks
 
 
 mod = Blueprint('adminroutes', __name__)
@@ -68,8 +69,10 @@ def dashboard():
 @login_required
 @admin_required
 def bot():
+    redis = get_redis()
+
     if request.method == 'POST':
         if request.form.get('bottoken') is not None:
-            settingsmodel.update('bottoken', request.form.get('bottoken'))
+            redis.set('bottoken', request.form.get('bottoken'))
 
-    return render_template('admin/bot.html', bottoken=settingsmodel.get('bottoken'))
+    return render_template('admin/bot.html', bottoken=redis.get('bottoken'))
