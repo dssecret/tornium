@@ -505,21 +505,18 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
     faction_attacks = []
     timestamp = utils.now()
     statid = session.query(StatModel).count()
-
+    last_timestamp = session.query(StatModel).filter_by(statid=statid - 1).first().timeadded
+    
     for faction in session.query(FactionModel).all():
         if len(json.loads(faction.keys)) == 0:
             continue
         elif json.loads(faction.config)['stat'] == 0:
             continue
-
-        faction_attacks.append(tornget('faction/?selections=basic,attacks',
-                                       random.choice(json.loads(faction.keys)),
-                                       fromts=timestamp - 300,  # TODO: Adjust when the crontab timer is adjusted
-                                       session=requests_session))  # TODO: Store last update per faction in DB
-
-    for faction in faction_attacks:
+            
         try:
-            faction_data = faction(blocking=True)
+            faction_data = tornget('faction/?selections=basic,attacks',
+                                   random.choice(json.loads(faction.keys)),
+                                   session=requests_session)
         except Exception as e:
             utils.get_logger().exception(e)
             continue
@@ -533,6 +530,8 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             elif attack['defender_id'] in [4, 10, 15, 17, 19, 20, 21]:  # Checks if NPC fight (and you defeated NPC)
                 continue
             elif attack['modifiers']['fair_fight'] == 3:  # 3x FF can be greater than the defender battlescore indicated
+                continue
+            elif attack['timestamp_ended'] > last_timestamp:
                 continue
 
             user = session.query(UserModel).filter_by(tid=attack['attacker_id']).first()
