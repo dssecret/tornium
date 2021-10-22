@@ -514,7 +514,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             continue
             
         try:
-            faction_data = tornget('faction/?selections=basic,attacks',
+            faction_data = tornget.call_local('faction/?selections=basic,attacks',
                                    random.choice(json.loads(faction.keys)),
                                    session=requests_session)
         except Exception as e:
