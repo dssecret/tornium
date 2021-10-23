@@ -502,30 +502,28 @@ def refresh_users():
 def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&f=61&t=16209964&b=0&a=0&start=0&to=0
     session = session_local()
     requests_session = requests.Session()
-    faction_attacks = []
     timestamp = utils.now()
     statid = session.query(StatModel).count()
     last_timestamp = session.query(StatModel).filter_by(statid=statid - 1).first().timeadded
-    
+
     for faction in session.query(FactionModel).all():
         if len(json.loads(faction.keys)) == 0:
             continue
         elif json.loads(faction.config)['stat'] == 0:
             continue
-            
+
         try:
             faction_data = tornget.call_local('faction/?selections=basic,attacks',
-                                   random.choice(json.loads(faction.keys)),
-                                   session=requests_session)
+                                              random.choice(json.loads(faction.keys)),
+                                              session=requests_session)
         except Exception as e:
             utils.get_logger().exception(e)
             continue
 
         for attack in faction_data['attacks'].values():
-            if attack['attacker_faction'] != faction_data['ID']:
+            if attack['defender_faction'] == faction_data['ID']:
                 continue
-            elif attack['result'] in ['Assist', 'Lost', 'Stalemate', 'Attacked', 'Mugged', 'Hospitalized', 'Special',
-                                      'Escape']:
+            elif attack['result'] in ['Assist', 'Lost', 'Stalemate', 'Escape']:
                 continue
             elif attack['defender_id'] in [4, 10, 15, 17, 19, 20, 21]:  # Checks if NPC fight (and you defeated NPC)
                 continue
@@ -566,6 +564,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
                 continue
 
             defender_score = (attack['modifiers']['fair_fight'] - 1) * 0.375 * attacker_score
+            print(defender_score)
 
             if defender_score == 0:
                 continue
@@ -770,13 +769,15 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
 
     try:
         if key is not None:
-            data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=key, session=requests_session)
+            data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=key,
+                                      session=requests_session)
         else:
             guild = random.choice(list(json.loads(stakeout.guilds).keys()))
             guild = session.query(ServerModel).filter_by(sid=guild).first()
             admin = random.choice(json.loads(guild.admins))
             admin = session.query(UserModel).filter_by(tid=admin).first()
-            data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=admin.key, session=requests_session)
+            data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=admin.key,
+                                      session=requests_session)
     except Exception as e:
         utils.get_logger().exception(e)
         return
