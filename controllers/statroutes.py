@@ -28,6 +28,7 @@ from models.faction import Faction
 from models.factionmodel import FactionModel
 from models.statmodel import StatModel
 from models.user import User
+from models.usermodel import UserModel
 
 mod = Blueprint('statroutes', __name__)
 
@@ -53,6 +54,8 @@ def stats_data():
 
     stats = []
     users = []
+    global_factions = []
+    global_users = []
 
     if utils.get_tid(search_value):
         stat_entries = session.query(StatModel).filter(cast(StatModel.tid, String).startswith(str(utils.get_tid(search_value)))).all()
@@ -60,10 +63,20 @@ def stats_data():
         stat_entries = session.query(StatModel).all()
 
     for stat_entry in stat_entries:
-        if Faction(User(stat_entry.addedid).factiontid).stat_config['global'] != 1 and \
-                User(stat_entry.addedid).factiontid != current_user.factiontid:
-            continue
-        elif stat_entry.tid in users:
+        if stat_entry.addedid not in global_users:
+            user = User(stat_entry.addedid)
+            if user.factiontid not in global_factions:
+                faction = Faction(user.factiontid)
+                if faction.stat_config['global'] != 1 and \
+                        User(stat_entry.addedid).factiontid != current_user.factiontid:
+                    continue
+
+                if faction.stat_config['global']:
+                    if stat_entry.addedid not in global_users and faction.tid in global_factions:
+                        global_users.append(stat_entry.addedid)
+                        global_factions.append(faction.tid)
+
+        if stat_entry.tid in users:
             continue
 
         stats.append([stat_entry.tid, 'NYI', int(stat_entry.battlescore),
