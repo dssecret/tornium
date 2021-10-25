@@ -13,8 +13,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, Integer, Float, String
-from sqlalchemy.dialects.mysql import INTEGER, FLOAT, TEXT
+from sqlalchemy import Column, Integer, Float, String, Boolean
+from sqlalchemy.dialects.mysql import INTEGER, FLOAT, TEXT, BOOLEAN
 
 from database import base
 from redisdb import get_redis
@@ -29,11 +29,11 @@ class StatModel(base):
         battlescore = Column(Float)
         battlestats = Column(String)  # String of list of battlestats [str, def, spd, dex]
         timeadded = Column(Integer)
-        addedid = Column(Integer)
+        globalstat = Column(Boolean)
     else:
         statid = Column(INTEGER, primary_key=True)
         tid = Column(INTEGER)
         battlescore = Column(FLOAT)
         battlestats = Column(TEXT)  # String of list of battlestats [str, def, spd, dex]
         timeadded = Column(INTEGER)
-        addedid = Column(INTEGER)
+        globalstat = Column(BOOLEAN)
