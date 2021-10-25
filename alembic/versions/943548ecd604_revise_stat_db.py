@@ -24,8 +24,10 @@ depends_on = None
 def upgrade():
     if get_redis().get('dev'):
         op.add_column('Stats', sa.Column('globalstat', sa.Boolean, default=False))
+        op.add_column('Stats', sa.Column('addedfactiontid', sa.Integer))
     else:
         op.add_column('Stats', sa.Column('globalstat', mysql.BOOLEAN, default=False))
+        op.add_column('Stats', sa.Column('addedfactiontid', mysql.INTEGER))
     
     session = session_local()
     
@@ -35,6 +37,7 @@ def upgrade():
         
         if json.loads(faction.statconfig)['global'] == 1:
             stat.globalstat = True
+            stat.addedfactiontid = faction.tid
     
     session.flush()
 
