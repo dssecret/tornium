@@ -281,6 +281,59 @@ def schedule_setup(*args, **kwargs):
 
 @key_required
 @ratelimit
+@requires_scopes(scopes={'admin', 'execute:faction', 'faction:admin'})
+def execute_scheduler(*args, **kwargs):
+    client = redisdb.get_redis()
+    user = User(kwargs['user'].tid)
+
+    if not user.aa:
+        return jsonify({
+            'code': 4005,
+            'name': 'InsufficientFactionPermissions',
+            'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
+                       'for an AA level request.'
+        }), 403, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    try:
+        schedule = Schedule(uuid=uuid, factiontid=user.factiontid)
+    except Exception:
+        return jsonify({
+            'code': 0,
+            'name': 'GeneralError',
+            'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
+                       'due to a cross-faction request.'
+        }), 403, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    if schedule.factiontid != user.factiontid:
+        return jsonify({
+            'code': 0,
+            'name': 'GeneralError',
+            'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
+                       'due to a cross-faction request.'
+        }), 403, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    schedule.generate()
+    return schedule.schedule, 200, {
+        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+    }
+
+
+@key_required
+@ratelimit
 @requires_scopes(scopes={'admin', 'read:faction', 'faction:admin'})
 def get_schedule(uuid, *args, **kwargs):
     client = redisdb.get_redis()

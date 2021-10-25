@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+import itertools
 import json
 import math
 import os
@@ -125,16 +126,90 @@ class Schedule:
         with open(f'{os.getcwd()}/schedule/{self.uuid}.json', 'w') as file:
             json.dump(self.file, file, indent=4)
 
-    def __calculate_weight(self, interval, tid):
-        start = int(interval.split('-')[0])
-        end = int(interval.split('-')[1])
+    def generate(self):
+        users = {}
 
-        experience = math.log10(User(tid).chain_hits)  # TODO: Add support in tasks
-        length = (end - start) / 3600
-        normal_weight = math.pow(math.e, (- (length - 2) ** 2)/(2 * 0.5 ** 2))/(0.5 * math.sqrt(2 * math.pi))
-        return experience * self.weight[tid] * normal_weight
+        def __calculate_interval_weight(fromts, tots, tid):
+            if tid in users:
+                user = users[tid]
+            else:
+                user = User(tid)
+                users[tid] = user
 
-    def generate(self, tots, fromts):
-        
+            return math.log10(user.chain_hits) * self.weight[tid] * math.pow(math.e, (
+                - ((tots - fromts) / 3600 - 2) ** 2) / (2 * 0.5 ** 2)) / (0.5 * math.sqrt(2 * math.pi))
 
-        pass
+        intervals = []
+        temp_schedule = {
+            'primary': {},
+            'backup': {}
+        }
+        temperature = 0
+
+        for tid, user_intervals in self.activity.items():
+            for interval in user_intervals:
+                fromts = int(interval.split('-')[0])
+                tots = int(interval.split('-')[1])
+
+                if fromts < self.fromts or tots > self.tots:
+                    continue
+
+                intervals.append([fromts, tots, tid])
+
+        # Begin Timsort
+        # 32 is size of each slice
+        for i in range(0, len(intervals), 32):
+            left = i
+            right = min((i + 32 - 1), len(intervals) - 1)
+
+            for j in range(left + 1, right + 1):
+                key_item = intervals[j]
+                k = j - 1
+
+                while k >= left and intervals[k] > key_item:
+                    intervals[k + 1] = intervals[k]
+
+                intervals[k + 1] = key_item
+
+        size = 32
+        while size < len(intervals):
+            for start in range(0, len(intervals), size * 2):
+                midpoint = start + size - 1
+                end = min((start + size * 2 - 1), (len(intervals) - 1))
+
+                if len(intervals[start:midpoint + 1]) == 0:
+                    merged_array = intervals[midpoint + 1:end + 1]
+                elif len(intervals[midpoint + 1:end + 1]) == 0:
+                    merged_array = intervals[start:midpoint + 1]
+                else:
+                    merged_array = []
+                    index_left = 0
+                    index_right = 0
+
+                    while len(merged_array) < len(intervals[start:midpoint + 1]):
+                        if intervals[start:midpoint + 1][index_left] <= intervals[midpoint + 1:end + 1][index_right]:
+                            merged_array.append(intervals[start:midpoint + 1][index_left])
+                            index_left += 1
+                        else:
+                            merged_array.append(intervals[midpoint + 1:end + 1][index_right])
+                            index_right += 1
+
+                        if index_right == len(intervals[midpoint + 1:end + 1]):
+                            merged_array += intervals[start:midpoint + 1][index_left:]
+                            break
+                        elif index_left == len(intervals[start:midpoint + 1]):
+                            merged_array += intervals[midpoint + 1:end + 1][index_right:]
+                            break
+
+                intervals[start:start + len(merged_array)] = merged_array
+
+            size *= 2
+
+        # End Timsort
+
+        for length in range(len(intervals) + 1):
+            for permutation in itertools.permutations(intervals, length):
+                primary = permutation
+                secondary = permutation
+
+        return self.schedule
