@@ -29,6 +29,8 @@ class StatModel(base):
         battlescore = Column(Float)
         battlestats = Column(String)  # String of list of battlestats [str, def, spd, dex]
         timeadded = Column(Integer)
+        addedid = Column(Integer)
+        addedfactiontid = Column(Integer)
         globalstat = Column(Boolean)
     else:
         statid = Column(INTEGER, primary_key=True)
@@ -36,4 +38,6 @@ class StatModel(base):
         battlescore = Column(FLOAT)
         battlestats = Column(TEXT)  # String of list of battlestats [str, def, spd, dex]
         timeadded = Column(INTEGER)
+        addedid = Column(INTEGER)
+        addedfactiontid = Column(INTEGER)
         globalstat = Column(BOOLEAN)
