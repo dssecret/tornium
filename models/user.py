@@ -69,7 +69,7 @@ class User(UserMixin):
                 level=0,
                 admin=False if tid != 2383326 else True,
                 key=key,
-                battlescore='[]',
+                battlescore=json.dumps([0, now]),
                 discord_id=0,
                 servers='[]',
                 factionid=0,
