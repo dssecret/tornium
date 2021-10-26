@@ -34,13 +34,17 @@ def upgrade():
     for stat in range(max_stat):
         stat = session.query(StatModel).filter_by(statid=stat).first()
         user = User(stat.addedid)
-        faction = Faction(user.factiontid)
 
-        if faction.stat_config['global'] == 1:
-            stat.globalstat = 1
+        stat.addedfactiontid = user.factiontid
+
+        if user.factiontid != 0:
+            faction = Faction(user.factiontid)
+            if faction.stat_config['global'] == 1:
+                stat.globalstat = 1
+            else:
+                stat.globalstat = 0
         else:
             stat.globalstat = 0
-        stat.addedfactiontid = faction.tid
         session.flush()
 
     with op.batch_alter_table('Stats') as batch_op:

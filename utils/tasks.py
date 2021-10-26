@@ -592,6 +592,13 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
 
             stat_faction = session.query(FactionModel).filter_by(tid=user.factionid).first()
 
+            if stat_faction is None:
+                globalstat = 1
+            else:
+                globalstat = json.loads(stat_faction.statconfig)['global']
+
+            print(user.factionid)
+
             stat_entry = StatModel(
                 statid=statid,
                 tid=attack['defender_id'],
@@ -599,8 +606,9 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
                 timeadded=timestamp,
                 addedid=attack['attacker_id'],
                 addedfactiontid=user.factionid,
-                globalstat=0 if stat_faction is None else json.loads(stat_faction.statconfig)['global']
+                globalstat=globalstat
             )
+            print(stat_entry.addedfactiontid)
             session.add(stat_entry)
             session.flush()
             statid += 1
