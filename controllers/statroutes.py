@@ -87,7 +87,7 @@ def user_data():
 
     stats = []
 
-    stat_entries = session.query(StatModel).filter_by(tid=tid, or_(StatModel.globalstat == 1, StatModel.addedfactiontid == current_user.factiontid)).all()
+    stat_entries = session.query(StatModel).filter_by(or_(StatModel.globalstat == 1, StatModel.addedfactiontid == current_user.factiontid), tid=tid).all()
 
     for stat_entry in stat_entries:
         if stat_entry.tid != tid:
