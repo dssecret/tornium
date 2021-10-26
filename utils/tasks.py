@@ -535,20 +535,44 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             user = session.query(UserModel).filter_by(tid=attack['attacker_id']).first()
 
             if user is None:
-                user = UserModel(
-                    tid=attack['attacker_id'],
-                    name='',
-                    level=0,
-                    admin=False,
-                    key='',
-                    battlescore='[]',
-                    discord_id=0,
-                    servers='[]',
-                    factionid=0,
-                    factionaa=False,
-                    last_refresh=timestamp,
-                    status=''
-                )
+                try:
+                    user_data = tornget.call_local(f'user/{attack["attacker_id"]}/?selections=profile,discord',
+                                                   random.choice(json.loads(faction.keys)),
+                                                   session=requests_session)
+
+                    user = UserModel(
+                        tid=attack['attacker_id'],
+                        name=user_data['name'],
+                        level=user_data['level'],
+                        admin=False,
+                        key='',
+                        battlescore='[]',
+                        discord_id=user_data['discord']['discordID'] if user_data['discord']['discordID'] != '' else 0,
+                        servers='[]',
+                        factionid=user_data['faction']['faction_id'],
+                        factionaa=False,
+                        last_refresh=timestamp,
+                        status=user_data['last_action']['status'],
+                        last_action=user_data['last_action']['relative']
+                    )
+                except Exception as e:
+                    utils.get_logger().exception(e)
+                    user = UserModel(
+                        tid=attack['attacker_id'],
+                        name='',
+                        level=0,
+                        admin=False,
+                        key='',
+                        battlescore='[]',
+                        discord_id=0,
+                        servers='[]',
+                        factionid=0,
+                        factionaa=False,
+                        last_refresh=timestamp,
+                        status='',
+                        last_action=''
+                    )
+
                 session.add(user)
                 session.flush()
 
@@ -564,18 +588,20 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
                 continue
 
             defender_score = (attack['modifiers']['fair_fight'] - 1) * 0.375 * attacker_score
-            print(defender_score)
 
             if defender_score == 0:
                 continue
+
+            stat_faction = session.query(FactionModel).filter_by(tid=user.factionid).first()
 
             stat_entry = StatModel(
                 statid=statid,
                 tid=attack['defender_id'],
                 battlescore=defender_score,
-                battlestats=json.dumps([0, 0, 0, 0]),
                 timeadded=timestamp,
-                addedid=attack['attacker_id']
+                addedid=attack['attacker_id'],
+                addedfactiontid=user.factionid,
+                globalstat=0 if stat_faction is None else json.loads(stat_faction.statconfig)['global']
             )
             session.add(stat_entry)
             session.flush()

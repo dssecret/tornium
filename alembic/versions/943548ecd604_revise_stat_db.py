@@ -23,26 +23,36 @@ depends_on = None
 
 def upgrade():
     if get_redis().get('dev'):
-        op.add_column('Stats', sa.Column('globalstat', sa.Boolean, default=False))
-        op.add_column('Stats', sa.Column('addedfactiontid', sa.Integer))
+        op.add_column('Stats', sa.Column('globalstat', sa.Boolean, server_default="0"))
+        op.add_column('Stats', sa.Column('addedfactiontid', sa.Integer, server_default="0"))
     else:
-        op.add_column('Stats', sa.Column('globalstat', mysql.BOOLEAN, default=False))
-        op.add_column('Stats', sa.Column('addedfactiontid', mysql.INTEGER))
-    
+        op.add_column('Stats', sa.Column('globalstat', mysql.BOOLEAN, server_default="0"))
+        op.add_column('Stats', sa.Column('addedfactiontid', mysql.INTEGER, server_default="0"))
+
     session = session_local()
-    
-    for stat in session.query(StatModel).all():
+    max_stat = session.query(StatModel).count() - 1
+    for stat in range(max_stat):
+        stat = session.query(StatModel).filter_by(statid=stat).first()
         user = User(stat.addedid)
         faction = Faction(user.factiontid)
-        
-        if json.loads(faction.statconfig)['global'] == 1:
-            stat.globalstat = True
-            stat.addedfactiontid = faction.tid
-    
-    session.flush()
+
+        if faction.stat_config['global'] == 1:
+            stat.globalstat = 1
+        else:
+            stat.globalstat = 0
+        stat.addedfactiontid = faction.tid
+        session.flush()
+
+    with op.batch_alter_table('Stats') as batch_op:
+        batch_op.drop_column('battlestats')
 
 
 def downgrade():
     with op.batch_alter_table('Stats') as batch_op:
+        if get_redis().get('dev'):
+            op.add_column('Stats', sa.Column('battlestats', sa.String, default='[0,0,0,0]'), )
+        else:
+            op.add_column('Stats', sa.Column('battlestats', mysql.TEXT, default='[0,0,0,0]'))
+
         batch_op.drop_column('globalstat')
         batch_op.drop_column('addedfactiontid')
