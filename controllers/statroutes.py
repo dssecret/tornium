@@ -18,7 +18,7 @@ import json
 
 from flask import Blueprint, render_template, request
 from flask_login import login_required, current_user
-from sqlalchemy import String
+from sqlalchemy import String, or_
 from sqlalchemy.sql.expression import cast
 
 import utils
@@ -54,28 +54,14 @@ def stats_data():
 
     stats = []
     users = []
-    global_factions = []
-    global_users = []
 
     if utils.get_tid(search_value):
-        stat_entries = session.query(StatModel).filter(cast(StatModel.tid, String).startswith(str(utils.get_tid(search_value)))).all()
+        stat_entries = session.query(StatModel).filter(cast(StatModel.tid, String).startswith(str(utils.get_tid(search_value))),
+                                                       or_(StatModel.globalstat == 1, StatModel.addedfactiontid == current_user.factiontid)).all()
     else:
-        stat_entries = session.query(StatModel).all()
+        stat_entries = session.query(StatModel).filter(or_(StatModel.globalstat == 1, StatModel.addedfactiontid == current_user.factiontid)).all()
 
     for stat_entry in stat_entries:
-        if stat_entry.addedid not in global_users:
-            user = User(stat_entry.addedid)
-            if user.factiontid not in global_factions:
-                faction = Faction(user.factiontid)
-                if faction.stat_config['global'] != 1 and \
-                        User(stat_entry.addedid).factiontid != current_user.factiontid:
-                    continue
-
-                if faction.stat_config['global']:
-                    if stat_entry.addedid not in global_users and faction.tid in global_factions:
-                        global_users.append(stat_entry.addedid)
-                        global_factions.append(faction.tid)
-
         if stat_entry.tid in users:
             continue
 
