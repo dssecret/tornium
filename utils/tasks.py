@@ -278,12 +278,9 @@ def refresh_factions():
         if len(json.loads(faction.keys)) == 0:
             continue
 
-        factions.append(tornget(f'faction/?selections=', random.choice(json.loads(faction.keys)),
-                                session=requests_session))
-
-    for faction in factions:
         try:
-            faction_data = faction(blocking=True)
+            faction_data = tornget.call_local(f'faction/?selections=', random.choice(json.loads(faction.keys)),
+                                              session=requests_session)
         except Exception as e:
             utils.get_logger().exception(e)
             continue
@@ -291,7 +288,7 @@ def refresh_factions():
         if faction_data is None:
             continue
 
-        faction = session.query(FactionModel).filter_by(tid=faction_data['ID']).first()
+        faction = session.query(FactionModel).filter_by(tid=faction.tid).first()
         faction.name = faction_data['name']
         faction.respect = faction_data['respect']
         faction.capacity = faction_data['capacity']
@@ -332,9 +329,10 @@ def refresh_factions():
             user.name = member['name']
             user.level = member['level']
             user.last_refresh = utils.now()
-            user.factiontid = faction_data['ID']
+            user.factiontid = faction.tid
             user.status = member['last_action']['status']
             user.last_action = member['last_action']['relative']
+            session.flush()
 
             if user.key == '' and len(keys) != 0:
                 try:
