@@ -87,22 +87,20 @@ def user_data():
 
     stats = []
 
-    stat_entries = session.query(StatModel).filter_by(tid=tid).all()
+    stat_entries = session.query(StatModel).filter_by(tid=tid, or_(StatModel.globalstat == 1, StatModel.addedfactiontid == current_user.factiontid)).all()
 
     for stat_entry in stat_entries:
-        if Faction(User(stat_entry.addedid).factiontid).stat_config['global'] != 1 and \
-                User(stat_entry.addedid).factiontid != current_user.factiontid:
-            continue
-        elif stat_entry.tid != tid:
+        if stat_entry.tid != tid:
             continue
 
         stats.append({
             'statid': stat_entry.statid,
             'tid': stat_entry.tid,
             'battlescore': stat_entry.battlescore,
-            'battlestats': json.loads(stat_entry.battlestats),
             'timeadded': stat_entry.timeadded,
-            'added': stat_entry.addedid
+            'addedid': stat_entry.addedid,
+            'addedfactiontid': stat_entry.addedfactiontid,
+            'globalstat': stat_entry.globalstat
         })
 
     return render_template('stats/statmodal.html', user=tid, stats=stats)
