@@ -14,7 +14,7 @@ Docker containers not yet available.
 If you have any questions, suggestions, or bugs to be reported, please contact tiksan [2383326] on [Discord](https://discordapp.com/users/695828257949352028) or on [Torn](https://www.torn.com/profiles.php?XID=2383326).
 
 ### Installation - Hosted Version
-The hosted version of Tornium does not allow for custom bots, customization of features, etc. Please first login to [Tornium](https://torn.deek.sh/login) then proceed to the [bot hosting documentation](https://torn.deek.sh/bot/host] for more information on setting up the Discord bot. The webserver does not require any additional setup.
+The hosted version of Tornium does not allow for custom bots, customization of features, etc. Please first login to [Tornium](https://torn.deek.sh/login) then proceed to the [bot hosting documentation](https://torn.deek.sh/bot/host) for more information on setting up the Discord bot. The webserver does not require any additional setup.
 
 ### Installation - Custom Server
 1. Clone the project - `git clone https://github.com/dssecret/tornium.git`
