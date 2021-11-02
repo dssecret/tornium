@@ -13,6 +13,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+import datetime
+import json
+
+from flask import request, jsonify, render_template, redirect
+from flask_login import login_required, current_user
+
+from database import session_local
+from models.faction import Faction
+from models.factionstakeoutmodel import FactionStakeoutModel
+from models.server import Server
+from models.servermodel import ServerModel
+from models.stakeout import Stakeout
+from models.userstakeoutmodel import UserStakeoutModel
+
 @login_required
 def stakeouts_dashboard(guildid: str):
     if guildid not in current_user.servers:
@@ -40,8 +54,7 @@ def stakeouts_dashboard(guildid: str):
                     'parent_id': server.stakeout_config['category']
                 }  # TODO: Add permission overwrite: everyone write false
 
-                channel = discordpost(f'guilds/{guildid}/channels', payload=payload)
-                channel = channel(blocking=True)
+                channel = discordpost.call_local(f'guilds/{guildid}/channels', payload=payload)
 
                 stakeout.guilds[guildid]['channel'] = int(channel['id'])
                 db_stakeout = session.query(FactionStakeoutModel).filter_by(tid=request.form.get('factionid')).first()
