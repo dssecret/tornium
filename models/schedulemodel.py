@@ -17,13 +17,13 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects.mysql import VARCHAR, INTEGER
 
 from database import base
-from models.settingsmodel import is_dev
+from redisdb import get_redis
 
 
 class ScheduleModel(base):
     __tablename__ = 'Schedules'
 
-    if is_dev():
+    if get_redis().get('dev'):
         uuid = Column(String, primary_key=True)
         factiontid = Column(Integer)
     else:
