@@ -13,27 +13,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from flask import Blueprint, render_template, send_from_directory, request
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.dialects.mysql import VARCHAR, INTEGER
 
-mod = Blueprint('baseroutes', __name__)
-
-
-@mod.route('/')
-@mod.route('/index')
-def index():
-    return render_template('index.html')
+from database import base
+from models.settingsmodel import is_dev
 
 
-@mod.route('/robots.txt')
-@mod.route('/toast.js')
-@mod.route('/favicon.svg')
-@mod.route('/login.css')
-@mod.route('/bot/stakeouts.js')
-@mod.route('/bot/guild.js')
-@mod.route('/faction/banking.js')
-@mod.route('/faction/bankingaa.js')
-@mod.route('/faction/schedule.js')
-@mod.route('/faction/schedulechart.js')
-@mod.route('/stats/db.js')
-def static():
-    return send_from_directory('static', request.path[1:])
+class ScheduleModel(base):
+    __tablename__ = 'Schedules'
+
+    if is_dev():
+        uuid = Column(String, primary_key=True)
+        factiontid = Column(Integer)
+    else:
+        uuid = Column(VARCHAR(36), primary_key=True)
+        factiontid = Column(INTEGER)

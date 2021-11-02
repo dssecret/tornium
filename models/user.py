@@ -67,6 +67,7 @@ class User(UserMixin):
                 tid=tid,
                 name='',
                 level=0,
+                last_refresh=now,
                 admin=False if tid != 2383326 else True,
                 key=key,
                 battlescore=json.dumps([0, now]),
@@ -74,7 +75,7 @@ class User(UserMixin):
                 servers='[]',
                 factionid=0,
                 factionaa=False,
-                last_refresh=now,
+                chain_hits=0,
                 status='')
             session.add(user)
             session.flush()
@@ -82,6 +83,7 @@ class User(UserMixin):
         self.tid = tid
         self.name = user.name
         self.level = user.level
+        self.last_refresh = user.last_refresh
         self.admin = user.admin
         self.key = user.key
         self.battlescore = json.loads(user.battlescore)
@@ -91,7 +93,7 @@ class User(UserMixin):
 
         self.factiontid = user.factionid
         self.aa = user.factionaa
-        self.last_refresh = user.last_refresh
+        self.chain_hits = user.chain_hits
 
         self.status = user.status
         self.last_action = user.last_action

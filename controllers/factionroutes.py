@@ -13,17 +13,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from math import ceil
 from functools import wraps
+import os
 import json
 
-from flask import Blueprint, render_template, abort, request, flash, redirect
+from flask import Blueprint, render_template, abort, request, flash, redirect, jsonify
 from flask_login import login_required, current_user
 from huey.exceptions import TaskException
 
 from database import session_local
 from models.faction import Faction
 from models.factionmodel import FactionModel
+from models.schedule import Schedule
+from models.schedulemodel import ScheduleModel
 from models.user import User
 from models.usermodel import UserModel
 import utils
@@ -346,3 +348,57 @@ def chain():
                 session.flush()
 
     return render_template('faction/chain.html', faction=faction)
+
+
+@mod.route('/faction/schedule', methods=['GET'])
+@login_required
+def schedule():
+    if request.args.get('uuid') is not None and request.args.get('watchers') is None:
+        schedule = Schedule(request.args.get('uuid'), factiontid=current_user.factiontid)
+        return render_template('faction/schedulemodal.html', sid=schedule.name)
+    elif request.args.get('uuid') is not None and request.args.get('watchers') is not None:
+        schedule = Schedule(request.args.get('uuid'), factiontid=current_user.factiontid)
+        data = []
+
+        for tid, userdata in schedule.activity.items():
+            modified_userdata = []
+
+            for activity in userdata:
+                activity = [int(activity.split('-')[0]), int(activity.split('-')[1])]
+                activity[0] = utils.torn_timestamp(activity[0])
+                activity[1] = utils.torn_timestamp(activity[1])
+                modified_userdata.append(f'{activity[0]} to {activity[1]}')
+
+            data.append([f'{User(tid).name} [{tid}]', modified_userdata, schedule.weight[tid]])
+
+        return jsonify(data)
+    
+    return render_template('faction/schedule.html', key=current_user.key)
+
+
+@mod.route('/faction/scheduledata')
+@login_required
+def schedule_data():
+    start = int(request.args.get('start'))
+    length = int(request.args.get('length'))
+    faction = Faction(current_user.factiontid)
+    session = session_local()
+    schedules = []
+
+    for schedule in session.query(ScheduleModel).filter_by(factiontid=faction.tid).all():
+        with open(f'{os.getcwd()}/schedule/{schedule.uuid}.json') as file:
+            data = json.load(file)
+            schedules.append([
+                schedule.uuid,
+                data['name'],
+                utils.torn_timestamp(data['timecreated']),
+                utils.torn_timestamp(data['timeupdated'])
+            ])
+
+    data = {
+        'draw': request.args.get('draw'),
+        'recordsTotal': session.query(ScheduleModel).count(),
+        'recordsFiltered': len(schedules),
+        'data': schedules[start:start + length]
+    }
+    return data
