@@ -14,22 +14,24 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 from flask import Blueprint, render_template
+from flask_login import login_required, current_user
 
+from controllers.bot import guild
 from controllers.bot import stakeout
+from models.server import Server
 
 mod = Blueprint('botroutes', __name__)
 
-
 # Guild Routes
-mod.add_url_route('/bot/dashboard', view_func=stakeout.dashboard, methods=['GET'])
-mod.add_url_route('/bot/dashboard/<string:guildid>', view_func=stakeout.guild_dashboard, methods=['GET', 'POST'])
-mod.add_url_route('/bot/dashboard/<string:guildid>/<int:factiontid>', view_func=stakeout.update_guild, methods=['POST'])
+mod.add_url_rule('/bot/dashboard', view_func=guild.dashboard, methods=['GET'])
+mod.add_url_rule('/bot/dashboard/<string:guildid>', view_func=guild.guild_dashboard, methods=['GET', 'POST'])
+mod.add_url_rule('/bot/dashboard/<string:guildid>/<int:factiontid>', view_func=guild.update_guild, methods=['POST'])
 
 # Stakeout Routes
-mod.add_url_route('/bot/stakeouts/<string:guildid>', view_func=stakeout.stakeouts_dashboard, methods=['GET', 'POST'])
-mod.add_url_route('/bot/stakeouts/<string:guildid>/<int:stype>', view_func=stakeout.stakeouts, methods=['GET'])
-mod.add_url_route('/bot/stakeouts/<string:guildid>/modal', view_func=stakeouts.stakeout_data, methods=['GET'])
-mod.add_url_route('/bot/stakeouts/<string:guildid>/update', view_func=stakouts.stakeout_update, methods=['GET', 'POST'])
+mod.add_url_rule('/bot/stakeouts/<string:guildid>', view_func=stakeout.stakeouts_dashboard, methods=['GET', 'POST'])
+mod.add_url_rule('/bot/stakeouts/<string:guildid>/<int:stype>', view_func=stakeout.stakeouts, methods=['GET'])
+mod.add_url_rule('/bot/stakeouts/<string:guildid>/modal', view_func=stakeout.stakeout_data, methods=['GET'])
+mod.add_url_rule('/bot/stakeouts/<string:guildid>/update', view_func=stakeout.stakeout_update, methods=['GET', 'POST'])
 
 
 @mod.route('/bot')
@@ -47,14 +49,3 @@ def documentation():
 @login_required
 def hosting():
     return render_template('bot/host.html')
-
-
-@mod.route('/bot/dashboard')
-@login_required
-def dashboard():
-    servers = []
-
-    for server in current_user.servers:
-        servers.append(Server(server))
-
-    return render_template('bot/dashboard.html', servers=servers)

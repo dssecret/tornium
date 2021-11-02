@@ -13,19 +13,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-import datetime
-import json
-
-from flask import request, jsonify, render_template, redirect
+from flask import request, jsonify, render_template, redirect, abort, flash
 from flask_login import login_required, current_user
 
-from database import session_local
 from models.faction import Faction
-from models.factionstakeoutmodel import FactionStakeoutModel
 from models.server import Server
-from models.servermodel import ServerModel
 from models.stakeout import Stakeout
-from models.userstakeoutmodel import UserStakeoutModel
+from models.user import User
+from utils.tasks import *
 
 @login_required
 def stakeouts_dashboard(guildid: str):
