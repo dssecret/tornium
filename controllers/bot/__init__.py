@@ -19,6 +19,7 @@ from controllers.bot import stakeout
 
 mod = Blueprint('botroutes', __name__)
 
+
 # Guild Routes
 mod.add_url_route('/bot/dashboard', view_func=stakeout.dashboard, methods=['GET'])
 mod.add_url_route('/bot/dashboard/<string:guildid>', view_func=stakeout.guild_dashboard, methods=['GET', 'POST'])
