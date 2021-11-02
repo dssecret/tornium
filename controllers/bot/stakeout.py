@@ -158,7 +158,6 @@ def stakeouts(guildid: str, stype: int):
     return data
 
 
-@mod.route('/bot/stakeouts/<string:guildid>/modal')
 @login_required
 def stakeout_data(guildid: str):
     if guildid not in current_user.servers:
