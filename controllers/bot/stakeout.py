@@ -30,16 +30,14 @@ def stakeouts_dashboard(guildid: str):
     server = Server(guildid)
 
     if request.method == 'POST':
-        session = session_local()
-        server_db = session.query(ServerModel).filter_by(sid=guildid).first()
+        server_db = utils.first(ServerModel.objects(sid=guildid))
 
         if request.form.get('factionid') is not None:
             if int(request.form.get('factionid')) not in server.faction_stakeouts:
                 stakeout = Stakeout(int(request.form.get('factionid')), user=False, key=current_user.key,
                                     guild=int(guildid))
                 server.faction_stakeouts.append(int(request.form.get('factionid')))
-                server_db.factionstakeouts = json.dumps(list(set(server.faction_stakeouts)))
-                session.flush()
+                server_db.factionstakeouts = list(set(server.faction_stakeouts))
 
                 payload = {
                     'name': f'faction-{stakeout.data["name"]}',
@@ -52,9 +50,9 @@ def stakeouts_dashboard(guildid: str):
                 channel = discordpost.call_local(f'guilds/{guildid}/channels', payload=payload)
 
                 stakeout.guilds[guildid]['channel'] = int(channel['id'])
-                db_stakeout = session.query(FactionStakeoutModel).filter_by(tid=request.form.get('factionid')).first()
-                db_stakeout.guilds = json.dumps(stakeout.guilds)
-                session.flush()
+                db_stakeout = utils.first(FactionStakeoutModel.objects(tid=request.form.get('factionid')))
+                db_stakeout.guilds = stakeout.guilds
+                db_stakeout.save()
 
                 message_payload = {
                     'embeds': [
@@ -68,7 +66,7 @@ def stakeouts_dashboard(guildid: str):
                         }
                     ]
                 }
-                discordpost(f'channels/{channel["id"]}/messages', payload=message_payload)()
+                discordpost.call_local(f'channels/{channel["id"]}/messages', payload=message_payload)
             else:
                 flash(f'Faction ID {request.form.get("factionid")} is already being staked out in {server.name}.',
                       category='error')
@@ -76,7 +74,7 @@ def stakeouts_dashboard(guildid: str):
             if int(request.form.get('userid')) not in server.user_stakeouts:
                 stakeout = Stakeout(int(request.form.get('userid')), key=current_user.key, guild=int(guildid))
                 server.user_stakeouts.append(int(request.form.get('userid')))
-                server_db.userstakeouts = json.dumps(list(set(server.user_stakeouts)))
+                server_db.userstakeouts = list(set(server.user_stakeouts))
 
                 payload = {
                     'name': f'user-{stakeout.data["name"]}',
@@ -86,13 +84,12 @@ def stakeouts_dashboard(guildid: str):
                     'parent_id': server.stakeout_config['category']
                 }  # TODO: Add permission overwrite: everyone write false
 
-                channel = discordpost(f'guilds/{guildid}/channels', payload=payload)
-                channel = channel(blocking=True)
+                channel = discordpost.call_local(f'guilds/{guildid}/channels', payload=payload)
 
                 stakeout.guilds[guildid]['channel'] = int(channel['id'])
-                db_stakeout = session.query(UserStakeoutModel).filter_by(tid=request.form.get('userid')).first()
-                db_stakeout.guilds = json.dumps(stakeout.guilds)
-                session.flush()
+                db_stakeout = utils.first(UserStakeoutModel.objects(tid=request.form.get('factionid')))
+                db_stakeout.guilds = stakeout.guilds
+                db_stakeout.save()
 
                 message_payload = {
                     'embeds': [
@@ -205,29 +202,27 @@ def stakeout_update(guildid):
     elif faction and user:
         return json.dumps({'success': True}), 400, {'ContentType': 'application/json'}
 
-    session = session_local
-
     if action == 'remove':
-        server = session.query(ServerModel).filter_by(sid=guildid).first()
+        server = utils.first(ServerModel.objects(sid=guildid))
 
         if faction is not None:
-            stakeouts = json.loads(server.factionstakeouts)
+            stakeouts = server.factionstakeouts
             stakeouts.remove(int(faction))
-            server.factionstakeouts = json.dumps(stakeouts)
+            server.factionstakeouts = stakeouts
 
-            stakeout = session.query(FactionStakeoutModel).filter_by(tid=faction).first()
-            discorddelete(f'channels/{json.loads(stakeout.guilds)[guildid]["channel"]}')()
-            session.delete(stakeout)
+            stakeout = utils.first(FactionStakeoutModel.objects(tid=faction))
+            discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
+            stakeout.delete()
         elif user is not None:
             stakeouts = json.loads(server.userstakeouts)
             stakeouts.remove(int(user))
             server.userstakeouts = json.dumps(stakeouts)
 
-            stakeout = session.query(UserStakeoutModel).filter_by(tid=user).first()
-            discorddelete(f'channels/{json.loads(stakeout.guilds)[guildid]["channel"]}')()
-            session.delete(stakeout)
+            stakeout = utils.first(UserStakeoutModel.objects(tid=faction))
+            discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
+            stakeout.delete()
 
-        session.flush()
+        server.save()
     elif action == 'addkey':
         if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity', 'armory',
                                                  'assault', 'armorydeposit']:
@@ -241,18 +236,15 @@ def stakeout_update(guildid):
             return jsonify({'error': f'This requires the faction to be in the list of factions in the server.'}), 400
 
         if user is not None:
-            stakeout = session.query(UserStakeoutModel).filter_by(tid=user).first()
+            stakeout = utils.first(UserStakeoutModel.objects(tid=faction))
         else:
-            stakeout = session.query(FactionStakeoutModel).filter_by(tid=faction).first()
-        
-        guilds = json.loads(stakeout.guilds)
+            stakeout = utils.first(FactionStakeoutModel.objects(tid=faction))
 
-        if value in guilds[guildid]['keys']:
+        if value in stakeout.guilds[guildid]['keys']:
             return jsonify({'error': f'Value {value} is already in {guildid}\'s list of keys.'}), 400
 
-        guilds[guildid]['keys'].append(value)
-        stakeout.guilds = json.dumps(guilds)
-        session.flush()
+        stakeout.guilds[guildid]['keys'].append(value)
+        stakeout.save()
     elif action == 'removekey':
         if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity', 'armory',
                                                  'assault', 'armorydeposit']:
@@ -263,36 +255,27 @@ def stakeout_update(guildid):
                                      f'ID to be passed.'}), 400
 
         if user is not None:
-            stakeout = session.query(UserStakeoutModel).filter_by(tid=user).first()
+            stakeout = utils.first(UserStakeoutModel.objects(tid=faction))
         else:
-            stakeout = session.query(FactionStakeoutModel).filter_by(tid=faction).first()
+            stakeout = utils.first(FactionStakeoutModel.objects(tid=faction))
 
-        guilds = json.loads(stakeout.guilds)
-
-        if value not in guilds[guildid]['keys']:
+        if value not in stakeout.guilds[guildid]['keys']:
             return jsonify({'error': f'Value {value} is not in {guildid}\'s list of keys.'}), 400
 
-        guilds[guildid]['keys'].remove(value)
-        stakeout.guilds = json.dumps(guilds)
-        session.flush()
+        stakeout.guilds[guildid]['keys'].remove(value)
+        stakeout.save()
     elif action == 'enable':
-        server = session.query(ServerModel).filter_by(sid=guildid).first()
-        config = json.loads(server.config)
-        config['stakeouts'] = 1
-        server.config = json.dumps(config)
-        session.flush()
+        server = utils.first(ServerModel.objects(sid=guildid))
+        server.config['stakeouts'] = 1
+        server.save()
     elif action == 'disable':
-        server = session.query(ServerModel).filter_by(sid=guildid).first()
-        config = json.loads(server.config)
-        config['stakeouts'] = 0
-        server.config = json.dumps(config)
-        session.flush()
+        server = utils.first(ServerModel.objects(sid=guildid))
+        server.config['stakeouts'] = 0
+        server.save()
     elif action == 'category':
-        server = session.query(ServerModel).filter_by(sid=guildid).first()
-        config = json.loads(server.stakeoutconfig)
-        config['category'] = int(value)
-        server.stakeoutconfig = json.dumps(config)
-        session.flush()
+        server = utils.first(ServerModel.objects(sid=guildid))
+        server.config['category'] = int(value)
+        server.save()
 
     if request.method == 'GET':
         return redirect(f'/bot/stakeouts/{guildid}')

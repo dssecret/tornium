@@ -13,15 +13,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+import json
 import secrets
 
-from flask import jsonify, request
-
 from controllers.api.decorators import *
-from database import session_local
 from models.keymodel import KeyModel
 from models.user import User
-from redisdb import get_redis
 import utils
 
 
@@ -45,7 +42,6 @@ def test_key(*args, **kwargs):
 @ratelimit
 def create_key(*args, **kwargs):
     user = User(kwargs['user'].tid)
-    session = session_local()
     data = json.loads(request.get_data().decode('utf-8'))
 
     scopes = data.get('scopes')
@@ -83,10 +79,9 @@ def create_key(*args, **kwargs):
     keydb = KeyModel(
         key=key,
         ownertid=user.tid,
-        scopes=json.dumps(scopes)
+        scopes=scopes
     )
-    session.add(keydb)
-    session.flush()
+    keydb.save()
 
     return jsonify({
         'key': key,
@@ -103,21 +98,19 @@ def create_key(*args, **kwargs):
 @torn_key_required
 @ratelimit
 def remove_key(*args, **kwargs):
-    user = User(kwargs['user'].tid)
-    session = session_local()
     data = json.loads(request.get_data().decode('utf-8'))
     key = data.get('key')
     client = redisdb.get_redis()
     
     if key is None:
         return
-    
-    key = session.query(KeyModel).filter_by(key=key).first()
+
+    key = utils.first(KeyModel.objects(key=key))
     owner = key.tid
     scopes = key.scopes
     expires = key.expires
     key.delete()
-    session.flush()
+    key.save()
     
     return jsonify({
         'key': key,

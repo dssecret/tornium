@@ -13,29 +13,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, Integer, Float, String, Boolean
-from sqlalchemy.dialects.mysql import INTEGER, FLOAT, TEXT, BOOLEAN
-
-from database import base
-from redisdb import get_redis
+from mongoengine import DynamicDocument, IntField, BooleanField, FloatField
 
 
-class StatModel(base):
-    __tablename__ = 'Stats'
-
-    if get_redis().get('dev'):
-        statid = Column(Integer, primary_key=True)
-        tid = Column(Integer)
-        battlescore = Column(Float)
-        timeadded = Column(Integer)
-        addedid = Column(Integer)
-        addedfactiontid = Column(Integer)
-        globalstat = Column(Boolean)
-    else:
-        statid = Column(INTEGER, primary_key=True)
-        tid = Column(INTEGER)
-        battlescore = Column(FLOAT)
-        timeadded = Column(INTEGER)
-        addedid = Column(INTEGER)
-        addedfactiontid = Column(INTEGER)
-        globalstat = Column(BOOLEAN)
+class StatModel(DynamicDocument):
+    statid = IntField(primary_key=True)
+    tid = IntField()
+    battlescore = FloatField()
+    timeadded = IntField()
+    addedid = IntField()
+    addedfactiontid = IntField()
+    globalstat = BooleanField()

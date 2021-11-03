@@ -14,7 +14,6 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
-import json
 import random
 import sys
 import time
@@ -25,11 +24,12 @@ from discord.ext import commands
 sys.path.append('..')
 
 from bot import botutils
-from database import session_local
 from models.faction import Faction
-from models.factionmodel import FactionModel
 from models.server import Server
-from models.user import User, DiscordUser
+from models.user import User
+from models.usermodel import UserModel
+from models.withdrawalmodel import WithdrawalModel
+import utils
 
 
 class Vault(commands.Cog):
@@ -41,9 +41,8 @@ class Vault(commands.Cog):
     async def withdraw(self, ctx, arg):
         await ctx.message.delete()
 
-        session = session_local()
         server = Server(ctx.message.guild.id)
-        user = DiscordUser(ctx.message.author.id, User(random.choice(server.admins)).key)
+        user = utils.first(UserModel.objects(discord_id=ctx.message.author.id))
 
         if user.tid == 0:
             embed = discord.Embed()
@@ -52,6 +51,12 @@ class Vault(commands.Cog):
                                 '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
                                 'utilize the banking features of this bot. If you have recently verified, please ' \
                                 'wait for a minute or two before trying again.'
+            await ctx.send(embed=embed)
+            return None
+        elif user is None:
+            embed = discord.Embed()
+            embed.title = 'Requires Verification'
+            embed.description = 'NYI. Contact tiksan for more details.'
             await ctx.send(embed=embed)
             return None
 
@@ -98,7 +103,7 @@ class Vault(commands.Cog):
                 return None
 
             channel = discord.utils.get(ctx.guild.channels, id=vault_config['banking'])
-            request_id = len(faction.withdrawals) + 1
+            request_id = WithdrawalModel.objects().count()
 
             embed = discord.Embed()
             embed.title = f'Vault Request #{request_id}'
@@ -112,20 +117,17 @@ class Vault(commands.Cog):
                                 f'enter `?f {request_id}` in this channel.'
             message = await channel.send(f'<@&{vault_config["banker"]}>', embed=embed)
 
-            faction.withdrawals.append({
-                'id': request_id,
-                "amount": cash,
-                'requester': user.tid,
-                'fulfilled': False,
-                'timerequested': time.ctime(),
-                'fulfiller': 0,
-                'timefulfilled': 0,
-                'withdrawalmessage': message.id
-            })
-            dbfaction = session.query(FactionModel).filter_by(tid=faction.tid).first()
-            dbfaction.withdrawals = json.dumps(faction.withdrawals)
-            session.flush()
-
+            withdrawal = WithdrawalModel(
+                wid=request_id,
+                amount=cash,
+                requester=user.tid,
+                factiontid=user.factiontid,
+                time_requested=utils.now(),
+                fulfiller=0,
+                time_fulfilled=0,
+                withdrawal_message=message.id
+            )
+            withdrawal.save()
             await asyncio.sleep(30)
             await original.delete()
         else:
@@ -141,9 +143,8 @@ class Vault(commands.Cog):
     async def fulfill(self, ctx, request):
         await ctx.message.delete()
 
-        session = session_local()
         server = Server(ctx.message.guild.id)
-        user = DiscordUser(ctx.message.author.id, User(random.choice(server.admins)).key)
+        user = utils.first(UserModel.objects(discord_id=ctx.message.author.id))
 
         if user.tid == 0:
             embed = discord.Embed()
@@ -152,6 +153,12 @@ class Vault(commands.Cog):
                                 '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
                                 'utilize the banking features of this bot. If you have recently verified, please ' \
                                 'wait for a minute or two before trying again.'
+            await ctx.send(embed=embed)
+            return None
+        elif user is None:
+            embed = discord.Embed()
+            embed.title = 'Requires Verification'
+            embed.description = 'NYI. Contact tiksan for more details.'
             await ctx.send(embed=embed)
             return None
 
@@ -183,10 +190,9 @@ class Vault(commands.Cog):
             return None
 
         banking_channel = discord.utils.get(ctx.guild.channels, id=vault_config['banking'])
+        withdrawal = utils.first(WithdrawalModel.objects(wid=int(request)))
 
-        try:
-            withdrawal = faction.withdrawals[int(request) - 1]
-        except IndexError:
+        if withdrawal is None:
             embed = discord.Embed()
             embed.title = 'Request Does not Exist'
             embed.description = f'Vault Request #{request} does not currently exist. Please verify that you entered ' \
@@ -197,7 +203,7 @@ class Vault(commands.Cog):
         # Message posted in banking channel
         withdrawal_message = await banking_channel.fetch_message(withdrawal['withdrawalmessage'])
 
-        if withdrawal['fulfilled']:
+        if withdrawal['fulfiller'] == 0:
             embed = discord.Embed()
             embed.title = 'Request Already Fulfilled'
             embed.description = f'Vault request #{request} has already been fulfilled by ' \
@@ -212,19 +218,16 @@ class Vault(commands.Cog):
         embed.description = f'This request has been fulfilled by {ctx.message.author.name} at {time.ctime()}.'
         await withdrawal_message.edit(embed=embed)
 
-        faction.withdrawals[int(request) - 1]['fulfilled'] = True
-        faction.withdrawals[int(request) - 1]['fulfiller'] = user.tid
-        faction.withdrawals[int(request) - 1]['timefulfilled'] = time.ctime()
-        dbfaction = session.query(FactionModel).filter_by(tid=faction.tid).first()
-        dbfaction.withdrawals = json.dumps(faction.withdrawals)
-        session.flush()
+        withdrawal.fulfiller = user.tid
+        withdrawal.timefulfilled = utils.now()
+        withdrawal.save()
 
     @commands.command(pass_context=True, aliases=['balance', 'bal'])
     async def fullbalance(self, ctx):
         await ctx.message.delete()
 
         server = Server(ctx.message.guild.id)
-        user = DiscordUser(ctx.message.author.id, User(random.choice(server.admins)).key)
+        user = utils.first(UserModel.objects(discord_id=ctx.message.author.id))
 
         if user.tid == 0:
             embed = discord.Embed()
@@ -233,6 +236,12 @@ class Vault(commands.Cog):
                                 '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
                                 'utilize the banking features of this bot. If you have recently verified, please ' \
                                 'wait for a minute or two before trying again.'
+            await ctx.send(embed=embed)
+            return None
+        elif user is None:
+            embed = discord.Embed()
+            embed.title = 'Requires Verification'
+            embed.description = 'NYI. Contact tiksan for more details.'
             await ctx.send(embed=embed)
             return None
 
@@ -288,7 +297,7 @@ class Vault(commands.Cog):
         await ctx.message.delete()
 
         server = Server(ctx.message.guild.id)
-        user = DiscordUser(ctx.message.author.id, User(random.choice(server.admins)).key)
+        user = utils.first(UserModel.objects(discord_id=ctx.message.author.id))
 
         if user.tid == 0:
             embed = discord.Embed()
@@ -297,6 +306,12 @@ class Vault(commands.Cog):
                                 '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
                                 'utilize the banking features of this bot. If you have recently verified, please ' \
                                 'wait for a minute or two before trying again.'
+            await ctx.send(embed=embed)
+            return None
+        elif user is None:
+            embed = discord.Embed()
+            embed.title = 'Requires Verification'
+            embed.description = 'NYI. Contact tiksan for more details.'
             await ctx.send(embed=embed)
             return None
 

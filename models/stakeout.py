@@ -13,11 +13,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-import json
-
 from flask_login import current_user
 
-from database import session_local
 from models.factionstakeoutmodel import FactionStakeoutModel
 from models.userstakeoutmodel import UserStakeoutModel
 import utils
@@ -26,8 +23,10 @@ from utils.tasks import tornget
 
 class Stakeout:
     def __init__(self, tid, guild=None, user=True, key=''):
-        session = session_local()
-        stakeout = session.query(UserStakeoutModel if user else FactionStakeoutModel).filter_by(tid=tid).first()
+        if user:
+            stakeout = utils.first(UserStakeoutModel.objects(tid=tid))
+        else:
+            stakeout = utils.first(FactionStakeoutModel.objects(tid=tid))
 
         if stakeout is None:
             now = utils.now()
@@ -35,45 +34,40 @@ class Stakeout:
 
             if user:
                 try:
-                    data = tornget(f'user/{tid}?selections=', key if key != '' else current_user.key)
-                    data = data(blocking=True)
+                    data = tornget.call_local(f'user/{tid}?selections=', key if key != '' else current_user.key)
                 except:
                     data = {}
 
                 stakeout = UserStakeoutModel(
                     tid=tid,
-                    data=json.dumps(data),
-                    guilds=json.dumps(guilds),
-                    lastupdate=now
+                    data=data,
+                    guilds=guilds,
+                    last_update=now
                 )
 
             else:
                 try:
-                    data = tornget(f'faction/{tid}?selections=', key if key != '' else current_user.key)
-                    data = data(blocking=True)
+                    data = tornget.call_local(f'faction/{tid}?selections=', key if key != '' else current_user.key)
                 except:
                     data = {}
 
                 stakeout = FactionStakeoutModel(
                     tid=tid,
-                    data=json.dumps(data),
-                    guilds=json.dumps(guilds),
-                    lastupdate=now
+                    data=data,
+                    guilds=guilds,
+                    last_update=now
                 )
 
-            session.add(stakeout)
-            session.flush()
-        elif guild not in json.loads(stakeout.guilds) and guild is not None:
-            guilds = json.loads(stakeout.guilds)
-            guilds[guild] = {
+            stakeout.save()
+        elif guild not in stakeout.guilds and guild is not None:
+            stakeout.guilds[guild] = {
                 'keys': [],
                 'channel': 0
             }
-            stakeout.guilds = json.dumps(guilds)
-            session.flush()
+            stakeout.save()
 
         self.tid = tid
         self.stype = 0 if user else 1  # 0 = user; 1 = faction
-        self.guilds = json.loads(stakeout.guilds)
-        self.last_update = stakeout.lastupdate
-        self.data = json.loads(stakeout.data)
+        self.guilds = stakeout.guilds
+        self.last_update = stakeout.last_update
+        self.data = stakeout.data

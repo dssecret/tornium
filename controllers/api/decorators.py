@@ -16,14 +16,13 @@
 import base64
 import datetime
 from functools import wraps, partial
-import json
 
 from flask import jsonify, request
 
-from database import session_local
 from models.keymodel import KeyModel
 from models.usermodel import UserModel
 import redisdb
+import utils
 
 
 def ratelimit(func):
@@ -65,10 +64,9 @@ def requires_scopes(func=None, scopes=None):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        session = session_local()
         client = redisdb.get_redis()
 
-        if kwargs['keytype'] == 'Tornium' and not set(json.loads(session.query(KeyModel).filter_by(key=kwargs['key']).first().scopes)) & scopes:
+        if kwargs['keytype'] == 'Tornium' and not set(utils.first(KeyModel.objects(key=kwargs['key'])).scopes) & scopes:
             return jsonify({
                 'code': 4004,
                 'name': 'InsufficientPermissions',
@@ -88,8 +86,6 @@ def requires_scopes(func=None, scopes=None):
 def torn_key_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        client = redisdb.get_redis()
-
         if request.headers.get('Authorization') is None:
             return jsonify({
                 'code': 4001,
@@ -113,8 +109,7 @@ def torn_key_required(func):
                 'message': 'Server failed to authenticate the request. No authentication code was provided.'
             }), 401
 
-        session = session_local()
-        user = session.query(UserModel).filter_by(key=authorization).first()
+        user = utils.first(UserModel.objects(key=authorization))
 
         if user is None:
             return jsonify({
@@ -135,8 +130,6 @@ def torn_key_required(func):
 def tornium_key_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        client = redisdb.get_redis()
-
         if request.headers.get('Authorization') is None:
             return jsonify({
                 'code': 4001,
@@ -160,8 +153,7 @@ def tornium_key_required(func):
                 'message': 'Server failed to authenticate the request. No authentication code was provided.'
             }), 401
 
-        session = session_local()
-        key = session.query(KeyModel).filter_by(key=authorization).first()
+        key = utils.first(KeyModel.objects(key=authorization))
 
         if key is None:
             return jsonify({
@@ -170,7 +162,7 @@ def tornium_key_required(func):
                 'message': 'Server failed to authenticate the request. The provided authentication code was invalid.'
             }), 401
 
-        kwargs['user'] = session.query(UserModel).filter_by(tid=key.ownertid).first()
+        kwargs['user'] = utils.first(UserModel.objects(tid=key.ownertid))
         kwargs['keytype'] = 'Tornium'
         kwargs['key'] = authorization
 
@@ -205,16 +197,15 @@ def key_required(func):
                 'message': 'Server failed to authenticate the request. No authentication code was provided.'
             }), 401
 
-        session = session_local()
-        key = session.query(KeyModel).filter_by(key=authorization).first()
-        user = session.query(UserModel).filter_by(key=authorization).first()
+        key = utils.first(KeyModel.objects(key=authorization))
+        user = utils.first(UserModel.objects(key=authorization))
 
         if user is not None:
             kwargs['user'] = user
             kwargs['keytype'] = 'Torn'
             kwargs['key'] = authorization
         elif key is not None:
-            kwargs['user'] = session.query(UserModel).filter_by(tid=key.ownertid).first()
+            kwargs['user'] = utils.first(UserModel.objects(tid=key.ownertid))
             kwargs['keytype'] = 'Tornium'
             kwargs['key'] = authorization
         else:

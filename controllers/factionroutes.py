@@ -21,13 +21,13 @@ from flask import Blueprint, render_template, abort, request, flash, redirect, j
 from flask_login import login_required, current_user
 from huey.exceptions import TaskException
 
-from database import session_local
 from models.faction import Faction
 from models.factionmodel import FactionModel
 from models.schedule import Schedule
 from models.schedulemodel import ScheduleModel
 from models.user import User
 from models.usermodel import UserModel
+from models.withdrawalmodel import WithdrawalModel
 import utils
 from utils.tasks import tornget
 
@@ -53,8 +53,7 @@ def index():
 @mod.route('/faction/members')
 @login_required
 def members():
-    session = session_local()
-    faction_members = session.query(UserModel).filter_by(factionid=current_user.factiontid).all()
+    faction_members = UserModel.objects(factionid=current_user.factiontid)
 
     return render_template('faction/members.html', members=faction_members)
 
@@ -65,12 +64,11 @@ def targets():
     faction = Faction(current_user.factiontid)
 
     if request.method == 'POST':
-        if not current_user.is_aa():
+        if not current_user.aa:
             flash('This action requires the user to be an AA user.', category='warning')
             return render_template('faction/targets.html', targets=faction.targets)
 
-        session = session_local()
-        faction_model = session.query(FactionModel).filter_by(tid=current_user.factiontid).first()
+        faction_model = utils.first(FactionModel.objects(tid=current_user.factiontid))
 
         if request.form.get('targetid') is not None:
             if request.form.get('targetid') in faction.targets:
@@ -90,8 +88,8 @@ def targets():
                 'level': torn_user['level']
             }
 
-            faction_model.targets = json.dumps(faction.targets)
-            session.flush()
+            faction_model.targets = faction.targets
+            faction_model.save()
 
     return render_template('faction/targets.html', targets=faction.targets)
 
@@ -102,15 +100,14 @@ def targets():
 def remove_target(tid):
     faction = Faction(current_user.factiontid)
 
-    if not current_user.is_aa():
+    if not current_user.aa:
         flash('This action requires the user to be an AA user.', category='warning')
         return redirect('/faction/targets')
 
-    session = session_local()
-    faction_model = session.query(FactionModel).filter_by(tid=current_user.factiontid).first()
+    faction_model = utils.first(FactionModel.objects(tid=current_user.factiontid))
     faction.targets.pop(str(tid))
-    faction_model.targets = json.dumps(faction.targets)
-    session.flush()
+    faction_model.targets = faction.targets
+    faction_model.save()
 
     return redirect('/faction/targets')
 
@@ -131,10 +128,9 @@ def refresh_target(tid):
     faction.targets[str(torn_user['player_id'])]['level'] = torn_user['level']
     faction.targets[str(torn_user['player_id'])]['last_update'] = utils.now()
 
-    session = session_local()
-    faction_model = session.query(FactionModel).filter_by(tid=current_user.factiontid).first()
+    faction_model = utils.first(FactionModel.objects(tid=current_user.factiontid))
     faction_model.targets = json.dumps(faction.targets)
-    session.flush()
+    faction_model.save()
 
     return redirect('/faction/targets')
 
@@ -144,14 +140,13 @@ def refresh_target(tid):
 @login_required
 def bot():
     faction = Faction(current_user.factiontid)
-    session = session_local()
 
     if request.method == 'POST':
-        faction_model = session.query(FactionModel).filter_by(tid=current_user.factiontid).first()
+        faction_model = utils.first(FactionModel.objects(tid=current_user.factiontid))
 
         if request.form.get('guildid') is not None:
             try:
-                data = utils.tasks.discordget.call_local(f'guilds/{request.form.get("guildid")}')
+                utils.tasks.discordget.call_local(f'guilds/{request.form.get("guildid")}')
             except utils.DiscordError as e:
                 return utils.handle_discord_error(str(e))
             except utils.NetworkingError as e:
@@ -163,7 +158,7 @@ def bot():
 
             faction.guild = request.form.get('guildid')
             faction_model.guild = request.form.get('guildid')
-            session.flush()
+            faction_model.save()
         elif request.form.get('withdrawal') is not None:
             try:
                 channel = utils.tasks.discordget(f'channels/{request.form.get("withdrawal")}')
@@ -181,8 +176,8 @@ def bot():
 
             vault_config = faction.get_vault_config()
             vault_config['withdrawal'] = int(channel['id'])
-            faction_model.vaultconfig = json.dumps(vault_config)
-            session.flush()
+            faction_model.vaultconfig = vault_config
+            faction_model.save()
         elif request.form.get('banking') is not None:
             try:
                 channel = utils.tasks.discordget(f'channels/{request.form.get("banking")}')
@@ -200,8 +195,8 @@ def bot():
 
             vault_config = faction.get_vault_config()
             vault_config['banking'] = int(channel['id'])
-            faction_model.vaultconfig = json.dumps(vault_config)
-            session.flush()
+            faction_model.vaultconfig = vault_config
+            faction_model.save()
         elif request.form.get('banker') is not None:
             try:
                 roles = utils.tasks.discordget(f'guilds/{faction.guild}/roles')
@@ -221,8 +216,8 @@ def bot():
                 if role['id'] == request.form.get('banker'):
                     vault_config = faction.get_vault_config()
                     vault_config['banker'] = int(request.form.get('banker'))
-                    faction_model.vaultconfig = json.dumps(vault_config)
-                    session.flush()
+                    faction_model.vaultconfig = vault_config
+                    faction_model.save()
         elif (request.form.get('enabled') is not None) ^ (request.form.get('disabled') is not None):
             config = faction.get_config()
 
@@ -233,9 +228,10 @@ def bot():
                 config['vault'] = 0
                 faction_model.config = json.dumps(config)
 
-            session.flush()
+            faction_model.save()
 
-    return render_template('faction/bot.html', guildid=faction.guild, vault_config=faction.get_vault_config(), config=faction.get_config())
+    return render_template('faction/bot.html', guildid=faction.guild, vault_config=faction.get_vault_config(),
+                           config=faction.get_config())
 
 
 @mod.route('/faction/bankingaa')
@@ -254,7 +250,7 @@ def bankingdata():
     faction = Faction(current_user.factiontid)
     withdrawals = []
 
-    for withdrawal in faction.withdrawals:
+    for withdrawal in WithdrawalModel.objects(factiontid=current_user.factiontid):
         requester = f'{User(withdrawal["requester"]).name} [{withdrawal["requester"]}]'
         fulfiller = f'{User(withdrawal["fulfiller"]).name} [{withdrawal["fulfiller"]}]' if withdrawal["fulfiller"] != 0 else ''
         timefulfilled = withdrawal['timefulfilled'] if withdrawal['timefulfilled'] != 0 else ''
@@ -265,8 +261,8 @@ def bankingdata():
     withdrawals = withdrawals[start:start+length]
     data = {
         'draw': request.args.get('draw'),
-        'recordsTotal': len(faction.withdrawals),
-        'recordsFiltered': len(faction.withdrawals),
+        'recordsTotal': WithdrawalModel.objects().count(),
+        'recordsFiltered': WithdrawalModel.objects(factiontid=current_user.factiontid).count(),
         'data': withdrawals
     }
     return data
@@ -286,10 +282,7 @@ def userbankingdata():
     faction = Faction(current_user.factiontid)
     withdrawals = []
 
-    for withdrawal in faction.withdrawals:
-        if withdrawal['requester'] != current_user.tid:
-            continue
-        
+    for withdrawal in WithdrawalModel.objects(requester=current_user.tid):
         fulfiller = f'{User(withdrawal["fulfiller"]).name} [{withdrawal["fulfiller"]}]' if withdrawal["fulfiller"] != 0 else ''
         timefulfilled = withdrawal['timefulfilled'] if withdrawal['timefulfilled'] != 0 else ''
 
@@ -298,9 +291,9 @@ def userbankingdata():
 
     data = {
         'draw': request.args.get('draw'),
-        'recordsTotal': len(withdrawals),
-        'recordsFiltered': len(withdrawals),
-        'data': withdrawals[start:start+length]
+        'recordsTotal': WithdrawalModel.objects().count(),
+        'recordsFiltered': WithdrawalModel.objects(factiontid=current_user.factiontid).count(),
+        'data': withdrawals
     }
     return data
 
@@ -311,8 +304,7 @@ def chain():
     faction = Faction(current_user.factiontid)
 
     if request.method == 'POST':
-        session = session_local()
-        faction_model = session.query(FactionModel).filter_by(tid=current_user.factiontid).first()
+        faction_model = utils.first(FactionModel.objects(tid=current_user.factiontid))
 
         if request.form.get('odchannel') is not None:
             try:
@@ -329,23 +321,21 @@ def chain():
                 else:
                     raise e
 
-            print(channel)
-
             config = faction.get_chain_config()
             config['odchannel'] = int(channel['id'])
-            faction_model.chainconfig = json.dumps(config)
-            session.flush()
+            faction_model.chainconfig = config
+            faction_model.save()
         elif (request.form.get('odenabled') is not None) ^ (request.form.get('oddisabled') is not None):
             config = faction.chain_config
 
             if request.form.get('odenabled') is not None:
                 config['od'] = 1
-                faction_model.chainconfig = json.dumps(config)
-                session.flush()
+                faction_model.chainconfig = config
+                faction_model.save()
             if request.form.get('oddisabled') is not None:
                 config['od'] = 0
-                faction_model.chainconfig = json.dumps(config)
-                session.flush()
+                faction_model.chainconfig = config
+                faction_model.save()
 
     return render_template('faction/chain.html', faction=faction)
 
@@ -382,10 +372,9 @@ def schedule_data():
     start = int(request.args.get('start'))
     length = int(request.args.get('length'))
     faction = Faction(current_user.factiontid)
-    session = session_local()
     schedules = []
 
-    for schedule in session.query(ScheduleModel).filter_by(factiontid=faction.tid).all():
+    for schedule in ScheduleModel.objects(factiontid=faction.tid):
         with open(f'{os.getcwd()}/schedule/{schedule.uuid}.json') as file:
             data = json.load(file)
             schedules.append([
@@ -397,7 +386,7 @@ def schedule_data():
 
     data = {
         'draw': request.args.get('draw'),
-        'recordsTotal': session.query(ScheduleModel).count(),
+        'recordsTotal': ScheduleModel.objects().count(),
         'recordsFiltered': len(schedules),
         'data': schedules[start:start + length]
     }

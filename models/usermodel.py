@@ -13,60 +13,25 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, Integer, String, Boolean
-from sqlalchemy.dialects.mysql import BIGINT, INTEGER, TEXT, BIT, VARCHAR, MEDIUMTEXT
-
-from database import base
-from redisdb import get_redis
+from mongoengine import DynamicDocument, IntField, StringField, DictField, ListField, BooleanField, FloatField
 
 
-class UserModel(base):
-    __tablename__ = 'Users'
+class UserModel(DynamicDocument):
+    tid = IntField(primary_key=True)
+    name = StringField()
+    level = IntField()
+    last_refresh = IntField()
+    admin = BooleanField()
+    key = StringField(min_length=16, max_length=16)
+    battlescore = FloatField()
+    battlescore_update = IntField()
 
-    if get_redis().get('dev'):
-        tid = Column(Integer, primary_key=True)
-        name = Column(String)
-        level = Column(Integer)
-        last_refresh = Column(Integer)
-        admin = Column(Boolean)
-        key = Column(String(16))
-        battlescore = Column(String)  # String of list of battlescore, last update timestamp
+    discord_id = IntField()
+    servers = ListField(IntField)  # List of discord servers where user is admin
 
-        discord_id = Column(Integer)
-        servers = Column(String)  # String of list of discord servers where user is admin
+    factionid = IntField()
+    factionaa = BooleanField()
+    chain_hits = IntField()
 
-        factionid = Column(Integer)
-        factionaa = Column(Boolean)
-        chain_hits = Column(Integer)
-
-        status = Column(String)
-        last_action = Column(String)
-    else:
-        tid = Column(INTEGER, primary_key=True)
-        name = Column(TEXT)
-        level = Column(INTEGER)
-        last_refresh = Column(INTEGER)
-        admin = Column(BIT(1))
-        key = Column(VARCHAR(16))
-        battlescore = Column(MEDIUMTEXT)  # String of list of battlescore, last update timestamp
-
-        discord_id = Column(BIGINT)
-        servers = Column(MEDIUMTEXT)  # String of list of discord servers where user is admin
-
-        factionid = Column(INTEGER)
-        factionaa = Column(BIT(1))
-        chain_hits = Column(INTEGER)
-
-        status = Column(TEXT)
-        last_action = Column(TEXT)
-
-
-class UserDiscordModel(base):
-    __tablename__ = 'DiscordUsers'
-
-    if get_redis().get('dev'):
-        discord_id = Column(Integer, primary_key=True)
-        tid = Column(Integer)
-    else:
-        discord_id = Column(BIGINT, primary_key=True)
-        tid = Column(INTEGER)
+    status = StringField()
+    last_action = IntField()

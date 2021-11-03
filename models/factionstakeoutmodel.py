@@ -13,23 +13,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.dialects.mysql import BIGINT, MEDIUMTEXT
-
-from database import base
-from redisdb import get_redis
+from mongoengine import DynamicDocument, IntField, DictField
 
 
-class FactionStakeoutModel(base):
-    __tablename__ = 'FactionStakeouts'
-
-    if get_redis().get('dev'):
-        tid = Column(Integer, primary_key=True)  # The faction ID of the stakeout
-        data = Column(String)  # String of data from the Torn API
-        guilds = Column(String)  # String of list of keys to be watched
-        lastupdate = Column(Integer)
-    else:
-        tid = Column(BIGINT, primary_key=True)  # The faction ID of the stakeout
-        data = Column(MEDIUMTEXT)  # String of data from the Torn API
-        guilds = Column(MEDIUMTEXT)  # String of list of keys to be watched
-        lastupdate = Column(BIGINT)
+class FactionStakeoutModel(DynamicDocument):
+    tid = IntField(primary_key=True)  # The faction ID of the stakeout
+    data = DictField()  # Faction data from the Torn API
+    guilds = DictField()  # Dictionary of guilds and keys to be watched
+    last_update = IntField()

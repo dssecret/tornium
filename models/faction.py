@@ -13,12 +13,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-import json
 import random
 
 from flask_login import current_user
 
-from database import session_local
 from models.factionmodel import FactionModel
 from models.server import Server
 from models.user import User
@@ -35,11 +33,9 @@ class Faction:
         :param key: Torn API Key to be utilized (uses current user's key if not passed)
         """
 
-        session = session_local()
-        faction = session.query(FactionModel).filter_by(tid=tid).first()
+        faction = utils.first(FactionModel.objects(tid=tid))
         if faction is None:
             faction_data = tornget.call_local(f'faction/{tid}?selections=basic', key if key != "" else current_user.key)
-
             now = utils.now()
 
             faction = FactionModel(
@@ -49,29 +45,24 @@ class Faction:
                 capacity=faction_data['capacity'],
                 leader=faction_data['leader'],
                 coleader=faction_data['co-leader'],
-                keys='[]',
+                keys=[],
                 last_members=now,
-                withdrawals='[]',
                 guild=0,
-                config='{"vault": 0, "stat": 1}',
-                vaultconfig='{"banking": 0, "banker": 0, "withdrawal": 0}',
-                targets='{}',
-                statconfig='{"global": 0}',
-                chainconfig='{"od": 0, "odchannel": 0}',
-                chainod='{}'
+                config={'vault': 0, 'stats': 1},
+                vaultconfig={'banking': 0, 'banker': 0, 'withdrawal': 0},
+                targets={},
+                statconfig={'global': 0},
+                chainconfig={'od': 0, 'odchannel': 0},
+                chainod={}
             )
 
             try:
                 tornget.call_local(f'faction/{tid}?selections=positions', key if key != "" else current_user.key)
-                keys = json.loads(faction.keys)
-                keys.append(key if key != "" else current_user.key)
-                keys = json.dumps(keys)
-                faction.keys = keys
+                faction.keys.append(key if key != "" else current_user.key)
             except:
                 pass
 
-            session.add(faction)
-            session.flush()
+            faction.save()
 
         self.tid = tid
         self.name = faction.name
@@ -80,31 +71,20 @@ class Faction:
         self.leader = faction.leader
         self.coleader = faction.coleader
 
-        self.keys = json.loads(faction.keys)
+        self.keys = faction.keys
 
         self.last_members = faction.last_members
 
-        self.withdrawals = json.loads(faction.withdrawals)
-
         self.guild = faction.guild
-        self.config = json.loads(faction.config)
-        self.vault_config = json.loads(faction.vaultconfig)
+        self.config = faction.config
+        self.vault_config = faction.vaultconfig
 
-        self.targets = json.loads(faction.targets)
+        self.targets = faction.targets
 
-        self.stat_config = json.loads(faction.statconfig)
+        self.stat_config = faction.statconfig
 
-        self.chain_config = json.loads(faction.chainconfig)
-        self.chain_od = json.loads(faction.chainod)
-
-    def get_tid(self):
-        """
-        Returns the faction's game ID
-        """
-        return self.tid
-
-    def get_keys(self):
-        return self.keys
+        self.chain_config = faction.chainconfig
+        self.chain_od = faction.chainod
 
     def rand_key(self):
         return random.choice(self.keys)
@@ -118,7 +98,7 @@ class Faction:
             return
 
         if key is None:
-            key = random.choice(self.get_keys())
+            key = random.choice(self.keys)
 
         factionmembers = tornget.call_local('faction/?selections=', key)
 
@@ -126,7 +106,7 @@ class Faction:
             user = User(memberid)
 
             if key is None:
-                key = random.choice(self.get_keys())
+                key = random.choice(self.keys)
             user.refresh(key, force)
 
     def get_vault_config(self):

@@ -13,10 +13,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+import json
+
 from flask import jsonify, request
 
 from controllers.api.decorators import *
-from database import session_local
 from models.factionmodel import FactionModel
 from models.factionstakeoutmodel import FactionStakeoutModel
 from models.keymodel import KeyModel
@@ -32,7 +33,6 @@ import utils
 @ratelimit
 @requires_scopes(scopes={'admin', 'write:stakeouts', 'guilds:admin'})
 def create_stakeout(stype, *args, **kwargs):
-    session = session_local()
     data = json.loads(request.get_data().decode('utf-8'))
     client = redisdb.get_redis()
 
@@ -67,7 +67,7 @@ def create_stakeout(stype, *args, **kwargs):
 
     guildid = int(guildid)
     tid = int(tid)
-    guild = session.query(ServerModel).filter_by(sid=guildid).first()
+    guild = utils.first(ServerModel.objects(sid=guildid))
 
     if stype not in ['faction', 'user']:
         return jsonify({
@@ -80,7 +80,7 @@ def create_stakeout(stype, *args, **kwargs):
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
-    elif str(guildid) not in User(session.query(KeyModel).filter_by(key=kwargs['key']).first().ownertid).servers:
+    elif str(guildid) not in User(utils.first(KeyModel.objects(key=kwargs['key'])).ownertid).servers:
         return jsonify({
             'code': 0,
             'name': 'UnknownGuild',
@@ -102,8 +102,8 @@ def create_stakeout(stype, *args, **kwargs):
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
-    elif stype == 'user' and session.query(UserStakeoutModel).filter_by(tid=tid).first() is not None and str(guildid) \
-            in json.loads(session.query(UserStakeoutModel).filter_by(tid=tid).first().guilds):
+    elif stype == 'user' and utils.first(UserStakeoutModel.objects(tid=tid)) is not None and str(guildid) in \
+            utils.first(UserStakeoutModel.objects(tid=tid)).guilds:
         return jsonify({
             'code': 0,
             'name': 'StakeoutAlreadyExists',
@@ -113,8 +113,8 @@ def create_stakeout(stype, *args, **kwargs):
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
-    elif stype == 'faction' and session.query(FactionStakeoutModel).filter_by(tid=tid).first() is not None and \
-            str(guildid) in json.loads(session.query(FactionStakeoutModel).filter_by(tid=tid).first().guilds):
+    elif stype == 'faction' and utils.first(FactionStakeoutModel.objects(tid=tid)) is not None and str(guildid) in \
+            utils.first(FactionStakeoutModel.objects(tid=tid)).guilds:
         return jsonify({
             'code': 0,
             'name': 'StakeoutAlreadyExists',
@@ -158,30 +158,29 @@ def create_stakeout(stype, *args, **kwargs):
     )
 
     if stype == 'user':
-        stakeouts = json.loads(guild.userstakeouts)
+        stakeouts = guild.userstakeouts
         stakeouts.append(tid)
-        guild.userstakeouts = json.dumps(list(set(stakeouts)))
-        session.flush()
+        guild.userstakeouts = list(set(stakeouts))
+        guild.save()
     elif stype == 'faction':
-        stakeouts = json.loads(guild.factionstakeouts)
+        stakeouts = guild.factionstakeouts
         stakeouts.append(tid)
-        guild.factionstakeouts = json.dumps(list(set(stakeouts)))
-        session.flush()
+        guild.factionstakeouts = list(set(stakeouts))
+        guild.save()
 
     payload = {
         'name': f'{stype}-{stakeout.data["name"]}' if name is None else name,
         'type': 0,
         'topic': f'The bot-created channel for stakeout notifications for {stakeout.data["name"]} '
                  f'[{stakeout.data["player_id"] if stype == "user" else stakeout.data["ID"]}] by the Tornium bot.',
-        'parent_id': json.loads(guild.stakeoutconfig)['category'] if category is None else category
+        'parent_id': guild.stakeoutconfig['category'] if category is None else category
     }
 
-    channel = utils.tasks.discordpost(f'guilds/{guildid}/channels', payload=payload)
-    channel = channel(blocking=True)
+    channel = utils.tasks.discordpost.call_local(f'guilds/{guildid}/channels', payload=payload)
 
     stakeout.guilds[str(guildid)]['channel'] = int(channel['id'])
     if stype == 'user':
-        db_stakeout = session.query(UserStakeoutModel).filter_by(tid=tid).first()
+        db_stakeout = utils.first(UserStakeoutModel.objects(tid=tid))
         message_payload = {
             'embeds': [
                 {
@@ -195,7 +194,7 @@ def create_stakeout(stype, *args, **kwargs):
             ]
         }
     elif stype == 'faction':
-        db_stakeout = session.query(FactionStakeoutModel).filter_by(tid=tid).first()
+        db_stakeout = utils.first(FactionStakeoutModel.objects(tid=tid))
         message_payload = {
             'embeds': [
                 {
@@ -209,8 +208,8 @@ def create_stakeout(stype, *args, **kwargs):
             ]
         }
 
-    db_stakeout.guilds = json.dumps(stakeout.guilds)
-    session.flush()
+    db_stakeout.guilds = stakeout.guilds
+    db_stakeout.save()
     utils.tasks.discordpost(f'channels/{channel["id"]}/messages', payload=message_payload)()
 
     return jsonify({

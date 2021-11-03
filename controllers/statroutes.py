@@ -18,17 +18,15 @@ import json
 
 from flask import Blueprint, render_template, request
 from flask_login import login_required, current_user
+from mongoengine.queryset.visitor import Q
 from sqlalchemy import String, or_
 from sqlalchemy.sql.expression import cast
 
 import utils
 from controllers.factionroutes import aa_required
-from database import session_local
 from models.faction import Faction
 from models.factionmodel import FactionModel
 from models.statmodel import StatModel
-from models.user import User
-from models.usermodel import UserModel
 
 mod = Blueprint('statroutes', __name__)
 
@@ -50,16 +48,14 @@ def stats_data():
     start = int(request.args.get('start'))
     length = int(request.args.get('length'))
     search_value = request.args.get('search[value]')
-    session = session_local()
 
     stats = []
     users = []
 
     if utils.get_tid(search_value):
-        stat_entries = session.query(StatModel).filter(cast(StatModel.tid, String).startswith(str(utils.get_tid(search_value))),
-                                                       or_(StatModel.globalstat == 1, StatModel.addedfactiontid == current_user.factiontid)).all()
+        stat_entries = StatModel.objects(Q(tid_startswith=utils.get_tid(search_value)) & (Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid)))
     else:
-        stat_entries = session.query(StatModel).filter(or_(StatModel.globalstat == 1, StatModel.addedfactiontid == current_user.factiontid)).all()
+        stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))
 
     for stat_entry in stat_entries:
         if stat_entry.tid in users:
@@ -71,7 +67,7 @@ def stats_data():
 
     data = {
         'draw': request.args.get('draw'),
-        'recordsTotal': session.query(StatModel).count(),
+        'recordsTotal': StatModel.objects().count(),
         'recordsFiltered': len(stats),
         'data': stats[start:start+length]
     }
@@ -83,11 +79,8 @@ def stats_data():
 @login_required
 def user_data():
     tid = int(request.args.get('user'))
-    session = session_local()
-
     stats = []
-
-    stat_entries = session.query(StatModel).filter(or_(StatModel.globalstat == 1, StatModel.addedfactiontid == current_user.factiontid), StatModel.tid == tid).all()
+    stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))
 
     for stat_entry in stat_entries:
         if stat_entry.tid != tid:
@@ -117,10 +110,9 @@ def chain():
 @aa_required
 def config():
     faction = Faction(current_user.factiontid)
-    session = session_local()
 
     if request.method == 'POST':
-        faction_model = session.query(FactionModel).filter_by(tid=current_user.factiontid).first()
+        faction_model = utils.first(FactionModel.objects(tid=current_user.factiontid))
 
         if (request.form.get('enabled') is not None) ^ (request.form.get('disabled') is not None):
             config = faction.get_stat_config()

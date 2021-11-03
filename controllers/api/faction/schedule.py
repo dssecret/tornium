@@ -384,9 +384,8 @@ def get_schedule(uuid, *args, **kwargs):
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
     else:
-        session = session_local()
         schedules = []
-        for schedule in session.query(ScheduleModel).filter_by(factiontid=user.factiontid):
+        for schedule in ScheduleModel.objects(factiontid=user.factiontid):
             schedules.append(schedule.uuid)
 
         return jsonify(schedules), 200, {

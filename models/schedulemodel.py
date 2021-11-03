@@ -13,19 +13,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.dialects.mysql import VARCHAR, INTEGER
-
-from database import base
-from redisdb import get_redis
+from mongoengine import DynamicDocument, IntField, UUIDField, StringField, DictField
 
 
-class ScheduleModel(base):
-    __tablename__ = 'Schedules'
-
-    if get_redis().get('dev'):
-        uuid = Column(String, primary_key=True)
-        factiontid = Column(Integer)
-    else:
-        uuid = Column(VARCHAR(36), primary_key=True)
-        factiontid = Column(INTEGER)
+class ScheduleModel(DynamicDocument):
+    uuid = UUIDField(primary_key=True)
+    factiontid = IntField()
+    name = StringField()
+    timecreated = IntField()
+    timeupdated = IntField()
+    activity = DictField()
+    weight = DictField()
+    schedule = DictField()
+    fromts = IntField()
+    tots = IntField()

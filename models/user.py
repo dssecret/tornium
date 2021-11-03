@@ -13,42 +13,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-import json
 import math
 
-import requests
 from flask_login import UserMixin, current_user
 
-from database import session_local
-from models.servermodel import ServerModel
-from models.usermodel import UserModel, UserDiscordModel
+from models.usermodel import UserModel
 import utils
-from utils.tasks import tornget, discordget
-
-
-class DiscordUser:
-    def __init__(self, did, key):
-        """
-        Retrieves the DiscordUser from the database
-
-        :param did: Discord User ID
-        """
-
-        session = session_local()
-        user = session.query(UserDiscordModel).filter_by(discord_id=did).first()
-
-        if user is None:
-            torn_user = tornget.call_local(f'user/{did}?selections=discord', key)
-
-            user = UserDiscordModel(
-                discord_id=did,
-                tid=torn_user['discord']['userID'] if torn_user['discord']['userID'] != '' else 0
-            )
-            session.add(user)
-            session.flush()
-
-        self.did = did
-        self.tid = user.tid
+from utils.tasks import tornget
 
 
 class User(UserMixin):
@@ -59,8 +30,7 @@ class User(UserMixin):
         :param tid: Torn user ID
         """
 
-        session = session_local()
-        user = session.query(UserModel).filter_by(tid=tid).first()
+        user = utils.first(UserModel.objects(tid=tid))
         now = utils.now()
         if user is None:
             user = UserModel(
@@ -68,17 +38,19 @@ class User(UserMixin):
                 name='',
                 level=0,
                 last_refresh=now,
-                admin=False if tid != 2383326 else True,
+                admin=False,
                 key=key,
-                battlescore=json.dumps([0, now]),
+                battlescore=0,
+                battlescore_update=now,
                 discord_id=0,
-                servers='[]',
+                servers=[],
                 factionid=0,
                 factionaa=False,
                 chain_hits=0,
-                status='')
-            session.add(user)
-            session.flush()
+                status='',
+                last_action=''
+            )
+            user.save()
 
         self.tid = tid
         self.name = user.name
@@ -86,10 +58,11 @@ class User(UserMixin):
         self.last_refresh = user.last_refresh
         self.admin = user.admin
         self.key = user.key
-        self.battlescore = json.loads(user.battlescore)
+        self.battlescore = user.battlescore
+        self.battlescore_update = user.battlescore_update
 
         self.discord_id = user.discord_id
-        self.servers = None if user.servers is None else json.loads(user.servers)
+        self.servers = user.servers
 
         self.factiontid = user.factionid
         self.aa = user.factionaa
@@ -102,108 +75,64 @@ class User(UserMixin):
         now = utils.now()
         
         if force or (now - self.last_refresh) > 1800:
-            if self.get_key() != "":
-                key = self.get_key()
+            if self.key != "":
+                key = self.key
             elif key is None:
                 key = current_user.get_key()
                 if key == '':
                     raise Exception  # TODO: Make exception more descriptive
 
-            session = session_local()
-
-            if key == self.get_key():
+            if key == self.key:
                 user_data = tornget.call_local(f'user/?selections=profile,battlestats,discord', key)
             else:
                 user_data = tornget.call_local(f'user/{self.tid}?selections=profile,discord', key)
 
-            user = session.query(UserModel).filter_by(tid=self.tid).first()
+            user = utils.first(UserModel.objects(tid=self.tid))
             user.factionid = user_data['faction']['faction_id']
             user.name = user_data['name']
             user.last_refresh = now
             user.status = user_data['last_action']['status']
             user.last_action = user_data['last_action']['relative']
             user.level = user_data['level']
-            user.admin = False if self.tid != 2383326 else True
             user.discord_id = user_data['discord']['discordID'] if user_data['discord']['discordID'] != '' else 0
 
-            if key == self.get_key():
-                battlescore = math.sqrt(user_data['strength']) + math.sqrt(user_data['speed']) + \
-                              math.sqrt(user_data['speed']) + math.sqrt(user_data['dexterity'])
-                user.battlescore = json.dumps([battlescore, now])
+            if key == self.key:
+                user.battlescore = math.sqrt(user_data['strength']) + math.sqrt(user_data['speed']) + \
+                                   math.sqrt(user_data['speed']) + math.sqrt(user_data['dexterity'])
+                user.battlescore_update = now
 
-            session.flush()
+            user.save()
+
+            self.name = user_data['name']
             self.factiontid = user_data['faction']['faction_id']
             self.last_refresh = now
             self.status = user_data['last_action']['status']
             self.last_action = user_data['last_action']['relative']
             self.level = user_data['level']
-            self.battlescore = json.loads(user.battlescore)
-            self.discord_id = user_data['discord']['discordID'] if user_data['discord']['discordID'] != '' else 0
-
-            if self.discord_id != 0:
-                discord_user = session.query(UserDiscordModel).filter_by(discord_id=self.discord_id).first()
-
-                if discord_user is None:
-                    discord_user = UserDiscordModel(
-                        discord_id=self.discord_id,
-                        tid=self.tid
-                    )
-                    session.add(discord_user)
-                    session.flush()
+            self.battlescore = user.battlescore
+            self.battlescore_update = now
+            self.discord_id = user.discord_id
 
     def faction_refresh(self):
-        session = session_local()
-        user = session.query(UserModel).filter_by(tid=self.tid).first()
-
-        faction_data = tornget.call_local(f'faction/?selections=', self.key)
+        user = utils.first(UserModel.objects(tid=self.tid))
 
         try:
             tornget.call_local(f'faction/?selections=positions', self.key)
         except:
             self.aa = False
             user.aa = False
-            session.flush()
-            return None
         finally:
             self.aa = True
             user.factionaa = True
 
-        self.factiontid = faction_data["ID"]
-        user.factionid = faction_data["ID"]
-        session.flush()
-
-        pass  # TODO: Make function update faction data
+        user.save()
 
     def get_id(self):
-        """
-        Returns the user's game ID
-        """
         return self.tid
 
-    def is_admin(self):
-        """
-        Returns whether or not the user is an admin
-        """
-
-        return self.admin
-
-    def is_aa(self):
-        return self.aa
-
-    def get_key(self):
-        """
-        Returns the user's Torn API key
-        """
-
-        return self.key
-
     def set_key(self, key: str):
-        """
-        Updates the user's Torn API key
-        """
 
-        session = session_local()
-        user = session.query(UserModel).filter_by(tid=self.tid).first()
+        user = utils.first(UserModel.objects(tid=self.tid))
         user.key = key
         self.key = key
-        session.flush()
+        user.save()

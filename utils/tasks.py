@@ -39,7 +39,8 @@ except FileNotFoundError:
         'secret': str(os.urandom(32)),
         'taskqueue': 'redis',
         'username': 'tornium',
-        'password': ''
+        'password': '',
+        'host': ''
     }
     with open(f'settings.json', 'w') as file:
         json.dump(data, file, indent=4)
@@ -56,13 +57,13 @@ redis.set('secret', data['secret'])
 redis.set('taskqueue', data['taskqueue'])
 redis.set('username', data['username'])
 redis.set('password', data['password'])
+redis.set('host', data['host'])
 
-from database import session_local
 from models.factionmodel import FactionModel
 from models.factionstakeoutmodel import FactionStakeoutModel
 from models.servermodel import ServerModel
 from models.statmodel import StatModel
-from models.usermodel import UserModel, UserDiscordModel
+from models.usermodel import UserModel
 from models.userstakeoutmodel import UserStakeoutModel
 import utils
 
@@ -108,39 +109,33 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
 
     if 'error' in request:
         if request['error']['code'] == 13 or request['error']['code'] == 10 or request['error']['code'] == 2:
-            db_session = session_local()
-            user = db_session.query(UserModel).filter_by(key=key).first()
+            user = utils.first(UserModel.objects(key=key))
             user.key = ''
+            user.save()
 
-            faction = db_session.query(FactionModel).fitler_by(tid=user.factionid).first()
-            faction_keys = json.loads(faction.keys)
+            faction = utils.first(FactionModel.objects(tid=user.factionid))
 
-            if key in faction_keys:
-                faction_keys.remove(key)
+            if key in faction.keys:
+                faction.keys.remove(key)
 
-            faction.keys = json.dumps(faction_keys)
+            faction.save()
 
-            for server in json.loads(user.servers):
-                server = db_session.query(ServerModel).filter_by(sid=server).first()
-                server_admins = json.loads(server.admins)
+            for server in user.servers:
+                server = utils.first(ServerModel.objects(sid=server))
 
-                if user.tid in server_admins:
-                    server_admins.remove(user.tid)
-
-                server.admins = json.dumps(server_admins)
-
-            db_session.flush()
+                if user.tid in server.admins:
+                    server.admins.remove(user.tid)
+                server.save()
         elif request['error']['code'] == 7:
-            db_session = session_local()
-            user = db_session.query(UserModel).filter_by(key=key).first()
-            faction = db_session.query(FactionModel).filter_by(tid=user.factionid).first()
-            faction_keys = json.loads(faction.keys)
+            user = utils.first(UserModel.objects(key=key))
+            user.aa = False
+            user.save()
 
-            if key in faction_keys:
-                faction_keys.remove(key)
+            faction = utils.first(FactionModel.objects(tid=user.factionid))
 
-            faction.keys = json.dumps(faction_keys)
-            db_session.flush()
+            if key in faction.keys:
+                faction.keys.remove(key)
+            faction.save()
 
         utils.get_logger().info(f'The Torn API has responded with error code {request["error"]["code"]} '
                                 f'({request["error"]["error"]}) to {url}).')
@@ -270,16 +265,14 @@ def torn_stats_get(endpoint, key, session=None):
 
 @huey.periodic_task(crontab(minute='0'))
 def refresh_factions():
-    session = session_local()
     requests_session = requests.Session()
-    factions = []
 
-    for faction in session.query(FactionModel).all():
+    for faction in FactionModel.objects():
         if len(json.loads(faction.keys)) == 0:
             continue
 
         try:
-            faction_data = tornget.call_local(f'faction/?selections=', random.choice(json.loads(faction.keys)),
+            faction_data = tornget.call_local(f'faction/?selections=', random.choice(faction.keys),
                                               session=requests_session)
         except Exception as e:
             utils.get_logger().exception(e)
@@ -288,7 +281,7 @@ def refresh_factions():
         if faction_data is None:
             continue
 
-        faction = session.query(FactionModel).filter_by(tid=faction.tid).first()
+        faction = utils.first(FactionModel.objects(tid=faction.tid))
         faction.name = faction_data['name']
         faction.respect = faction_data['respect']
         faction.capacity = faction_data['capacity']
@@ -298,8 +291,8 @@ def refresh_factions():
 
         keys = []
 
-        leader = session.query(UserModel).filter_by(tid=faction.leader).first()
-        coleader = session.query(UserModel).filter_by(tid=faction.coleader).first()
+        leader = utils.first(UserModel.objects(tid=faction.leader))
+        coleader = utils.first(UserModel.objects(tid=faction.coleader))
 
         if leader is not None and leader.key != '':
             keys.append(leader.key)
@@ -307,24 +300,27 @@ def refresh_factions():
             keys.append(coleader.key)
 
         for member_id, member in faction_data['members'].items():
-            user = session.query(UserModel).filter_by(tid=int(member_id)).first()
+            user = utils.first(UserModel.objects(tid=int(member_id)))
 
             if user is None:
                 user = UserModel(
                     tid=int(member_id),
                     name='',
                     level=0,
-                    admin=False if int(member_id) != 2383326 else True,
-                    key='',
-                    battlescore='[]',
+                    last_refresh=utils.now(),
+                    admin=False,
+                    key=utils.now(),
+                    battlescore=0,
+                    battlescore_update=utils.now(),
                     discord_id=0,
-                    servers='[]',
-                    factionid=faction.tid,
+                    servers=[],
+                    factionid=0,
                     factionaa=False,
-                    last_refresh=faction.last_members,
-                    status='')
-                session.add(user)
-                session.flush()
+                    chain_hits=0,
+                    status='',
+                    last_action=''
+                )
+                user.save()
 
             user.name = member['name']
             user.level = member['level']
@@ -332,7 +328,6 @@ def refresh_factions():
             user.factiontid = faction.tid
             user.status = member['last_action']['status']
             user.last_action = member['last_action']['relative']
-            session.flush()
 
             if user.key == '' and len(keys) != 0:
                 try:
@@ -348,9 +343,12 @@ def refresh_factions():
                 elif user_data['spy']['type'] != 'faction-share':
                     continue
 
-                user.battlescore = json.dumps([user_data['spy']['target_score'], utils.now()])
+                user.battlescore = user_data['spy']['target_score']
+                user.battlescore_update = utils.now()
 
-        if json.loads(faction.chainconfig)['od'] == 1:
+            user.save()
+
+        if faction.chainconfig['od'] == 1:
             try:
                 faction_od = tornget.call_local('faction/?selections=contributors',
                                                 stat='drugoverdoses',
@@ -363,7 +361,7 @@ def refresh_factions():
             if len(json.loads(faction.chainod)) != 0:
                 for tid, user_od in json.loads(faction_od)['contributors']['drugoverdoses'].items():
                     if user_od != json.loads(faction.chainod).get(tid):
-                        overdosed_user = session.query(UserModel).filter_by(tid=tid).first()
+                        overdosed_user = utils.first(UserModel.objects(tid=tid))
                         payload = {
                             'embeds': [
                                 {
@@ -379,32 +377,29 @@ def refresh_factions():
                         }
 
                         try:
-                            discordpost(f'channels/{faction.chainconfig["odchannel"]}/messages', payload=payload)()
+                            discordpost.call_local(f'channels/{faction.chainconfig["odchannel"]}/messages', payload=payload)
                         except Exception as e:
                             utils.get_logger().exception(e)
                             continue
 
-            faction.chainod = json.dumps(faction_od['contributors']['drugoverdoses'])
+            faction.chainod = faction_od['contributors']['drugoverdoses']
 
-    session.flush()
+        faction.save()
 
 
 @huey.periodic_task(crontab(minute='30'))
 def refresh_guilds():
-    session = session_local()
     requests_session = requests.Session()
 
     try:
-        guilds = discordget('users/@me/guilds', session=requests_session)
-        guilds = guilds(blocking=True)
+        guilds = discordget.call_local('users/@me/guilds', session=requests_session)
     except Exception as e:
         utils.get_logger().exception(e)
         return
 
     for guild in guilds:
         try:
-            members = discordget(f'guilds/{guild["id"]}/members', session=requests_session)
-            members = members(blocking=True)
+            members = discordget.call_local(f'guilds/{guild["id"]}/members', session=requests_session)
         except utils.DiscordError as e:
             if int(str(e)) == 10007:
                 continue
@@ -416,53 +411,39 @@ def refresh_guilds():
             continue
 
         try:
-            guild = discordget(f'guilds/{guild["id"]}', session=requests_session)
-            guild = guild(blocking=True)
+            guild = discordget.call_local(f'guilds/{guild["id"]}', session=requests_session)
         except Exception as e:
             utils.get_logger().exception(e)
             continue
 
-        owner_discord = session.query(UserDiscordModel).filter_by(discord_id=guild['owner_id']).first()
+        owner = utils.first(UserModel.objects(discord_id=guild['owner_id']))
 
-        if owner_discord is not None and owner_discord.tid != 0:
-            owner = session.query(UserModel).filter_by(tid=owner_discord.tid).first()
-            owner_servers = json.loads(owner.servers)
-            owner_servers.append(guild['id'])
-            owner.servers = json.dumps(list(set(owner_servers)))
+        if owner is not None:
+            owner.servers.append(guild['id'])
+            owner.servers = list(set(owner.servers))
+            owner.save()
 
         for member in members:
-            member_discord = session.query(UserDiscordModel).filter_by(discord_id=member['user']['id']).first()
+            user = utils.first(UserModel.objects(discord_id=member['user']['id']))
 
-            if member_discord is not None and member_discord.tid != 0:
-                user = session.query(UserModel).filter_by(tid=member_discord.tid).first()
-
-                if user is None:
-                    continue
-
-                user_servers = json.loads(user.servers)
-
+            if user is not None:
                 for role in member['roles']:
                     for guild_role in guild['roles']:
                         # Checks if the user has the role and the role has the administrator permission
                         if guild_role['id'] == role and (int(guild_role['permissions']) & 0x0000000008) == 0x0000000008:
-                            user_servers.append(guild['id'])
+                            user.servers.append(guild['id'])
 
-                user.servers = json.dumps(list(set(user_servers)))
-
-    session.flush()
+                user.servers = list(set(user.servers))
+                user.save()
 
 
 @huey.periodic_task(crontab(minute='0'))
 def refresh_users():
-    session = session_local()
     requests_session = requests.Session()
     users = []
     timestamp = utils.now()
 
-    for user in session.query(UserModel).all():
-        if user.key == '':
-            continue
-
+    for user in UserModel.objects(key__ne=''):
         users.append(tornget(f'user/?selections=profile,battlestats,discord', user.key, session=requests_session))
 
     for user in users:
@@ -472,48 +453,39 @@ def refresh_users():
             utils.get_logger().exception(e)
             continue
 
-        user = session.query(UserModel).filter_by(tid=user_data['player_id']).first()
+        user = utils.first(UserModel.objects(tid=user_data['player_id']))
         user.factiontid = user_data['faction']['faction_id']
         user.name = user_data['name']
         user.last_refresh = timestamp
         user.status = user_data['last_action']['status']
         user.last_action = user_data['last_action']['relative']
         user.level = user_data['level']
-        user.admin = False if user.tid != 2383326 else True
         user.discord_id = user_data['discord']['discordID'] if user_data['discord']['discordID'] != '' else 0
         user.factiontid = user_data['faction']['faction_id']
 
         battlescore = math.sqrt(user_data['strength']) + math.sqrt(user_data['speed']) + \
                       math.sqrt(user_data['speed']) + math.sqrt(user_data['dexterity'])
-        user.battlescore = json.dumps([battlescore, timestamp])
-
-        discord_user = session.query(UserDiscordModel).filter_by(discord_id=user.discord_id).first()
-        if discord_user is None and user.discord_id != '':
-            discord_user = UserDiscordModel(
-                discord_id=user.discord_id,
-                tid=user.tid
-            )
-            session.add(discord_user)
-        session.flush()
+        user.battlescore = battlescore
+        user.battlescore_update = timestamp
+        user.save()
 
 
 @huey.periodic_task(crontab(minute='*/5'))
 def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&f=61&t=16209964&b=0&a=0&start=0&to=0
-    session = session_local()
     requests_session = requests.Session()
     timestamp = utils.now()
-    statid = session.query(StatModel).count()
-    last_timestamp = session.query(StatModel).filter_by(statid=statid - 1).first().timeadded
+    statid = StatModel.objects().count()
+    last_timestamp = utils.first(StatModel.objects(statid=statid - 1)).timeadded
 
-    for faction in session.query(FactionModel).all():
-        if len(json.loads(faction.keys)) == 0:
+    for faction in FactionModel.objects():
+        if len(faction.keys) == 0:
             continue
-        elif json.loads(faction.config)['stat'] == 0:
+        elif faction.config['stat'] == 0:
             continue
 
         try:
             faction_data = tornget.call_local('faction/?selections=basic,attacks',
-                                              random.choice(json.loads(faction.keys)),
+                                              random.choice(faction.keys),
                                               session=requests_session)
         except Exception as e:
             utils.get_logger().exception(e)
@@ -531,7 +503,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             elif attack['timestamp_ended'] < last_timestamp:
                 continue
 
-            user = session.query(UserModel).filter_by(tid=attack['attacker_id']).first()
+            user = utils.first(UserModel.objects(tid=attack['attacker_id']))
 
             if user is None:
                 try:
@@ -545,39 +517,25 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
                         level=user_data['level'],
                         admin=False,
                         key='',
-                        battlescore='[]',
+                        battlescore=0,
+                        battlescore_update=timestamp,
                         discord_id=user_data['discord']['discordID'] if user_data['discord']['discordID'] != '' else 0,
-                        servers='[]',
+                        servers=[],
                         factionid=user_data['faction']['faction_id'],
                         factionaa=False,
                         last_refresh=timestamp,
+                        chain_hits=0,
                         status=user_data['last_action']['status'],
                         last_action=user_data['last_action']['relative']
                     )
+                    user.save()
                 except Exception as e:
                     utils.get_logger().exception(e)
-                    user = UserModel(
-                        tid=attack['attacker_id'],
-                        name='',
-                        level=0,
-                        admin=False,
-                        key='',
-                        battlescore='[]',
-                        discord_id=0,
-                        servers='[]',
-                        factionid=0,
-                        factionaa=False,
-                        last_refresh=timestamp,
-                        status='',
-                        last_action=''
-                    )
-
-                session.add(user)
-                session.flush()
+                    continue
 
             try:
-                if json.loads(user.battlescore)[1] - utils.now() <= 10800000:  # Three hours
-                    attacker_score = json.loads(user.battlescore)[0]
+                if user.battlescore_update - utils.now() <= 10800000:  # Three hours
+                    attacker_score = user.battlescore
                 else:
                     continue
             except IndexError:
@@ -591,14 +549,12 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             if defender_score == 0:
                 continue
 
-            stat_faction = session.query(FactionModel).filter_by(tid=user.factionid).first()
+            stat_faction = utils.first(FactionModel.objects(tid=user.factionid))
 
             if stat_faction is None:
                 globalstat = 1
             else:
-                globalstat = json.loads(stat_faction.statconfig)['global']
-
-            print(user.factionid)
+                globalstat = stat_faction.statconfig['global']
 
             stat_entry = StatModel(
                 statid=statid,
@@ -609,76 +565,54 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
                 addedfactiontid=user.factionid,
                 globalstat=globalstat
             )
-            print(stat_entry.addedfactiontid)
-            session.add(stat_entry)
-            session.flush()
+            stat_entry.save()
             statid += 1
-        session.flush()
 
 
 @huey.periodic_task(crontab())
 def update_user_stakeouts():
-    session = session_local()
     requests_session = requests.Session()
 
-    for stakeout in session.query(UserStakeoutModel).all():
+    for stakeout in UserStakeoutModel.objects():
         user_stakeout(stakeout.tid, requests_session=requests_session)()
 
 
 @huey.periodic_task(crontab())
 def update_faction_stakeouts():
-    session = session_local()
     requests_session = requests.Session()
 
-    for stakeout in session.query(FactionStakeoutModel).all():
+    for stakeout in FactionStakeoutModel.objects():
         faction_stakeout(stakeout.tid, requests_session=requests_session)()
 
 
 @huey.task()
 def user_stakeout(stakeout, requests_session=None, key=None):
     # TODO: Add try and except to tornget, discordget, and discordpost
-    session = session_local()
-    stakeout = session.query(UserStakeoutModel).filter_by(tid=stakeout).first()
+    stakeout = utils.first(UserStakeoutModel.objects(tid=stakeout))
 
     try:
         if key is not None:
             data = tornget.call_local(f'user/{stakeout.tid}?selections=', key=key, session=requests_session)
         else:
-            guild = random.choice(list(json.loads(stakeout.guilds).keys()))
-            guild = session.query(ServerModel).filter_by(sid=guild).first()
-            admin = random.choice(json.loads(guild.admins))
-            admin = session.query(UserModel).filter_by(tid=admin).first()
+            guild = utils.first(ServerModel.objects(sid=random.choice(list(stakeout.guilds.keys()))))
+            admin = utils.first(UserModel.objects(tid=random.choice(guild.admins)))
             data = tornget.call_local(f'user/{stakeout.tid}?selections=', key=admin.key, session=requests_session)
     except Exception as e:
         utils.get_logger().exception(e)
         return
 
-    stakeout_data = json.loads(stakeout.data)
-
+    stakeout_data = stakeout.data
     stakeout.lastupdate = utils.now()
     stakeout.data = json.dumps(data)
-    session.flush()
+    stakeout.save()
 
     for guildid, guild_stakeout in json.loads(stakeout.guilds).items():
         if len(guild_stakeout['keys']) == 0:
             continue
 
-        server = session.query(ServerModel).filter_by(sid=guildid).first()
+        server = utils.first(ServerModel.objects(sid=guildid))
 
-        if json.loads(server.config)['stakeouts'] == 0:
-            continue
-
-        channels = discordget(f'guilds/{guildid}/channels', session=requests_session)
-        try:
-            channels = channels(blocking=True)
-        except Exception as e:
-            utils.get_logger().exception(e)
-            return
-
-        for channel in channels:
-            if channel['id'] == str(guild_stakeout['channel']):
-                break
-        else:
+        if server.config['stakeouts'] == 0:
             continue
 
         if 'level' in guild_stakeout['keys'] and data['level'] != stakeout_data['level']:
@@ -696,7 +630,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
                 ]
             }
             try:
-                discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
                 utils.get_logger().exception(e)
                 return
@@ -716,7 +650,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
                 ]
             }
             try:
-                discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
                 utils.get_logger().exception(e)
                 return
@@ -739,7 +673,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
                 ]
             }
             try:
-                discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
                 utils.get_logger().exception(e)
                 return
@@ -760,7 +694,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
                 ]
             }
             try:
-                discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
                 utils.get_logger().exception(e)
                 return
@@ -788,7 +722,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
                 ]
             }
             try:
-                discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
                 utils.get_logger().exception(e)
                 return
@@ -797,50 +731,33 @@ def user_stakeout(stakeout, requests_session=None, key=None):
 @huey.task()
 def faction_stakeout(stakeout, requests_session=None, key=None):
     # TODO: Add try and except to tornget, discordget, and discordpost
-    session = session_local()
-    stakeout = session.query(FactionStakeoutModel).filter_by(tid=stakeout).first()
+    stakeout = utils.first(FactionStakeoutModel.objects(tid=stakeout))
 
     try:
         if key is not None:
             data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=key,
                                       session=requests_session)
         else:
-            guild = random.choice(list(json.loads(stakeout.guilds).keys()))
-            guild = session.query(ServerModel).filter_by(sid=guild).first()
-            admin = random.choice(json.loads(guild.admins))
-            admin = session.query(UserModel).filter_by(tid=admin).first()
+            guild = utils.first(ServerModel.objects(sid=random.choice(list(stakeout.guilds.keys()))))
+            admin = utils.first(UserModel.objects(tid=random.choice(guild.admins)))
             data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=admin.key,
                                       session=requests_session)
     except Exception as e:
         utils.get_logger().exception(e)
         return
 
-    stakeout_data = json.loads(stakeout.data)
-
+    stakeout_data = stakeout.data
     stakeout.lastupdate = utils.now()
     stakeout.data = json.dumps(data)
-    session.flush()
+    stakeout.save()
 
     for guildid, guild_stakeout in json.loads(stakeout.guilds).items():
         if len(guild_stakeout['keys']) == 0:
             continue
 
-        server = session.query(ServerModel).filter_by(sid=guildid).first()
+        server = utils.first(ServerModel.objects(sid=guildid))
 
-        if json.loads(server.config)['stakeouts'] == 0:
-            continue
-
-        try:
-            channels = discordget(f'guilds/{guildid}/channels', session=requests_session)
-            channels = channels(blocking=True)
-        except Exception as e:
-            utils.get_logger().exception(e)
-            return
-
-        for channel in channels:
-            if channel['id'] == str(guild_stakeout['channel']):
-                break
-        else:
+        if server.config['stakeouts'] == 0:
             continue
 
         # stakeout_data: data from the previous minute
@@ -863,7 +780,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
@@ -883,7 +800,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
@@ -904,7 +821,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
@@ -925,7 +842,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
@@ -946,7 +863,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
@@ -967,7 +884,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
@@ -987,7 +904,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
@@ -1007,7 +924,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
@@ -1036,7 +953,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
@@ -1067,7 +984,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
@@ -1096,7 +1013,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
@@ -1110,8 +1027,8 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         break
 
                 if not existing:
-                    defending = session.query(FactionModel).filter_by(tid=war["defending_faction"]).first()
-                    assulting = session.query(FactionModel).filter_by(tid=war["assaulting_faction"]).first()
+                    defending = utils.first(FactionModel.objects(tid=war['defending_faction']))
+                    assaulting = utils.first(FactionModel.objects(tid=war['assaulting_faction']))
 
                     payload = {
                         'embeds': [
@@ -1120,7 +1037,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                                 'description': f'Territory {war["territory"]} of faction '
                                                f'{war["defending_faction"] if defending is None else defending.name}'
                                                f' has been assaulted by faction '
-                                               f'{war["assaulting_faction"] if assulting is None else assulting.name}.',
+                                               f'{war["assaulting_faction"] if assaulting is None else assaulting.name}.',
                                 'timestamp': datetime.datetime.fromtimestamp(war["start_time"]).isoformat(),
                                 'footer': {
                                     'text': utils.torn_timestamp(war["start_time"])
@@ -1129,7 +1046,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
@@ -1142,8 +1059,8 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         break
 
                 if not existing:
-                    defending = session.query(FactionModel).filter_by(tid=war["defending_faction"]).first()
-                    assulting = session.query(FactionModel).filter_by(tid=war["assaulting_faction"]).first()
+                    defending = utils.first(FactionModel.objects(tid=war['defending_faction']))
+                    assaulting = utils.first(FactionModel.objects(tid=war['assaulting_faction']))
                     payload = {
                         'embeds': [
                             {
@@ -1151,7 +1068,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                                 'description': f'The assault of territory {war["territory"]} of faction '
                                                f'{war["defending_faction"] if defending is None else defending.name}'
                                                f' by faction '
-                                               f'{war["assaulting_faction"] if assulting is None else assulting.name}.'
+                                               f'{war["assaulting_faction"] if assaulting is None else assaulting.name}.'
                                                f'has ended.',
                                 'timestamp': datetime.datetime.utcnow().isoformat(),
                                 'footer': {
@@ -1161,21 +1078,22 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
                         utils.get_logger().exception(e)
                         return
         if 'armory' in guild_stakeout['keys']:
-            server = session.query(ServerModel).filter_by(sid=guildid).first()
-            faction = session.query(FactionModel).filter_by(tid=stakeout.tid).first()
-            if stakeout.tid in json.loads(server.factions) and faction.guild == int(guildid):
+            server = utils.first(ServerModel.objects(sid=guildid))
+            faction = utils.first(FactionModel.objects(tid=stakeout.tid))
+
+            if stakeout.tid in server.factions and faction.guild == int(guildid):
                 try:
                     if key is not None:
                         data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
                                                   key=key,
                                                   session=requests_session,
                                                   fromts=utils.now() - 60)
-                    elif len(json.loads(faction.keys)) == 0:
+                    elif len(faction.keys) == 0:
                         break
                     else:
                         data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
@@ -1208,23 +1126,23 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         }
 
                         try:
-                            discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                            discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                         except Exception as e:
                             utils.get_logger().exception(e)
                             return
 
                         pass
         if 'armorydeposit' in guild_stakeout['keys']:
-            server = session.query(ServerModel).filter_by(sid=guildid).first()
-            faction = session.query(FactionModel).filter_by(tid=stakeout.tid).first()
-            if stakeout.tid in json.loads(server.factions) and faction.guild == int(guildid):
+            server = utils.first(ServerModel.objects(sid=guildid))
+            faction = utils.first(FactionModel.objects(tid=stakeout.tid))
+            if stakeout.tid in server.factions and faction.guild == int(guildid):
                 try:
                     if key is not None:
                         data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
                                                   key=key,
                                                   session=requests_session,
                                                   fromts=utils.now() - 60)
-                    elif len(json.loads(faction.keys)) == 0:
+                    elif len(faction.keys) == 0:
                         break
                     else:
                         data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
@@ -1257,7 +1175,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         }
 
                         try:
-                            discordpost(f'channels/{channel["id"]}/messages', payload=payload)()
+                            discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                         except Exception as e:
                             utils.get_logger().exception(e)
                             return

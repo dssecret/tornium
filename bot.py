@@ -36,7 +36,8 @@ except FileNotFoundError:
         'secret': str(os.urandom(32)),
         'taskqueue': 'redis',
         'username': 'tornium',
-        'password': ''
+        'password': '',
+        'host': ''
     }
     with open(f'settings.json', 'w') as file:
         json.dump(data, file, indent=4)
@@ -53,6 +54,7 @@ redis.set('secret', data['secret'])
 redis.set('taskqueue', data['taskqueue'])
 redis.set('username', data['username'])
 redis.set('password', data['password'])
+redis.set('host', data['host'])
 
 from bot import botutils
 from bot.vault import Vault

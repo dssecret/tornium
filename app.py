@@ -21,7 +21,7 @@ import os
 import flask
 from flask_cors import CORS
 from flask_login import LoginManager
-from sqlalchemy.orm import scoped_session
+from mongoengine import connect
 
 from redisdb import get_redis
 
@@ -38,7 +38,8 @@ except FileNotFoundError:
         'secret': str(os.urandom(32)),
         'taskqueue': 'redis',
         'username': 'tornium',
-        'password': ''
+        'password': '',
+        'host': ''
     }
     with open(f'settings.json', 'w') as file:
         json.dump(data, file, indent=4)
@@ -55,6 +56,14 @@ redis.set('secret', data['secret'])
 redis.set('taskqueue', data['taskqueue'])
 redis.set('username', data['username'])
 redis.set('password', data['password'])
+redis.set('host', data['host'])
+
+connect(
+    db='Tornium',
+    username=redis.get('username'),
+    password=redis.get('password'),
+    host=f'mongodb://{redis.get("host")}'
+)
 
 from controllers import mod as base_mod
 from controllers.authroutes import mod as auth_mod
@@ -64,7 +73,6 @@ from controllers.errors import mod as error_mod
 from controllers.adminroutes import mod as admin_mod
 from controllers.statroutes import mod as stat_mod
 from controllers.api import mod as api_mod
-from database import session_local
 import utils
 
 logger = logging.getLogger('server')
@@ -73,9 +81,8 @@ handler = logging.FileHandler(filename='server.log', encoding='utf-8', mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
-app = flask.Flask(__name__, instance_path=f'{os.getcwd()}/instance')  # Temp bug fix for https://youtrack.jetbrains.com/issue/PY-49984
+app = flask.Flask(__name__)
 app.secret_key = redis.get('secret')
-app.session = scoped_session(session_local, scopefunc=flask._app_ctx_stack.__ident_func__)
 
 cors = CORS(app, resources={r'/api/*': {'origins': '*'}})
 

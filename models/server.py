@@ -13,10 +13,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-import json
-
-from database import session_local
 from models.servermodel import ServerModel
+import utils
 from utils.tasks import discordget
 
 
@@ -28,34 +26,31 @@ class Server:
         :param sid: Discord server ID
         """
 
-        session = session_local()
-        server = session.query(ServerModel).filter_by(sid=sid).first()
+        server = utils.first(ServerModel.objects(sid=sid))
         if server is None:
-            guild = discordget(f'guilds/{sid}')
-            guild = guild(blocking=True)
+            guild = discordget.call_local(f'guilds/{sid}')
 
             server = ServerModel(
                 sid=sid,
                 name=guild['name'],
-                admins='[]',
+                admins=[],
                 prefix='?',
-                config='{"stakeouts": 0}',
-                factions='[]',
-                stakeoutconfig='{"category": 0}',
-                userstakeouts='[]',
-                factionstakeouts='[]'
+                config={'stakeouts': 0},
+                factions=[],
+                stakeoutconfig={'category': 0},
+                userstakeouts=[],
+                factionstakeouts=[]
             )
-            session.add(server)
-            session.flush()
+            server.save()
 
         self.sid = sid
         self.name = server.name
-        self.admins = json.loads(server.admins)
+        self.admins = server.admins
         self.prefix = server.prefix
-        self.config = json.loads(server.config)
+        self.config = server.config
 
-        self.factions = json.loads(server.factions)
+        self.factions = server.factions
 
-        self.stakeout_config = json.loads(server.stakeoutconfig)
-        self.user_stakeouts = json.loads(server.userstakeouts)
-        self.faction_stakeouts = json.loads(server.factionstakeouts)
+        self.stakeout_config = server.stakeoutconfig
+        self.user_stakeouts = server.userstakeouts
+        self.faction_stakeouts = server.factionstakeouts

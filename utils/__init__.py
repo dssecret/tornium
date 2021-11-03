@@ -165,3 +165,7 @@ def torn_timestamp(timestamp=None):
 def remove_html(text):
     cleaner = re.compile("<.*?>")
     return re.sub(cleaner, '', text)
+
+
+def first(array):
+    return None if len(array) == 0 else array[0]

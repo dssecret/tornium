@@ -42,7 +42,7 @@ def login():
 
     user = User(torn_user['player_id'])
 
-    if user.get_key() != request.form['key']:
+    if user.key != request.form['key']:
         user.set_key(request.form['key'])
 
     user.refresh()

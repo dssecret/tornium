@@ -13,17 +13,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-import time
-
-from flask import jsonify
+import json
 
 from controllers.api.decorators import *
-from database import session_local
 from models.faction import Faction
-from models.factionmodel import FactionModel
 from models.user import User
-from models.usermodel import UserModel
-from redisdb import get_redis
+from models.withdrawalmodel import WithdrawalModel
 import utils
 
 
@@ -31,7 +26,6 @@ import utils
 @ratelimit
 @requires_scopes(scopes={'admin', 'write:banking', 'write:faction', 'faction:admin'})
 def banking_request(*args, **kwargs):
-    session = session_local()
     data = json.loads(request.get_data().decode('utf-8'))
     client = redisdb.get_redis()
     user = User(kwargs['user'].tid)
@@ -98,7 +92,7 @@ def banking_request(*args, **kwargs):
                 'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
             }
 
-        request_id = len(faction.withdrawals) + 1
+        request_id = WithdrawalModel.objects().count()
         message_payload = {
             'content': f'<@&{vault_config["banker"]}>',
             'embeds': [
@@ -110,28 +104,26 @@ def banking_request(*args, **kwargs):
                 }
             ]
         }
-        message = utils.tasks.discordpost(f'channels/{vault_config["banking"]}/messages', payload=message_payload)(blocking=True)
+        message = utils.tasks.discordpost.call_local(f'channels/{vault_config["banking"]}/messages',
+                                                     payload=message_payload)
 
-        faction.withdrawals.append({
-            'id': request_id,
-            "amount": amount_requested,
-            'requester': user.tid,
-            'fulfilled': False,
-            'timerequested': time.ctime(),
-            'fulfiller': 0,
-            'timefulfilled': 0,
-            'withdrawalmessage': message['id']
-        })
-
-        dbfaction = session.query(FactionModel).filter_by(tid=faction.tid).first()
-        dbfaction.withdrawals = json.dumps(faction.withdrawals)
-        session.flush()
+        withdrawal = WithdrawalModel(
+            wid=request_id,
+            amount=amount_requested,
+            requester=user.tid,
+            factiontid=user.factiontid,
+            time_requested=utils.now(),
+            fulfiller=0,
+            time_fulfilled=0,
+            withdrawal_message=message['id']
+        )
+        withdrawal.save()
 
         return jsonify({
             'id': request_id,
             'amount': amount_requested,
             'requester': user.tid,
-            'timerequested': faction.withdrawals[request_id - 1]['timerequested'],
+            'timerequested': withdrawal['timerequested'],
             'withdrawalmessage': message['id']
         }), 200, {
             'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota

@@ -20,7 +20,6 @@ import os
 
 from flask_login import current_user
 
-from database import session_local
 from models.schedulemodel import ScheduleModel
 from models.user import User
 import utils
@@ -30,54 +29,39 @@ import utils
 
 class Schedule:
     def __init__(self, uuid, factiontid=None):
-        session = session_local()
-        schedule = session.query(ScheduleModel).filter_by(uuid=uuid).first()
+        schedule = utils.first(ScheduleModel.objects(uuid=uuid))
         
         if schedule is None and factiontid is None:
             raise Exception
         elif schedule is None:
             schedule = ScheduleModel(
                 uuid=uuid,
-                factiontid=factiontid
+                factiontid=factiontid,
+                name=uuid,
+                timecreated=utils.now(),
+                timeupdated=utils.now(),
+                activity={},
+                weight={},
+                schedule={},
+                fromts=0,
+                tots=0
             )
-
-            if not os.path.exists(f'{os.getcwd()}/schedule'):
-                os.makedirs(f'{os.getcwd()}/schedule')
-            
-            with open(f'{os.getcwd()}/schedule/{uuid}.json', 'x') as file:
-                json.dump({
-                    'uuid': uuid,
-                    'name': uuid,
-                    'factiontid': factiontid,
-                    'timecreated': utils.now(),
-                    'timeupdated': utils.now(),
-                    'activity': {},
-                    'weight': {},
-                    'schedule': {},
-                    'from': 0,
-                    'to': 0
-                }, file, indent=4)
-            
-            session.add(schedule)
-            session.flush()
+            schedule.save()
         
         self.uuid = uuid
         self.factiontid = schedule.factiontid
 
         if current_user.factiontid != self.factiontid and factiontid != self.factiontid:
             raise Exception
-        
-        with open(f'{os.getcwd()}/schedule/{uuid}.json') as file:
-            self.file = json.load(file)
 
-        self.name = self.file['name']
-        self.time_created = self.file['timecreated']
-        self.time_updated = self.file['timeupdated']
-        self.activity = self.file['activity']
-        self.weight = self.file['weight']
-        self.schedule = self.file['schedule']
-        self.fromts = self.file['from']
-        self.tots = self.file['to']
+        self.name = schedule.name
+        self.time_created = schedule.timecreated
+        self.time_updated = schedule.timeupdated
+        self.activity = schedule.activity
+        self.weight = schedule.weight
+        self.schedule = schedule.schedule
+        self.fromts = schedule.fromts
+        self.tots = schedule.tots
 
     def add_activity(self, tid, activity=None):
         if activity is None:
@@ -90,41 +74,27 @@ class Schedule:
             else:
                 self.activity[tid] = [activity]
 
-        self.update_file()
+        schedule = utils.first(ScheduleModel.objects(uuid=self.uuid))
+        schedule.activity = self.activity
+        schedule.save()
 
     def remove_user(self, tid):
         self.activity.pop(tid, None)
         self.weight.pop(tid, None)
-        self.update_file()
+        schedule = utils.first(ScheduleModel.objects(uuid=self.uuid))
+        schedule.activity = self.activity
+        schedule.weight = self.weight
+        schedule.save()
 
     def set_weight(self, tid, weight):
         self.weight[tid] = weight
-        self.update_file()
+        schedule = utils.first(ScheduleModel.objects(uuid=self.uuid))
+        schedule.weight = self.weight
+        schedule.save()
 
     def delete(self):
-        session = session_local()
-        schedule = session.query(ScheduleModel).filter_by(uuid=self.uuid).first()
-        session.delete(schedule)
-
-        if os.path.isfile(f'{os.getcwd()}/schedule/{self.uuid}.json'):
-            os.remove(f'{os.getcwd()}/schedule/{self.uuid}.json')
-        else:
-            raise Exception
-
-        session.flush()
-
-    def update_file(self):
-        self.file['name'] = self.name
-        self.file['timecreated'] = self.time_created
-        self.file['timeupdated'] = utils.now()
-        self.file['activity'] = self.activity
-        self.file['weight'] = self.weight
-        self.file['schedule'] = self.schedule
-        self.file['from'] = self.fromts
-        self.file['to'] = self.tots
-
-        with open(f'{os.getcwd()}/schedule/{self.uuid}.json', 'w') as file:
-            json.dump(self.file, file, indent=4)
+        schedule = utils.first(ScheduleModel.objects(uuid=self.uuid))
+        schedule.delete()
 
     def generate(self):
         users = {}

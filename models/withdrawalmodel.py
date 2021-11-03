@@ -13,10 +13,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from mongoengine import DynamicDocument, IntField, StringField, ListField
+from mongoengine import DynamicDocument, IntField
 
 
-class KeyModel(DynamicDocument):
-    key = StringField(primary_key=True)
-    ownertid = IntField()
-    scopes = ListField(StringField)  # List of scopes
+class WithdrawalModel(DynamicDocument):
+    wid = IntField(primary_key=True)  # The withdrawal ID
+    factiontid = IntField()
+    amount = IntField()
+    requester = IntField()
+    time_requested = IntField()
+    fulfiller = IntField()
+    time_fulfilled = IntField()
+    withdrawal_message = IntField()
