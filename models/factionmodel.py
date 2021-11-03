@@ -24,7 +24,7 @@ class FactionModel(DynamicDocument):
     leader = IntField(default=0)
     coleader = IntField(default=0)
 
-    keys = ListField(StringField(min_length=16, max_length=16), default=[])  # String of list of keys
+    keys = ListField(StringField(), default=[])  # String of list of keys
 
     last_members = IntField(default=0)  # Time of last members update
 
