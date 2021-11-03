@@ -18,23 +18,23 @@ from mongoengine import DynamicDocument, IntField, StringField, DictField, ListF
 
 class FactionModel(DynamicDocument):
     tid = IntField(primary_key=True)
-    name = StringField()
-    respect = IntField()
-    capacity = IntField()
-    leader = IntField()
-    coleader = IntField()
+    name = StringField(default='')
+    respect = IntField(default=0)
+    capacity = IntField(default=0)
+    leader = IntField(default=0)
+    coleader = IntField(default=0)
 
-    keys = ListField(StringField(min_length=16, max_length=16))  # String of list of keys
+    keys = ListField(StringField(min_length=16, max_length=16), default=[])  # String of list of keys
 
-    last_members = IntField()  # Time of last members update
+    last_members = IntField(default=0)  # Time of last members update
 
-    guild = IntField()  # Guild ID of the faction's guild
-    config = DictField()  # Dictionary of faction's bot configuration
-    vaultconfig = DictField()  # Dictionary of vault configuration
+    guild = IntField(default=0)  # Guild ID of the faction's guild
+    config = DictField(default={'vault': 0, 'stats': 1})  # Dictionary of faction's bot configuration
+    vaultconfig = DictField(default={'banking': 0, 'banker': 0, 'withdrawal': 0})  # Dictionary of vault configuration
 
-    targets = DictField()  # Dictionary of targets
+    targets = DictField(default={})  # Dictionary of targets
 
-    statconfig = DictField()  # Dictionary of target config
+    statconfig = DictField(default={'global': 0})  # Dictionary of target config
 
-    chainconfig = DictField()  # Dictionary of chain config
-    chainod = DictField()  # Dictionary of faction member overdoses
+    chainconfig = DictField(default={'od': 0, 'odchannel': 0})  # Dictionary of chain config
+    chainod = DictField(default={})  # Dictionary of faction member overdoses
