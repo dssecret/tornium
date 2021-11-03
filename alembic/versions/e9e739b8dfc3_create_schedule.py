@@ -1,7 +1,7 @@
 """Create Schedule
 
 Revision ID: e9e739b8dfc3
-Revises: b0a79880c026
+Revises: c7a21f70d4a2
 Create Date: 2021-10-05 16:20:17.072635
 
 """
@@ -14,7 +14,7 @@ from redisdb import get_redis
 
 # revision identifiers, used by Alembic.
 revision = 'e9e739b8dfc3'
-down_revision = 'b0a79880c026'
+down_revision = 'c7a21f70d4a2'
 branch_labels = None
 depends_on = None
 
