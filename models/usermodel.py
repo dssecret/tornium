@@ -22,7 +22,7 @@ class UserModel(DynamicDocument):
     level = IntField()
     last_refresh = IntField()
     admin = BooleanField()
-    key = StringField(min_length=16, max_length=16)
+    key = StringField()
     battlescore = FloatField()
     battlescore_update = IntField()
 
