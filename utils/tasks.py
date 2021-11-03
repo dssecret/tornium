@@ -458,7 +458,7 @@ def refresh_users():
         user.name = user_data['name']
         user.last_refresh = timestamp
         user.status = user_data['last_action']['status']
-        user.last_action = user_data['last_action']['relative']
+        user.last_action = user_data['last_action']['timestamp']
         user.level = user_data['level']
         user.discord_id = user_data['discord']['discordID'] if user_data['discord']['discordID'] != '' else 0
         user.factiontid = user_data['faction']['faction_id']
