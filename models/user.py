@@ -129,9 +129,11 @@ class User(UserMixin):
 
     def get_id(self):
         return self.tid
+    
+    def is_aa(self):
+        return self.aa
 
     def set_key(self, key: str):
-
         user = utils.first(UserModel.objects(tid=self.tid))
         user.key = key
         self.key = key
