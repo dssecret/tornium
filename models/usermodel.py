@@ -18,20 +18,20 @@ from mongoengine import DynamicDocument, IntField, StringField, DictField, ListF
 
 class UserModel(DynamicDocument):
     tid = IntField(primary_key=True)
-    name = StringField()
-    level = IntField()
-    last_refresh = IntField()
-    admin = BooleanField()
-    key = StringField()
-    battlescore = FloatField()
-    battlescore_update = IntField()
+    name = StringField(default='')
+    level = IntField(default=0)
+    last_refresh = IntField(default=0)
+    admin = BooleanField(default=False)
+    key = StringField(default='')
+    battlescore = FloatField(default=0.0)
+    battlescore_update = IntField(default=0)
 
-    discord_id = IntField()
-    servers = ListField(IntField)  # List of discord servers where user is admin
+    discord_id = IntField(default=0)
+    servers = ListField(IntField, default=[])  # List of discord servers where user is admin
 
-    factionid = IntField()
-    factionaa = BooleanField()
-    chain_hits = IntField()
+    factionid = IntField(default=0)
+    factionaa = BooleanField(default=False)
+    chain_hits = IntField(default=0)
 
-    status = StringField()
-    last_action = IntField()
+    status = StringField(default='')
+    last_action = IntField(default=0)
