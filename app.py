@@ -62,7 +62,8 @@ connect(
     db='Tornium',
     username=redis.get('username'),
     password=redis.get('password'),
-    host=f'mongodb://{redis.get("host")}'
+    host=f'mongodb://{redis.get("host")}',
+    connect=False
 )
 
 from controllers import mod as base_mod
