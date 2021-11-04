@@ -18,9 +18,9 @@ from mongoengine import DynamicDocument, IntField, BooleanField, FloatField
 
 class StatModel(DynamicDocument):
     statid = IntField(primary_key=True)
-    tid = IntField()
-    battlescore = FloatField()
-    timeadded = IntField()
-    addedid = IntField()
-    addedfactiontid = IntField()
-    globalstat = BooleanField()
+    tid = IntField(default=0)
+    battlescore = FloatField(default=0.0)
+    timeadded = IntField(default=0)
+    addedid = IntField(default=0)
+    addedfactiontid = IntField(default=0)
+    globalstat = BooleanField(default=False)

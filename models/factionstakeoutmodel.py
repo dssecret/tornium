@@ -18,6 +18,6 @@ from mongoengine import DynamicDocument, IntField, DictField
 
 class FactionStakeoutModel(DynamicDocument):
     tid = IntField(primary_key=True)  # The faction ID of the stakeout
-    data = DictField()  # Faction data from the Torn API
-    guilds = DictField()  # Dictionary of guilds and keys to be watched
-    last_update = IntField()
+    data = DictField(default={})  # Faction data from the Torn API
+    guilds = DictField(default={})  # Dictionary of guilds and keys to be watched
+    last_update = IntField(default=0)
