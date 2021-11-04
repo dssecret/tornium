@@ -128,7 +128,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
                 server.save()
         elif request['error']['code'] == 7:
             user = utils.first(UserModel.objects(key=key))
-            user.aa = False
+            user.factionaa = False
             user.save()
 
             faction = utils.first(FactionModel.objects(tid=user.factionid))
