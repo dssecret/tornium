@@ -37,7 +37,7 @@ def index():
 @mod.route('/stats/db')
 @login_required
 def stats():
-    return render_template('stats/db.html', battlescore=int(current_user.battlescore[0]))
+    return render_template('stats/db.html', battlescore=current_user.battlescore)
 
 
 @mod.route('/stats/dbdata')
