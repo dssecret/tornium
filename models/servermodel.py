@@ -13,11 +13,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from mongoengine import DynamicDocument, IntField, StringField, DictField, ListField
+from mongoengine import DynamicDocument, IntField, StringField, DictField, ListField, LongField
 
 
 class ServerModel(DynamicDocument):
-    sid = IntField(primary_key=True)
+    sid = LongField(primary_key=True)
     name = StringField(default='')
     admins = ListField(IntField, default=[])  # List of admin ids
     prefix = StringField(default='?')
