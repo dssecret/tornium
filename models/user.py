@@ -120,7 +120,7 @@ class User(UserMixin):
             tornget.call_local(f'faction/?selections=positions', self.key)
         except:
             self.aa = False
-            user.aa = False
+            user.factionaa = False
         finally:
             self.aa = True
             user.factionaa = True
