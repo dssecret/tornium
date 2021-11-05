@@ -30,7 +30,7 @@ class User(UserMixin):
         :param tid: Torn user ID
         """
 
-        user = utils.first(UserModel.objects(tid=tid))
+        user = utils.first(UserModel.objects(_id=tid))
         now = utils.now()
         if user is None:
             user = UserModel(

@@ -19,4 +19,4 @@ from mongoengine import DynamicDocument, IntField, StringField, ListField
 class KeyModel(DynamicDocument):
     key = StringField(primary_key=True)
     ownertid = IntField(default=0)
-    scopes = ListField(StringField, default=[])  # List of scopes
+    scopes = ListField(default=[])  # List of scopes

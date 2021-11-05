@@ -27,7 +27,7 @@ class UserModel(DynamicDocument):
     battlescore_update = IntField(default=0)
 
     discord_id = IntField(default=0)
-    servers = ListField(IntField, default=[])  # List of discord servers where user is admin
+    servers = ListField(default=[])  # List of discord servers where user is admin
 
     factionid = IntField(default=0)
     factionaa = BooleanField(default=False)

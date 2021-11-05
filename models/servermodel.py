@@ -19,11 +19,11 @@ from mongoengine import DynamicDocument, IntField, StringField, DictField, ListF
 class ServerModel(DynamicDocument):
     sid = LongField(primary_key=True)
     name = StringField(default='')
-    admins = ListField(IntField, default=[])  # List of admin ids
+    admins = ListField(default=[])  # List of admin ids
     prefix = StringField(default='?')
     config = DictField(default={'stakeouts': 0})  # Dictionary of server configurations
 
-    factions = ListField(IntField, default=[])  # List of factions in server
+    factions = ListField(default=[])  # List of factions in server
 
     stakeoutconfig = DictField(default={'category': 0})  # Dictionary of stakeout configurations for the server
     userstakeouts = ListField(IntField, default=[])  # List of staked-out users
