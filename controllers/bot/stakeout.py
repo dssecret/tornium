@@ -207,19 +207,15 @@ def stakeout_update(guildid):
         server = utils.first(ServerModel.objects(sid=guildid))
 
         if faction is not None:
-            stakeouts = server.factionstakeouts
-            stakeouts.remove(int(faction))
-            server.factionstakeouts = stakeouts
+            server.factionstakeouts.remove(int(faction))
 
             stakeout = utils.first(FactionStakeoutModel.objects(tid=faction))
             discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
             stakeout.delete()
         elif user is not None:
-            stakeouts = json.loads(server.userstakeouts)
-            stakeouts.remove(int(user))
-            server.userstakeouts = json.dumps(stakeouts)
+            server.userstakeouts.remove(int(user))
 
-            stakeout = utils.first(UserStakeoutModel.objects(tid=faction))
+            stakeout = utils.first(UserStakeoutModel.objects(tid=user))
             discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
             stakeout.delete()
 
@@ -237,7 +233,7 @@ def stakeout_update(guildid):
             return jsonify({'error': f'This requires the faction to be in the list of factions in the server.'}), 400
 
         if user is not None:
-            stakeout = utils.first(UserStakeoutModel.objects(tid=faction))
+            stakeout = utils.first(UserStakeoutModel.objects(tid=user))
         else:
             stakeout = utils.first(FactionStakeoutModel.objects(tid=faction))
 
@@ -256,7 +252,7 @@ def stakeout_update(guildid):
                                      f'ID to be passed.'}), 400
 
         if user is not None:
-            stakeout = utils.first(UserStakeoutModel.objects(tid=faction))
+            stakeout = utils.first(UserStakeoutModel.objects(tid=user))
         else:
             stakeout = utils.first(FactionStakeoutModel.objects(tid=faction))
 

@@ -26,5 +26,5 @@ class ServerModel(DynamicDocument):
     factions = ListField(default=[])  # List of factions in server
 
     stakeoutconfig = DictField(default={'category': 0})  # Dictionary of stakeout configurations for the server
-    userstakeouts = ListField(IntField, default=[])  # List of staked-out users
-    factionstakeouts = ListField(IntField, default=[])  # List of staked-out factions
+    userstakeouts = ListField(default=[])  # List of staked-out users
+    factionstakeouts = ListField(default=[])  # List of staked-out factions
