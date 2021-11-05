@@ -29,7 +29,8 @@ def dashboard():
     servers = []
 
     for server in current_user.servers:
-        servers.append(Server(server))
+        print(int(server))
+        servers.append(Server(int(server)))
 
     return render_template('bot/dashboard.html', servers=servers)
 

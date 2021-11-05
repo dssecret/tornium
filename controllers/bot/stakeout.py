@@ -27,17 +27,19 @@ def stakeouts_dashboard(guildid: str):
     if guildid not in current_user.servers:
         abort(403)
 
-    server = Server(guildid)
-
     if request.method == 'POST':
-        server_db = utils.first(ServerModel.objects(sid=guildid))
+        server = utils.first(ServerModel.objects(sid=guildid))
+
+        if server is None:
+            abort(400)
 
         if request.form.get('factionid') is not None:
-            if int(request.form.get('factionid')) not in server.faction_stakeouts:
+            if int(request.form.get('factionid')) not in server.factionstakeouts:
                 stakeout = Stakeout(int(request.form.get('factionid')), user=False, key=current_user.key,
                                     guild=int(guildid))
-                server.faction_stakeouts.append(int(request.form.get('factionid')))
-                server_db.factionstakeouts = list(set(server.faction_stakeouts))
+                stakeouts = server.factionstakeouts
+                stakeouts.append(int(request.form.get('factionid')))
+                server.factionstakeouts = list(set(stakeouts))
 
                 payload = {
                     'name': f'faction-{stakeout.data["name"]}',
@@ -49,9 +51,8 @@ def stakeouts_dashboard(guildid: str):
 
                 channel = discordpost.call_local(f'guilds/{guildid}/channels', payload=payload)
 
-                stakeout.guilds[guildid]['channel'] = int(channel['id'])
                 db_stakeout = utils.first(FactionStakeoutModel.objects(tid=request.form.get('factionid')))
-                db_stakeout.guilds = stakeout.guilds
+                db_stakeout.guilds[guildid]['channel'] = int(channel['id'])
                 db_stakeout.save()
 
                 message_payload = {
@@ -71,24 +72,24 @@ def stakeouts_dashboard(guildid: str):
                 flash(f'Faction ID {request.form.get("factionid")} is already being staked out in {server.name}.',
                       category='error')
         elif request.form.get('userid') is not None:
-            if int(request.form.get('userid')) not in server.user_stakeouts:
+            if int(request.form.get('userid')) not in server.userstakeouts:
                 stakeout = Stakeout(int(request.form.get('userid')), key=current_user.key, guild=int(guildid))
-                server.user_stakeouts.append(int(request.form.get('userid')))
-                server_db.userstakeouts = list(set(server.user_stakeouts))
+                server.userstakeouts.append(int(request.form.get('userid')))
+                server.userstakeouts = list(set(server.userstakeouts))
+                server.save()
 
                 payload = {
                     'name': f'user-{stakeout.data["name"]}',
                     'type': 0,
                     'topic': f'The bot-created channel for stakeout notifications for {stakeout.data["name"]} '
                              f'[{stakeout.data["player_id"]}] by the Tornium bot.',
-                    'parent_id': server.stakeout_config['category']
+                    'parent_id': server.stakeoutconfig['category']
                 }  # TODO: Add permission overwrite: everyone write false
 
                 channel = discordpost.call_local(f'guilds/{guildid}/channels', payload=payload)
 
-                stakeout.guilds[guildid]['channel'] = int(channel['id'])
-                db_stakeout = utils.first(UserStakeoutModel.objects(tid=request.form.get('factionid')))
-                db_stakeout.guilds = stakeout.guilds
+                db_stakeout = utils.first(UserStakeoutModel.objects(tid=request.form.get('userid')))
+                db_stakeout.guilds[guildid]['channel'] = int(channel['id'])
                 db_stakeout.save()
 
                 message_payload = {
@@ -103,7 +104,7 @@ def stakeouts_dashboard(guildid: str):
                         }
                     ]
                 }
-                discordpost(f'channels/{channel["id"]}/messages', payload=message_payload)()
+                discordpost.call_local(f'channels/{channel["id"]}/messages', payload=message_payload)
             else:
                 flash(f'User ID {request.form.get("userid")} is already being staked out in {server.name}.',
                       category='error')
@@ -274,7 +275,7 @@ def stakeout_update(guildid):
         server.save()
     elif action == 'category':
         server = utils.first(ServerModel.objects(sid=guildid))
-        server.config['category'] = int(value)
+        server.stakeoutconfig['category'] = int(value)
         server.save()
 
     if request.method == 'GET':

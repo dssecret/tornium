@@ -30,7 +30,7 @@ class Stakeout:
 
         if stakeout is None:
             now = utils.now()
-            guilds = {} if guild is None else {guild: {'keys': [], 'channel': 0}}
+            guilds = {} if guild is None else {str(guild): {'keys': [], 'channel': 0}}
 
             if user:
                 try:
@@ -60,7 +60,7 @@ class Stakeout:
 
             stakeout.save()
         elif guild not in stakeout.guilds and guild is not None:
-            stakeout.guilds[guild] = {
+            stakeout.guilds[str(guild)] = {
                 'keys': [],
                 'channel': 0
             }

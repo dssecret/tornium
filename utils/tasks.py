@@ -154,12 +154,16 @@ def discordget(endpoint, session=None):
     else:
         request = session.get(url, headers={'Authorization': f'Bot {redis.get("bottoken")}'})
 
-    if str(request.status_code)[:1] != '2':
-        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
-                                   f'"{endpoint}".')
-        raise utils.NetworkingError(request.status_code)
-
-    request_json = request.json()
+    try:
+        request_json = request.json()
+    except:
+        if str(request.status_code)[:1] != '2':
+            utils.get_logger().warning(
+                f'The Discord API has responded with status code {request.status_code} to endpoint '
+                f'"{endpoint}".')
+            raise utils.NetworkingError(request.status_code)
+        else:
+            raise Exception
 
     if 'code' in request_json:
         # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
@@ -167,7 +171,13 @@ def discordget(endpoint, session=None):
 
         utils.get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
                                 f'({request_json["message"]}) to {url}).')
+        if redis.get('dev'):
+            utils.get_logger().debug(request_json)
         raise utils.DiscordError(request_json["code"])
+    elif str(request.status_code)[:1] != '2':
+        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
+                                   f'"{endpoint}".')
+        raise utils.NetworkingError(request.status_code)
 
     return request_json
 
@@ -186,12 +196,16 @@ def discordpost(endpoint, payload, session=None):
                                              'Content-Type': 'application/json'},
                                data=json.dumps(payload))
 
-    if str(request.status_code)[:1] != '2':
-        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
-                                   f'"{endpoint}".')
-        raise utils.NetworkingError(request.status_code)
-
-    request_json = request.json()
+    try:
+        request_json = request.json()
+    except:
+        if str(request.status_code)[:1] != '2':
+            utils.get_logger().warning(
+                f'The Discord API has responded with status code {request.status_code} to endpoint '
+                f'"{endpoint}".')
+            raise utils.NetworkingError(request.status_code)
+        else:
+            raise Exception
 
     if 'code' in request_json:
         # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
@@ -199,7 +213,13 @@ def discordpost(endpoint, payload, session=None):
 
         utils.get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
                                 f'({request_json["message"]}) to {url}).')
+        if redis.get('dev'):
+            utils.get_logger().debug(request_json)
         raise utils.DiscordError(request_json["code"])
+    elif str(request.status_code)[:1] != '2':
+        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
+                                   f'"{endpoint}".')
+        raise utils.NetworkingError(request.status_code)
 
     return request_json
 
@@ -216,12 +236,16 @@ def discorddelete(endpoint, session=None):
         request = session.delete(url, headers={'Authorization': f'Bot {redis.get("bottoken")}',
                                                'Content-Type': 'application/json'})
 
-    if str(request.status_code)[:1] != '2':
-        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
-                                   f'"{endpoint}".')
-        raise utils.NetworkingError(request.status_code)
-
-    request_json = request.json()
+    try:
+        request_json = request.json()
+    except:
+        if str(request.status_code)[:1] != '2':
+            utils.get_logger().warning(
+                f'The Discord API has responded with status code {request.status_code} to endpoint '
+                f'"{endpoint}".')
+            raise utils.NetworkingError(request.status_code)
+        else:
+            raise Exception
 
     if 'code' in request_json:
         # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
@@ -229,7 +253,13 @@ def discorddelete(endpoint, session=None):
 
         utils.get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
                                 f'({request_json["message"]}) to {url}).')
+        if redis.get('dev'):
+            utils.get_logger().debug(request_json)
         raise utils.DiscordError(request_json["code"])
+    elif str(request.status_code)[:1] != '2':
+        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
+                                   f'"{endpoint}".')
+        raise utils.NetworkingError(request.status_code)
 
     return request_json
 
