@@ -17,6 +17,7 @@ import asyncio
 import json
 import logging
 import os
+import random
 
 import discord
 from discord.ext import commands
@@ -64,7 +65,10 @@ connect(
 from bot import botutils
 from bot.vault import Vault
 from models.faction import Faction
+from models.factionmodel import FactionModel
 from models.server import Server
+from models.user import User
+import utils
 
 botlogger = logging.getLogger('bot')
 botlogger.setLevel(logging.DEBUG)
@@ -106,12 +110,14 @@ async def on_message(message):
         await bot.process_commands(message)
 
     for faction in server.factions:
-        faction = Faction(faction)
+        faction = utils.first(FactionModel.objects(tid=int(faction)))
 
-        if faction.get_vault_config().get('withdrawal') == 0:
+        if faction is None:
+            continue
+        elif faction.vaultconfig['withdrawal'] == 0:
             continue
 
-        if message.channel.id == faction.get_vault_config().get('withdrawal') and message.clean_content[0] != server.prefix:
+        if message.channel.id == faction.vaultconfig['withdrawal'] and message.clean_content[0] != server.prefix:
             await message.delete()
             embed = discord.Embed()
             embed.title = "Bot Channel"
