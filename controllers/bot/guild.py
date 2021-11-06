@@ -29,7 +29,6 @@ def dashboard():
     servers = []
 
     for server in current_user.servers:
-        print(int(server))
         servers.append(Server(int(server)))
 
     return render_template('bot/dashboard.html', servers=servers)
@@ -45,9 +44,9 @@ def guild_dashboard(guildid: str):
 
     if request.method == 'POST':
         if request.form.get('factionid') is not None:
-            server.factions.append(int(request.form.get('factionid')))
             server_model = utils.first(ServerModel.objects(sid=guildid))
-            server_model.factions = server.factions
+            server_model.factions.append(int(request.form.get('factionid')))
+            server_model.factions = list(set(server_model.factions))
             server_model.save()
         elif request.form.get('prefix') is not None:  # TODO: Check if prefix is valid character
             if len(request.form.get('prefix')) != 1:
@@ -70,10 +69,8 @@ def update_guild(guildid: str, factiontid: int):
     if guildid not in current_user.servers:
         abort(403)
 
-    server = Server(guildid)
-    server.factions.remove(factiontid)
     server_model = utils.first(ServerModel.objects(sid=guildid))
-    server_model.factions = server.factions
+    server_model.factions.remove(factiontid)
     server_model.save()
 
     return redirect(f'/bot/dashboard/{guildid}')

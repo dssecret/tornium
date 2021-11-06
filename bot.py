@@ -20,6 +20,7 @@ import os
 
 import discord
 from discord.ext import commands
+from mongoengine import connect
 
 from redisdb import get_redis
 
@@ -55,6 +56,14 @@ redis.set('taskqueue', data['taskqueue'])
 redis.set('username', data['username'])
 redis.set('password', data['password'])
 redis.set('host', data['host'])
+
+connect(
+    db='Tornium',
+    username=redis.get('username'),
+    password=redis.get('password'),
+    host=f'mongodb://{redis.get("host")}',
+    connect=False
+)
 
 from bot import botutils
 from bot.vault import Vault

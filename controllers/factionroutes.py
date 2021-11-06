@@ -161,72 +161,53 @@ def bot():
             faction_model.save()
         elif request.form.get('withdrawal') is not None:
             try:
-                channel = utils.tasks.discordget(f'channels/{request.form.get("withdrawal")}')
-                channel = channel(blocking=True)
-            except TaskException as e:
-                e = str(e)
-                if 'DiscordError' in e:
-                    return utils.handle_discord_error(e)
-                elif 'NetworkingError' in e:
-                    return render_template('errors/error.html', title='Discord Networking Error',
-                                           error=f'The Discord API has responded with HTTP error code '
-                                                 f'{utils.remove_str(e)}.')
-                else:
-                    raise e
+                channel = utils.tasks.discordget.call_local(f'channels/{request.form.get("withdrawal")}')
+            except utils.DiscordError as e:
+                return utils.handle_discord_error(str(e))
+            except utils.NetworkingError as e:
+                return render_template('errors/error.html', title='Discord Networking Error',
+                                       error=f'The Discord API has responded with HTTP error code '
+                                             f'{utils.remove_str(str(e))}.')
+            except Exception as e:
+                raise e
 
-            vault_config = faction.get_vault_config()
-            vault_config['withdrawal'] = int(channel['id'])
-            faction_model.vaultconfig = vault_config
+            faction_model.vaultconfig['withdrawal'] = int(channel['id'])
             faction_model.save()
         elif request.form.get('banking') is not None:
             try:
-                channel = utils.tasks.discordget(f'channels/{request.form.get("banking")}')
-                channel = channel(blocking=True)
-            except TaskException as e:
-                e = str(e)
-                if 'DiscordError' in e:
-                    return utils.handle_discord_error(e)
-                elif 'NetworkingError' in e:
-                    return render_template('errors/error.html', title='Discord Networking Error',
-                                           error=f'The Discord API has responded with HTTP error code '
-                                                 f'{utils.remove_str(e)}.')
-                else:
-                    raise e
+                channel = utils.tasks.discordget.call_local(f'channels/{request.form.get("banking")}')
+            except utils.DiscordError as e:
+                return utils.handle_discord_error(str(e))
+            except utils.NetworkingError as e:
+                return render_template('errors/error.html', title='Discord Networking Error',
+                                       error=f'The Discord API has responded with HTTP error code '
+                                             f'{utils.remove_str(str(e))}.')
+            except Exception as e:
+                raise e
 
-            vault_config = faction.get_vault_config()
-            vault_config['banking'] = int(channel['id'])
-            faction_model.vaultconfig = vault_config
+            faction_model.vaultconfig['banking'] = int(channel['id'])
             faction_model.save()
         elif request.form.get('banker') is not None:
             try:
-                roles = utils.tasks.discordget(f'guilds/{faction.guild}/roles')
-                roles = roles(blocking=True)
-            except TaskException as e:
-                e = str(e)
-                if 'DiscordError' in e:
-                    return utils.handle_discord_error(e)
-                elif 'NetworkingError' in e:
-                    return render_template('errors/error.html', title='Discord Networking Error',
-                                           error=f'The Discord API has responded with HTTP error code '
-                                                 f'{utils.remove_str(e)}.')
-                else:
-                    raise e
+                roles = utils.tasks.discordget.call_local(f'guilds/{faction.guild}/roles')
+            except utils.DiscordError as e:
+                return utils.handle_discord_error(str(e))
+            except utils.NetworkingError as e:
+                return render_template('errors/error.html', title='Discord Networking Error',
+                                       error=f'The Discord API has responded with HTTP error code '
+                                             f'{utils.remove_str(str(e))}.')
+            except Exception as e:
+                raise e
 
             for role in roles:  # TODO: Add error message for role not found in server
                 if role['id'] == request.form.get('banker'):
-                    vault_config = faction.get_vault_config()
-                    vault_config['banker'] = int(request.form.get('banker'))
-                    faction_model.vaultconfig = vault_config
+                    faction_model.vaultconfig['banker'] = int(request.form.get('banker'))
                     faction_model.save()
         elif (request.form.get('enabled') is not None) ^ (request.form.get('disabled') is not None):
-            config = faction.get_config()
-
             if request.form.get('enabled') is not None:
-                config['vault'] = 1
-                faction_model.config = json.dumps(config)
+                faction_model.config['vault'] = 1
             else:
-                config['vault'] = 0
-                faction_model.config = json.dumps(config)
+                faction_model.config['vault'] = 0
 
             faction_model.save()
 
@@ -247,16 +228,16 @@ def bankingaa():
 def bankingdata():
     start = int(request.args.get('start'))
     length = int(request.args.get('length'))
-    faction = Faction(current_user.factiontid)
     withdrawals = []
 
     for withdrawal in WithdrawalModel.objects(factiontid=current_user.factiontid):
-        requester = f'{User(withdrawal["requester"]).name} [{withdrawal["requester"]}]'
-        fulfiller = f'{User(withdrawal["fulfiller"]).name} [{withdrawal["fulfiller"]}]' if withdrawal["fulfiller"] != 0 else ''
-        timefulfilled = withdrawal['timefulfilled'] if withdrawal['timefulfilled'] != 0 else ''
+        requester = f'{User(withdrawal.requester).name} [{withdrawal.requester}]'
+        fulfiller = f'{User(withdrawal.fulfiller).name} [{withdrawal.fulfiller}]' if withdrawal.fulfiller != 0 else ''
+        timefulfilled = withdrawal.time_fulfilled if withdrawal.time_fulfilled != 0 else ''
 
-        withdrawals.append([withdrawal["id"], f'${withdrawal["amount"]:,}', requester, withdrawal['timerequested'],
-                            fulfiller, timefulfilled])
+        withdrawals.append([withdrawal.wid, f'${withdrawal.amount:,}', requester,
+                            utils.torn_timestamp(withdrawal.time_requested), fulfiller,
+                            utils.torn_timestamp(timefulfilled)])
 
     withdrawals = withdrawals[start:start+length]
     data = {
@@ -279,16 +260,16 @@ def banking():
 def userbankingdata():
     start = int(request.args.get('start'))
     length = int(request.args.get('length'))
-    faction = Faction(current_user.factiontid)
     withdrawals = []
 
     for withdrawal in WithdrawalModel.objects(requester=current_user.tid):
-        fulfiller = f'{User(withdrawal["fulfiller"]).name} [{withdrawal["fulfiller"]}]' if withdrawal["fulfiller"] != 0 else ''
-        timefulfilled = withdrawal['timefulfilled'] if withdrawal['timefulfilled'] != 0 else ''
+        fulfiller = f'{User(withdrawal.fulfiller).name} [{withdrawal.fulfiller}]' if withdrawal.fulfiller != 0 else ''
+        timefulfilled = withdrawal.time_fulfilled if withdrawal.time_fulfilled != 0 else ''
 
-        withdrawals.append([withdrawal['id'], f'${withdrawal["amount"]:,}', withdrawal['timerequested'],
-                            fulfiller, timefulfilled])
+        withdrawals.append([withdrawal.wid, f'${withdrawal.amount:,}', utils.torn_timestamp(withdrawal.time_requested),
+                            fulfiller, utils.torn_timestamp(timefulfilled)])
 
+    withdrawals = withdrawals[start:start+length]
     data = {
         'draw': request.args.get('draw'),
         'recordsTotal': WithdrawalModel.objects().count(),

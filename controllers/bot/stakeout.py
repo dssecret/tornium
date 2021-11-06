@@ -171,7 +171,7 @@ def stakeout_data(guildid: str):
         stakeout = Stakeout(faction, user=False)
 
         return render_template('bot/factionstakeoutmodal.html',
-                               faction=f'{Faction(faction, key=current_user.key).name} [{faction}]',
+                               faction=f'{Faction(int(faction), key=current_user.key).name} [{faction}]',
                                lastupdate=utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update)),
                                keys=stakeout.guilds[guildid]['keys'],
                                guildid=guildid,
@@ -184,7 +184,7 @@ def stakeout_data(guildid: str):
 
         stakeout = Stakeout(user)
         return render_template('bot/userstakeoutmodal.html',
-                               user=f'{User(user, key=current_user.key).name} [{user}]',
+                               user=f'{User(int(user), key=current_user.key).name} [{user}]',
                                lastupdate=utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update)),
                                keys=stakeout.guilds[guildid]['keys'],
                                guildid=guildid,

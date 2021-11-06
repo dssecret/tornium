@@ -123,7 +123,7 @@ def banking_request(*args, **kwargs):
             'id': request_id,
             'amount': amount_requested,
             'requester': user.tid,
-            'timerequested': withdrawal['timerequested'],
+            'timerequested': withdrawal.time_requested,
             'withdrawalmessage': message['id']
         }), 200, {
             'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota

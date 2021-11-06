@@ -201,14 +201,14 @@ class Vault(commands.Cog):
             return None
 
         # Message posted in banking channel
-        withdrawal_message = await banking_channel.fetch_message(withdrawal['withdrawalmessage'])
+        withdrawal_message = await banking_channel.fetch_message(withdrawal.withdrawal_message)
 
-        if withdrawal['fulfiller'] == 0:
+        if withdrawal['fulfiller'] != 0:
             embed = discord.Embed()
             embed.title = 'Request Already Fulfilled'
             embed.description = f'Vault request #{request} has already been fulfilled by ' \
-                                f'{User(withdrawal["fulfiller"]).name} at ' \
-                                f'{withdrawal["timefulfilled"]}.'
+                                f'{User(withdrawal.fulfiller).name} at ' \
+                                f'{withdrawal.time_fulfilled}.'
             await ctx.send(embed=embed)
             return None
 
@@ -219,7 +219,7 @@ class Vault(commands.Cog):
         await withdrawal_message.edit(embed=embed)
 
         withdrawal.fulfiller = user.tid
-        withdrawal.timefulfilled = utils.now()
+        withdrawal.time_fulfilled = utils.now()
         withdrawal.save()
 
     @commands.command(pass_context=True, aliases=['balance', 'bal'])
