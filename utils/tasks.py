@@ -488,7 +488,7 @@ def refresh_users():
             utils.get_logger().exception(e)
             continue
 
-        user = utils.first(UserModel.objects(tid=user_data['player_id']))
+        user = utils.first(UserModel.objects(_id=user_data['player_id']))
         user.factiontid = user_data['faction']['faction_id']
         user.name = user_data['name']
         user.last_refresh = timestamp
