@@ -34,8 +34,6 @@ except FileNotFoundError:
     data = {
         'jsonfiles': ['settings'],
         'dev': False,
-        'banlist': [],
-        'useragentlist': [],
         'bottoken': '',
         'secret': str(os.urandom(32)),
         'taskqueue': 'redis',
@@ -51,8 +49,6 @@ with open('settings.json', 'r') as file:
 
 redis = get_redis()
 redis.set('dev', str(data['dev']))
-redis.set('banlist', json.dumps(data['banlist']))
-redis.set('useragentlist', json.dumps(data['useragentlist']))
 redis.set('bottoken', data['bottoken'])
 redis.set('secret', data['secret'])
 redis.set('taskqueue', data['taskqueue'])
@@ -307,7 +303,7 @@ def refresh_factions():
     requests_session = requests.Session()
 
     for faction in FactionModel.objects():
-        if len(json.loads(faction.keys)) == 0:
+        if len(faction.keys) == 0:
             continue
 
         try:
@@ -397,9 +393,9 @@ def refresh_factions():
                 utils.get_logger().exception(e)
                 continue
 
-            if len(json.loads(faction.chainod)) != 0:
-                for tid, user_od in json.loads(faction_od)['contributors']['drugoverdoses'].items():
-                    if user_od != json.loads(faction.chainod).get(tid):
+            if len(faction.chainod) != 0:
+                for tid, user_od in faction_od['contributors']['drugoverdoses'].items():
+                    if user_od != faction.chainod.get(tid):
                         overdosed_user = utils.first(UserModel.objects(tid=tid))
                         payload = {
                             'embeds': [
@@ -547,7 +543,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             if user is None:
                 try:
                     user_data = tornget.call_local(f'user/{attack["attacker_id"]}/?selections=profile,discord',
-                                                   random.choice(json.loads(faction.keys)),
+                                                   random.choice(faction.keys),
                                                    session=requests_session)
 
                     user = UserModel(
@@ -642,10 +638,10 @@ def user_stakeout(stakeout, requests_session=None, key=None):
 
     stakeout_data = stakeout.data
     stakeout.lastupdate = utils.now()
-    stakeout.data = json.dumps(data)
+    stakeout.data = data
     stakeout.save()
 
-    for guildid, guild_stakeout in json.loads(stakeout.guilds).items():
+    for guildid, guild_stakeout in stakeout.guilds.items():
         if len(guild_stakeout['keys']) == 0:
             continue
 
@@ -787,10 +783,10 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
 
     stakeout_data = stakeout.data
     stakeout.lastupdate = utils.now()
-    stakeout.data = json.dumps(data)
+    stakeout.data = data
     stakeout.save()
 
-    for guildid, guild_stakeout in json.loads(stakeout.guilds).items():
+    for guildid, guild_stakeout in stakeout.guilds.items():
         if len(guild_stakeout['keys']) == 0:
             continue
 
@@ -1136,7 +1132,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         break
                     else:
                         data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
-                                                  key=random.choice(json.loads(faction.keys)),
+                                                  key=random.choice(faction.keys),
                                                   session=requests_session,
                                                   fromts=utils.now() - 60)
                 except Exception as e:
@@ -1185,7 +1181,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         break
                     else:
                         data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
-                                                  key=random.choice(json.loads(faction.keys)),
+                                                  key=random.choice(faction.keys),
                                                   session=requests_session,
                                                   fromts=utils.now() - 60)
                 except Exception as e:

@@ -31,8 +31,6 @@ except FileNotFoundError:
     data = {
         'jsonfiles': ['settings'],
         'dev': False,
-        'banlist': [],
-        'useragentlist': [],
         'bottoken': '',
         'secret': str(os.urandom(32)),
         'taskqueue': 'redis',
@@ -48,8 +46,6 @@ with open('settings.json', 'r') as file:
 
 redis = get_redis()
 redis.set('dev', str(data['dev']))
-redis.set('banlist', json.dumps(data['banlist']))
-redis.set('useragentlist', json.dumps(data['useragentlist']))
 redis.set('bottoken', data['bottoken'])
 redis.set('secret', data['secret'])
 redis.set('taskqueue', data['taskqueue'])
