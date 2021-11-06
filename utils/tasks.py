@@ -515,7 +515,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
     for faction in FactionModel.objects():
         if len(faction.keys) == 0:
             continue
-        elif faction.config['stat'] == 0:
+        elif faction.config['stats'] == 0:
             continue
 
         try:
