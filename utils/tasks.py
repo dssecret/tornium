@@ -22,6 +22,7 @@ import random
 import time
 
 from huey import SqliteHuey, RedisHuey, crontab
+from mongoengine import connect
 import requests
 
 from redisdb import get_redis
@@ -58,6 +59,14 @@ redis.set('taskqueue', data['taskqueue'])
 redis.set('username', data['username'])
 redis.set('password', data['password'])
 redis.set('host', data['host'])
+
+connect(
+    db='Tornium',
+    username=redis.get('username'),
+    password=redis.get('password'),
+    host=f'mongodb://{redis.get("host")}',
+    connect=False
+)
 
 from models.factionmodel import FactionModel
 from models.factionstakeoutmodel import FactionStakeoutModel
