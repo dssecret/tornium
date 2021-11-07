@@ -119,7 +119,7 @@ async def on_message(message):
             embed.set_footer(text=utils.torn_timestamp())
 
             for server in ServerModel.objects(assistchannel__ne=0):
-                if server.config['assists'] == 0 or server.assistschannel == 0:
+                if 'assists' not in server.config or server.config['assists'] == 0 or server.assistschannel == 0:
                     continue
 
                 try:
