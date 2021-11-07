@@ -35,11 +35,12 @@ class Server:
                 name=guild['name'],
                 admins=[],
                 prefix='?',
-                config={'stakeouts': 0},
+                config={'stakeouts': 0, 'assists': 0},
                 factions=[],
                 stakeoutconfig={'category': 0},
                 userstakeouts=[],
-                factionstakeouts=[]
+                factionstakeouts=[],
+                assistschannel=0
             )
             server.save()
 
@@ -54,3 +55,5 @@ class Server:
         self.stakeout_config = server.stakeoutconfig
         self.user_stakeouts = server.userstakeouts
         self.faction_stakeouts = server.factionstakeouts
+
+        self.assistschannel = server.assistschannel

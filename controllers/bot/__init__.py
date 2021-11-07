@@ -16,9 +16,9 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 
+from controllers.bot import assists
 from controllers.bot import guild
 from controllers.bot import stakeout
-from models.server import Server
 
 mod = Blueprint('botroutes', __name__)
 
@@ -32,6 +32,9 @@ mod.add_url_rule('/bot/stakeouts/<string:guildid>', view_func=stakeout.stakeouts
 mod.add_url_rule('/bot/stakeouts/<string:guildid>/<int:stype>', view_func=stakeout.stakeouts, methods=['GET'])
 mod.add_url_rule('/bot/stakeouts/<string:guildid>/modal', view_func=stakeout.stakeout_data, methods=['GET'])
 mod.add_url_rule('/bot/stakeouts/<string:guildid>/update', view_func=stakeout.stakeout_update, methods=['GET', 'POST'])
+
+# Assist Routes
+mod.add_url_rule('/bot/assists/<string:guildid>/update', view_func=assists.assists_update, methods=['GET', 'POST'])
 
 
 @mod.route('/bot')

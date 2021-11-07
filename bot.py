@@ -14,10 +14,12 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
+import datetime
 import json
 import logging
 import os
 import random
+from urllib.parse import urlparse, parse_qs
 
 import discord
 from discord.ext import commands
@@ -64,9 +66,9 @@ connect(
 
 from bot import botutils
 from bot.vault import Vault
-from models.faction import Faction
 from models.factionmodel import FactionModel
 from models.server import Server
+from models.servermodel import ServerModel
 from models.user import User
 import utils
 
@@ -77,11 +79,7 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 botlogger.addHandler(handler)
 
 client = discord.client.Client()
-intents = discord.Intents.default()
-intents.reactions = True
-intents.members = True
-intents.guilds = True
-intents.messages = True
+intents = discord.Intents.all()
 
 bot = commands.Bot(command_prefix=botutils.get_prefix, help_command=None, intents=intents)
 
@@ -105,6 +103,65 @@ async def on_message(message):
         return None
 
     server = Server(message.guild.id)
+
+    if 'assists' in server.config and server.config['assists'] == 1 and server.assistschannel == message.channel.id:
+        messages = []
+        content = message.content
+
+        parsed_url = urlparse(content)
+
+        if parsed_url.hostname == 'www.torn.com' and parsed_url.path in ('/loader.php', '/loader2.php') and \
+                parse_qs(parsed_url.query)["sid"][0] in ('attack', 'getInAttack'):
+            embed = discord.Embed()
+            embed.title = 'Assist Request'
+            embed.description = f'[{content}]({content})'
+            embed.timestamp = datetime.datetime.utcnow()
+            embed.set_footer(text=utils.torn_timestamp())
+
+            for server in ServerModel.objects(assistchannel__ne=0):
+                if server.config['assists'] == 0 or server.assistschannel == 0:
+                    continue
+
+                try:
+                    guild = bot.get_guild(server.sid)
+                except discord.Forbidden:
+                    continue
+                channel = discord.utils.get(guild.channels, id=server.assistschannel)
+
+                if channel is None:
+                    continue
+
+                message = await channel.send(embed=embed)
+                messages.append(message)
+
+            if len(server.admins) == 0:
+                return None
+            else:
+                tid = parse_qs(urlparse(content).query)
+
+                try:
+                    user_data = utils.tasks.tornget.call_local(f'user/{tid["user2ID"][0]}?selections=',
+                                                               key=User(random.choice(server.admins)).key)
+                except Exception as e:
+                    utils.get_logger().exception(e)
+                    return None
+
+                embed.add_field(name='User', value=f'{user_data["name"]} [{user_data["player_id"]}]')
+                embed.add_field(name='Level', value=user_data["level"])
+
+                if user_data["faction"]["faction_id"] == 0:
+                    faction = 'None'
+                else:
+                    faction = f'[{user_data["faction"]["faction_name"]}](https://www.torn.com/factions.php?step=' \
+                              f'profile&ID={user_data["faction"]["faction_id"]})'
+
+                embed.add_field(name='Faction', value=faction)
+                embed.add_field(name='Life', value=f'{user_data["life"]["current"]}/{user_data["life"]["maximum"]}')
+
+                for message in messages:
+                    await message.edit(embed=embed)
+
+            return None
 
     if len(server.admins) == 0:
         await bot.process_commands(message)

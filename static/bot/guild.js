@@ -33,4 +33,18 @@ $(document).ready(function(){
             xhttp.send();
         }
     });
+
+    $('#assistchannel').on('keypress', function(e) {
+        if(e.which === 13) {
+            const id = $('#assistchannel').val();
+            const xhttp = new XMLHttpRequest();
+
+            xhttp.onload = function() {
+                window.location.reload();
+            }
+
+            xhttp.open('POST', `/bot/assists/${guildid}/update?action=channel&value=${id}`);
+            xhttp.send();
+        }
+    });
 });

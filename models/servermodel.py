@@ -21,10 +21,12 @@ class ServerModel(DynamicDocument):
     name = StringField(default='')
     admins = ListField(default=[])  # List of admin ids
     prefix = StringField(default='?')
-    config = DictField(default={'stakeouts': 0})  # Dictionary of server configurations
+    config = DictField(default={'stakeouts': 0, 'assists': 0})  # Dictionary of server configurations
 
     factions = ListField(default=[])  # List of factions in server
 
     stakeoutconfig = DictField(default={'category': 0})  # Dictionary of stakeout configurations for the server
     userstakeouts = ListField(default=[])  # List of staked-out users
     factionstakeouts = ListField(default=[])  # List of staked-out factions
+
+    assistschannel = IntField(default=0)

@@ -22,6 +22,7 @@ from models.stakeout import Stakeout
 from models.user import User
 from utils.tasks import *
 
+
 @login_required
 def stakeouts_dashboard(guildid: str):
     if guildid not in current_user.servers:
@@ -199,9 +200,9 @@ def stakeout_update(guildid):
     value = request.args.get('value')
 
     if action not in ['remove', 'addkey', 'removekey', 'enable', 'disable', 'category']:
-        return json.dumps({'success': True}), 400, {'ContentType': 'application/json'}
+        return json.dumps({'success': False}), 400, {'ContentType': 'application/json'}
     elif faction and user:
-        return json.dumps({'success': True}), 400, {'ContentType': 'application/json'}
+        return json.dumps({'success': False}), 400, {'ContentType': 'application/json'}
 
     if action == 'remove':
         server = utils.first(ServerModel.objects(sid=guildid))

@@ -122,6 +122,39 @@ Tornium - Bot Dashboard
             {% endif %}
         </div>
     </div>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Assist Requests</h5>
+            <p class="card-text">
+                The attack assist requests that are sent to all servers.
+                The assists channel is the Discord channel in which assist requests will be sent to and from.
+            </p>
+
+            <div class="col-sm-12 col-md-8 col-lg-4 mb-3">
+                <div class="form-floating">
+                    <input class="form-control" id="assistchannel" name="assistchannel" value="{{ server.assist_channel }}">
+                    <label for="assistchannel">Assist Channel</label>
+                </div>
+            </div>
+
+            {% if server.config['assists'] == 0 %}
+            <button type="button" class="btn btn-primary">
+                <a href="/bot/assists/{{ guildid }}/update?action=enable" style="color: white;">Enabled</a>
+            </button>
+            <button type="button" class="btn btn-primary" disabled>
+                <a href="#" style="color: white;">Disabled</a>
+            </button>
+            {% else %}
+            <button type="button" class="btn btn-primary" disabled>
+                <a href="#" style="color: white;">Enabled</a>
+            </button>
+            <button type="button" class="btn btn-primary">
+                <a href="/bot/assists/{{ guildid }}/update?action=disable" style="color: white;">Disabled</a>
+            </button>
+            {% endif %}
+        </div>
+    </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js" integrity="sha512-2rNj2KJ+D8s1ceNasTIex6z4HWyOnEYLVC3FigGOmyQCZc2eBXKgOxQmo3oKLHyfcj53uz4QMsRCWNbLd32Q1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
