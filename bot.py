@@ -113,7 +113,7 @@ async def on_message(message):
         if parsed_url.hostname == 'www.torn.com' and parsed_url.path in ('/loader.php', '/loader2.php') and \
                 parse_qs(parsed_url.query)["sid"][0] in ('attack', 'getInAttack'):
             embed = discord.Embed()
-            embed.title = 'Assist Request'
+            embed.title = f'{message.author.nick if message.author.nick is not None else message.author.name} has requested an assist:'
             embed.description = f'[{content}]({content})'
             embed.timestamp = datetime.datetime.utcnow()
             embed.set_footer(text=utils.torn_timestamp())
@@ -148,7 +148,7 @@ async def on_message(message):
                     utils.get_logger().exception(e)
                     return None
 
-                embed.add_field(name='User', value=f'{user_data["name"]} [{user_data["player_id"]}]')
+                embed.add_field(name='Target', value=f'{user_data["name"]} [{user_data["player_id"]}]')
                 embed.add_field(name='Level', value=user_data["level"])
 
                 if user_data["faction"]["faction_id"] == 0:
