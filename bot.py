@@ -113,7 +113,8 @@ async def on_message(message):
         if parsed_url.hostname == 'www.torn.com' and parsed_url.path in ('/loader.php', '/loader2.php') and \
                 parse_qs(parsed_url.query)["sid"][0] in ('attack', 'getInAttack'):
             embed = discord.Embed()
-            embed.title = f'{message.author.nick if message.author.nick is not None else message.author.name} has requested an assist:'
+            embed.title = f'{message.author.nick if message.author.nick is not None else message.author.name} has ' \
+                          f'requested an assist from {message.guild.name}:'
             embed.description = f'[{content}]({content})'
             embed.timestamp = datetime.datetime.utcnow()
             embed.set_footer(text=utils.torn_timestamp())
