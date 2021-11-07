@@ -134,6 +134,8 @@ async def on_message(message):
                 message = await channel.send(embed=embed)
                 messages.append(message)
 
+            server = Server(message.guild.id)
+
             if len(server.admins) == 0:
                 return None
             else:
