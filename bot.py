@@ -212,6 +212,10 @@ async def on_message(message):
                 for message in messages:
                     await message.edit(embed=embed)
 
+            await asyncio.sleep(300)
+            for message in messages:
+                await message.delete()
+
             return None
 
     if len(server.admins) == 0:
