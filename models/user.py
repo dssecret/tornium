@@ -107,7 +107,7 @@ class User(UserMixin):
             self.factiontid = user_data['faction']['faction_id']
             self.last_refresh = now
             self.status = user_data['last_action']['status']
-            self.last_action = user_data['last_action']['relative']
+            self.last_action = user_data['last_action']['timestamp']
             self.level = user_data['level']
             self.battlescore = user.battlescore
             self.battlescore_update = now

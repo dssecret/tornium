@@ -362,7 +362,7 @@ def refresh_factions():
             user.last_refresh = utils.now()
             user.factiontid = faction.tid
             user.status = member['last_action']['status']
-            user.last_action = member['last_action']['relative']
+            user.last_action = member['last_action']['timestamp']
 
             if user.key == '' and len(keys) != 0:
                 try:
@@ -561,7 +561,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
                         last_refresh=timestamp,
                         chain_hits=0,
                         status=user_data['last_action']['status'],
-                        last_action=user_data['last_action']['relative']
+                        last_action=user_data['last_action']['timestamp']
                     )
                     user.save()
                 except Exception as e:
