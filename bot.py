@@ -153,6 +153,7 @@ async def on_message(message):
     server = Server(message.guild.id)
 
     if 'assists' in server.config and server.config['assists'] == 1 and server.assistschannel == message.channel.id:
+        await message.delete()
         messages = []
         content = message.content
 
