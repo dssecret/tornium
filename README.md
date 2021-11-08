@@ -19,12 +19,12 @@ The hosted version of Tornium does not allow for custom bots, customization of f
 ### Installation - Custom Server
 1. Clone the project - `git clone https://github.com/dssecret/tornium.git`
 2. `sudo apt-get update && sudo apt-get upgrade`
-3. Install required system level packages (python3, pip3, redis-server, mysql)
+3. Install required system level packages (python3, pip3, redis-server, mongodb)
 4. Create [virtual environment](https://linoxide.com/how-to-create-python-virtual-environment-on-ubuntu-20-04/) and activate virtual environment (Optional)
 5. Install required Python packages - `pip3 install -r requirements.txt`
 6. Set up necessary other files such as systemd, supervisord, et al.
 7. Setup `alembic.ini` for the specific databasing software used on the server. If SQLite is used on the server, leave line 43 uncommented. If MySQL is used on the server, uncomment line 43 and comment line 42; then, modify line 43 to the same values as stored in the settings file (username, password, IP, etc.)
-8. Launch Redis, Huey, and MySQL
+8. Launch Redis, Huey, and MongoDB
 9. Launch bot and web server
 
 
