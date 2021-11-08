@@ -115,22 +115,27 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
     if 'error' in request:
         if request['error']['code'] == 13 or request['error']['code'] == 10 or request['error']['code'] == 2:
             user = utils.first(UserModel.objects(key=key))
-            user.key = ''
-            user.save()
+            if user is not None:
+                user.key = ''
+                user.save()
+                faction = utils.first(FactionModel.objects(tid=user.factionid))
 
-            faction = utils.first(FactionModel.objects(tid=user.factionid))
+                if key in faction.keys:
+                    faction.keys.remove(key)
 
-            if key in faction.keys:
-                faction.keys.remove(key)
+                faction.save()
 
-            faction.save()
+                for server in user.servers:
+                    server = utils.first(ServerModel.objects(sid=server))
 
-            for server in user.servers:
-                server = utils.first(ServerModel.objects(sid=server))
-
-                if user.tid in server.admins:
-                    server.admins.remove(user.tid)
-                server.save()
+                    if server is not None and user.tid in server.admins:
+                        server.admins.remove(user.tid)
+                    server.save()
+            else:
+                for faction in FactionModel.objects():
+                    if key in faction.keys:
+                        faction.keys.remove(key)
+                    faction.save()
         elif request['error']['code'] == 7:
             user = utils.first(UserModel.objects(key=key))
             user.factionaa = False
