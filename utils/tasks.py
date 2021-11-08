@@ -780,6 +780,11 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
         else:
             guild = utils.first(ServerModel.objects(sid=random.choice(list(stakeout.guilds.keys()))))
             admin = utils.first(UserModel.objects(tid=random.choice(guild.admins)))
+
+            if admin is not None:
+                guild.admins.remove(admin.tid)
+                guild.save()
+
             data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=admin.key,
                                       session=requests_session)
     except Exception as e:
