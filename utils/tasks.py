@@ -89,7 +89,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
     url = f'https://api.torn.com/{endpoint}&key={key}&comment=Tornium{"" if fromts == 0 else f"&from={fromts}"}' \
           f'{"" if tots == 0 else f"&to={tots}"}{stat if stat == "" else f"stat={stat}"}'
 
-    if key is None:
+    if key is None or key == '':
         raise Exception
 
     redis = get_redis()
