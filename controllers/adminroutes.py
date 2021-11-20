@@ -33,6 +33,8 @@ def admin_required(f):
         else:
             return f(*args, **kwargs)
 
+        return abort(403)
+
     return wrapper
 
 

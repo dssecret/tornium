@@ -19,6 +19,7 @@ from mongoengine.queryset.visitor import Q
 
 from controllers.api.decorators import *
 from models.statmodel import StatModel
+from models.user import User
 
 
 @key_required
@@ -83,8 +84,17 @@ def get_user(tid, *args, **kwargs):
                                       Q(addedfactiontid=kwargs['user'].factionid)) &
                                      Q(tid=tid)).order_by('-statid')[:limit].all()
     jsonified_stat_entries = []
+    users = []
 
     for stat_entry in stat_entries:
+        if stat_entry.tid in users:
+            continue
+        else:
+            users.append(stat_entry.tid)
+
+        user = User(stat_entry.tid)
+        user.refresh(key=kwargs['user'].key)
+
         jsonified_stat_entries.append({
             'statid': stat_entry.statid,
             'tid': stat_entry.tid,
