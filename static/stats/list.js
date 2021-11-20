@@ -28,6 +28,7 @@ $(document).ready(function() {
                 generateToast("Chain List Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
             } else {
                 const table = document.querySelector('#chain-table')
+                document.getElementById('chain-table-body').innerHTML = "";
                 var counter = 1
                 response["data"].forEach(function(user) {
                     console.log(user)
