@@ -781,11 +781,12 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
             data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=key,
                                       session=requests_session)
         else:
+            utils.get_logger().debug(stakeout.guilds.keys())
             guild = utils.first(ServerModel.objects(sid=random.choice(list(stakeout.guilds.keys()))))
             if guild is None and len(stakeout.guild.keys) == 1:
                 return
-            elif guild is None and len(stakeout.guild.keyd) > 1:
-                guilds = random.sample(stakeout.guilds.keys(), k=len(stakeout.guild.keys()))
+            elif guild is None and len(stakeout.guild.keys) > 1:
+                guilds = random.sample(stakeout.guilds.keys(), k=len(stakeout.guilds.keys()))
                 for guild in guilds:
                     guild = utils.first(ServerModel.objects(sid=guild))
                     if guild is not None:
