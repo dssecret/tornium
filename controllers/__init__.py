@@ -35,5 +35,6 @@ def index():
 @mod.route('/faction/schedule.js')
 @mod.route('/faction/schedulechart.js')
 @mod.route('/stats/db.js')
+@mod.route('/stats/list.js')
 def static():
     return send_from_directory('static', request.path[1:])

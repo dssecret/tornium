@@ -100,7 +100,7 @@ def user_data():
 @mod.route('/stats/chain')
 @login_required
 def chain():
-    return render_template('stats/chain.html')
+    return render_template('stats/chain.html', key=current_user.key)
 
 
 @mod.route('/stats/config', methods=['GET', 'POST'])
@@ -122,6 +122,6 @@ def config():
                 config['global'] = 0
                 faction_model.statconfig = json.dumps(config)
 
-            session.flush()
+            faction_model.save()
 
     return render_template('stats/config.html', config=faction.get_stat_config())

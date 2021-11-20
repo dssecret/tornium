@@ -13,13 +13,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from mongoengine import DynamicDocument, IntField, BooleanField, FloatField
+from mongoengine import DynamicDocument, IntField, BooleanField
 
 
 class StatModel(DynamicDocument):
     statid = IntField(primary_key=True)
     tid = IntField(default=0)
-    battlescore = FloatField(default=0.0)
+    battlescore = IntField(default=0)
     timeadded = IntField(default=0)
     addedid = IntField(default=0)
     addedfactiontid = IntField(default=0)

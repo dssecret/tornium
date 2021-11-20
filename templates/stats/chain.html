@@ -7,4 +7,74 @@ Tornium - Chain Generator
 {% block content %}
 {% include 'navbar.html' %}
 {% include 'stats/navbar.html' %}
+
+<div class="px-3 py-3">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Chain List Generator</h5>
+            <p class="card-text">
+                This utility generates a chain list of length 10 using the battle stats estimated with the stat
+                database. This utility returns users based on fair fight with a default of 75% of your battle stats
+                (75% correlates to about 3x FF) plus or minus 10%.
+            </p>
+            <p class="card-text">
+                Note: This utility makes a call to the Torn API for
+                every user generated unless the user has recently been refreshed, so this utility shouldn't be refresh
+                too frequently regardless of the automatic ratelimiting applied.
+            </p>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Chain List Generator Options</h5>
+            <div class="row">
+                <div class="col-sm-12 col-md-8 col-lg-4 my-2">
+                    <form class="form-floating" id="chainform">
+                        <label for="chainff" class="form-label">
+                            Chain List Strength
+                            <span class="badge rounded-pill bg-danger">
+                                <span id="strength">0.75</span>
+                            </span>
+                        </label>
+                        <input type="range" class="form-range mb-3" id="chainff" min="0.1" max="1.5" step="0.01" Value="0.75" onInput="$('#strength').html($(this).val())">
+
+                        <div class="form-text">
+                           Please enter the strength of the chain targets. The minimum value is 0.1x and the maximum
+                            value is 1.5x. These values are not total battle stats, but battle score (sum of square
+                            roots of individual battle stats). Therefore, for a 3x FF, a 0.75x chain list strength or
+                            greater would be required.
+                        </div>
+
+                        <button type="submit" class="btn btn-primary my-3">Generate</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Chain List Results</h5>
+            <div class="col-sm-12 col-md-8 col-lg-4">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Battle Score</th>
+                            <th scope="col">Time Added</th>
+                            <th scope="col">Options</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chain-table-body">
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="/stats/list.js" data-key="{{ key }}"></script>
 {% endblock %}

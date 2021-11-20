@@ -41,6 +41,7 @@ def test_key(*args, **kwargs):
 @torn_key_required
 @ratelimit
 def create_key(*args, **kwargs):
+    # curl -X POST -H "Authorization: Basic " -H "Content-Type: application/json" -d '{"scopes": []}' localhost:8000/api/key
     user = User(kwargs['user'].tid)
     data = json.loads(request.get_data().decode('utf-8'))
 
