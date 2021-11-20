@@ -89,6 +89,9 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
     url = f'https://api.torn.com/{endpoint}&key={key}&comment=Tornium{"" if fromts == 0 else f"&from={fromts}"}' \
           f'{"" if tots == 0 else f"&to={tots}"}{stat if stat == "" else f"stat={stat}"}'
 
+    if key is None:
+        raise Exception
+
     redis = get_redis()
     if redis.setnx(key, 100):
         redis.expire(key, 60 - datetime.datetime.utcnow().second)
@@ -637,7 +640,20 @@ def user_stakeout(stakeout, requests_session=None, key=None):
         if key is not None:
             data = tornget.call_local(f'user/{stakeout.tid}?selections=', key=key, session=requests_session)
         else:
-            guild = utils.first(ServerModel.objects(sid=random.choice(list(stakeout.guilds.keys()))))
+            guild = utils.first(ServerModel.objects(sid=int(random.choice(list(stakeout.guilds)))))
+            if guild is None and len(list(stakeout.guild)) == 1:
+                return
+            elif guild is None and len(list(stakeout.guilds)) > 1:
+                guilds = random.sample(list(stakeout.guilds), k=len(list(stakeout.guilds)))
+                guild_discorvered = False
+                for guild in guilds:
+                    guild = utils.first(ServerModel.objects(sid=int(guild)))
+                    if guild is not None and len(guild.admins) != 0:
+                        guild_discorvered = True
+                        break
+                if not guild_discorvered:
+                    return
+
             admin = utils.first(UserModel.objects(tid=random.choice(guild.admins)))
             data = tornget.call_local(f'user/{stakeout.tid}?selections=', key=admin.key, session=requests_session)
     except Exception as e:
