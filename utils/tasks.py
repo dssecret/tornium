@@ -625,7 +625,8 @@ def update_faction_stakeouts():
     requests_session = requests.Session()
 
     for stakeout in FactionStakeoutModel.objects():
-        faction_stakeout(stakeout.tid, requests_session=requests_session)()
+        # faction_stakeout(stakeout.tid, requests_session=requests_session)()
+        faction_stakeout.call_local(stakeout.tid, requests_session=requests_session)
 
 
 @huey.task()
@@ -797,11 +798,6 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     return
 
             admin = utils.first(UserModel.objects(tid=random.choice(guild.admins)))
-
-            if admin is not None:
-                guild.admins.remove(admin.tid)
-                guild.save()
-
             data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=admin.key,
                                       session=requests_session)
     except Exception as e:
