@@ -625,8 +625,7 @@ def update_faction_stakeouts():
     requests_session = requests.Session()
 
     for stakeout in FactionStakeoutModel.objects():
-        # faction_stakeout(stakeout.tid, requests_session=requests_session)()
-        faction_stakeout.call_local(stakeout.tid, requests_session=requests_session)
+        faction_stakeout(stakeout.tid, requests_session=requests_session)()
 
 
 @huey.task()
