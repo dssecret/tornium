@@ -515,7 +515,10 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
     requests_session = requests.Session()
     timestamp = utils.now()
     statid = StatModel.objects().count()
-    last_timestamp = utils.first(StatModel.objects(statid=statid - 1)).timeadded
+    try:
+        last_timestamp = utils.first(StatModel.objects(statid=statid - 1)).timeadded
+    except AttributeError:
+        last_timestamp = 0
 
     for faction in FactionModel.objects():
         if len(faction.keys) == 0:
@@ -779,6 +782,17 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                                       session=requests_session)
         else:
             guild = utils.first(ServerModel.objects(sid=random.choice(list(stakeout.guilds.keys()))))
+            if guild is None and len(stakeout.guild.keys) == 1:
+                return
+            elif guild is None and len(stakeout.guild.keyd) > 1:
+                guilds = random.sample(stakeout.guilds.keys(), k=len(stakeout.guild.keys()))
+                for guild in guilds:
+                    guild = utils.first(ServerModel.objects(sid=guild))
+                    if guild is not None:
+                        break
+                if guild is None:
+                    return
+
             admin = utils.first(UserModel.objects(tid=random.choice(guild.admins)))
 
             if admin is not None:
