@@ -787,11 +787,13 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                 return
             elif guild is None and len(list(stakeout.guilds)) > 1:
                 guilds = random.sample(list(stakeout.guilds), k=len(list(stakeout.guilds)))
+                guild_discorvered = False
                 for guild in guilds:
                     guild = utils.first(ServerModel.objects(sid=int(guild)))
                     if guild is not None and len(guild.admins) != 0:
+                        guild_discorvered = True
                         break
-                if guild is None:
+                if not guild_discorvered:
                     return
 
             admin = utils.first(UserModel.objects(tid=random.choice(guild.admins)))
