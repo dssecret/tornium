@@ -70,13 +70,14 @@ $(document).ready(function() {
                             var tableBody = document.getElementById('chain-table-body');
                             var newNode = document.createElement('tr');
 
-                            var ff = 1 + 8/3 * (user["battlescore"] / userResponse["battlescore"])
-                            var baseRespect = ((Math.log2(user["user"]["level"]) + 1)/4).toFixed(2)
+                            var ff = 1 + 8/3 * user["battlescore"] / userResponse["battlescore"];
+                            ff = Math.min(ff, 3);
+                            var baseRespect = ((Math.log2(user["user"]["level"]) + 1)/4).toFixed(2);
 
                             newNode.innerHTML = `
                             <tr>
                                 <th scope="col">${counter}</th>
-                                <th scope="col">${userResponse["username"]}</th>
+                                <th scope="col">${user["user"]["username"]}</th>
                                 <th scope="col">${ff.toFixed(2)}</th>
                                 <th scope="col">${(ff * baseRespect).toFixed(2)}</th>
                                 <th scope="col">${user["timeadded"]}</th>
