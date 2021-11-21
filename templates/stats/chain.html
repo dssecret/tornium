@@ -18,14 +18,14 @@ Tornium - Chain Generator
         <div class="accordion-collapse collapse show" id="collapse-basic" aria-labelledby="Chain List Generator" data-bs-example="accordion">
             <div class="accordion-body">
                 <p class="card-text">
-                    This utility generates a chain list of length 10 using the battle stats estimated with the stat
-                    database. This utility returns users based on fair fight with a default of 75% of your battle stats
-                    (75% correlates to about 3x FF) plus or minus 10%.
+                    This utility returns a chain list based on fair fight with a default of 3x FF (this can be
+                    adjusted if you're on war perks, xan debuff, et al). Move the slider below to maximize the respect
+                    earned and minimize the potential health lost. It is not recommended to move the slider above 1x
+                    since at that point, targets will be as strong or stronger than you are.
                 </p>
                 <p class="card-text">
-                    Note: This utility makes a call to the Torn API for
-                    every user generated unless the user has recently been refreshed, so this utility shouldn't be refresh
-                    too frequently regardless of the automatic ratelimiting applied.
+                    Note: Please minimize the number of generations per minute since this utility makes a call to the
+                    Torn API for each user.
                 </p>
             </div>
         </div>
@@ -51,10 +51,10 @@ Tornium - Chain Generator
                             <input type="range" class="form-range mb-3" id="chainff" min="0.1" max="1.5" step="0.01" Value="0.75" onInput="$('#strength').html($(this).val())">
 
                             <div class="form-text">
-                               Please enter the strength of the chain targets. The minimum value is 0.1x and the maximum
-                                value is 1.5x. These values are not total battle stats, but battle score (sum of square
-                                roots of individual battle stats). Therefore, for a 3x FF, a 0.75x chain list strength or
-                                greater would be required.
+                                Adjust the slider above in order to increase or decrease the difficulty of the target.
+                                As the slider moves to the left, the difficulty decreases; as the slider moves to the
+                                right, the difficulty increases. A value of around 0.75 will give maximum fair fight
+                                and a value of around 1 will give a list of users with similar stats.
                             </div>
 
                             <button type="submit" class="btn btn-primary my-3">Generate</button>
