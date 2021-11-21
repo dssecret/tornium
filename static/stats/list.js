@@ -27,32 +27,75 @@ $(document).ready(function() {
             if("code" in response) {
                 generateToast("Chain List Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
             } else {
-                const table = document.querySelector('#chain-table')
-                document.getElementById('chain-table-body').innerHTML = "";
-                var counter = 1
-                response["data"].forEach(function(user) {
-                    console.log(user)
-                    var tableBody = document.getElementById('chain-table-body');
-                    var newNode = document.createElement('tr');
-                    newNode.innerHTML = `
-                    <tr>
-                        <th scope="col">${counter}</th>
-                        <th scope="col">${user["battlescore"]}</th>
-                        <th scope="col">${user["timeadded"]}</th>
-                        <th scope="col">
-                            <a href="https://www.torn.com/loader.php?sid=attack&user2ID=${user['tid']}">
-                                <i class="fas fa-crosshairs"></i>
-                            </a>
-                            
-                            <a href="https://www.torn.com/profiles.php?XID=${user['tid']}">
-                                <i class="fas fa-id-card-alt"></i>
-                            </a>
-                        </th>
-                    </tr>
-                    `;
-                    tableBody.appendChild(newNode);
-                    counter += 1;
-                });
+                xhttp.open("GET", "/api/user");
+                xhttp.setRequestHeader("Authorization", `Basic ${btoa(`${key}:`)}`);
+                xhttp.setRequestHeader("Content-Type", "application/json");
+                xhttp.send();
+                xhttp.onload = function() {
+                    var userResponse = xhttp.response;
+                    const table = document.querySelector('#chain-table')
+                    document.getElementById('chain-table-body').innerHTML = "";
+                    var counter = 1
+
+                    if ("code" in userResponse) {
+                        response["data"].forEach(function(user) {
+                            console.log(user)
+                            var tableBody = document.getElementById('chain-table-body');
+                            var newNode = document.createElement('tr');
+
+                            newNode.innerHTML = `
+                            <tr>
+                                <th scope="col">${counter}</th>
+                                <th scope="col">Error</th>
+                                <th scope="col">Error</th>
+                                <th scope="col">Error</th>
+                                <th scope="col">${user["timeadded"]}</th>
+                                <th scope="col">
+                                    <a href="https://www.torn.com/loader.php?sid=attack&user2ID=${user['tid']}">
+                                        <i class="fas fa-crosshairs"></i>
+                                    </a>
+                                    
+                                    <a href="https://www.torn.com/profiles.php?XID=${user['tid']}">
+                                        <i class="fas fa-id-card-alt"></i>
+                                    </a>
+                                </th>
+                            </tr>
+                            `;
+                            tableBody.appendChild(newNode);
+                            counter += 1;
+                        });
+                    } else {
+                        response["data"].forEach(function(user) {
+                            console.log(user)
+                            var tableBody = document.getElementById('chain-table-body');
+                            var newNode = document.createElement('tr');
+
+                            var ff = 1 + 8/3 * (user["battlescore"] / userResponse["battlescore"])
+                            var baseRespect = ((Math.log2(user["user"]["level"]) + 1)/4).toFixed(2)
+
+                            newNode.innerHTML = `
+                            <tr>
+                                <th scope="col">${counter}</th>
+                                <th scope="col">${userResponse["username"]}</th>
+                                <th scope="col">${ff.toFixed(2)}</th>
+                                <th scope="col">${(ff * baseRespect).toFixed(2)}</th>
+                                <th scope="col">${user["timeadded"]}</th>
+                                <th scope="col">
+                                    <a href="https://www.torn.com/loader.php?sid=attack&user2ID=${user['tid']}">
+                                        <i class="fas fa-crosshairs"></i>
+                                    </a>
+                                    
+                                    <a href="https://www.torn.com/profiles.php?XID=${user['tid']}">
+                                        <i class="fas fa-id-card-alt"></i>
+                                    </a>
+                                </th>
+                            </tr>
+                            `;
+                            tableBody.appendChild(newNode);
+                            counter += 1;
+                        });
+                    }
+                }
             }
         }
 

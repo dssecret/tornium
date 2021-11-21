@@ -55,11 +55,23 @@ def generate_chain_list(*args, **kwargs):
 
     for stat_entry in stat_entries:
         stat = StatModel.objects(statid=stat_entry).first()
+        user = User(tid=stat.tid)
+        user.refresh(key=kwargs['user'].key)
         jsonified_stat_entires.append({
             'statid': stat.statid,
             'tid': stat.tid,
             'battlescore': stat.battlescore,
-            'timeadded': stat.addedid
+            'timeadded': stat.addedid,
+            'user': {
+                'tid': user.tid,
+                'name': user.name,
+                'username': f'{user.name} [{user.tid}]',
+                'level': user.level,
+                'last_refresh': user.last_refresh,
+                'factionid': user.factiontid,
+                'status': user.status,
+                'last_action': user.last_action
+            }
         })
 
     return jsonify({
@@ -76,7 +88,7 @@ def generate_chain_list(*args, **kwargs):
 @key_required
 @ratelimit
 @requires_scopes(scopes={'admin', 'read:stats'})
-def get_user(tid, *args, **kwargs):
+def get_stat_user(tid, *args, **kwargs):
     client = redisdb.get_redis()
     limit = request.args.get('limit') if request.args.get('limit') is not None else 10
 
