@@ -28,7 +28,7 @@ mod = Blueprint('adminroutes', __name__)
 def admin_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if (not current_user.is_authenticated or not current_user.admin) and not get_redis().get('dev'):
+        if not current_user.is_authenticated or not current_user.admin:
             return abort(403)
         else:
             return f(*args, **kwargs)
