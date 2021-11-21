@@ -61,7 +61,7 @@ def generate_chain_list(*args, **kwargs):
             'statid': stat.statid,
             'tid': stat.tid,
             'battlescore': stat.battlescore,
-            'timeadded': stat.addedid,
+            'timeadded': stat.timeadded,
             'user': {
                 'tid': user.tid,
                 'name': user.name,
