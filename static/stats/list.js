@@ -57,6 +57,7 @@ $(document).ready(function() {
                                 <th scope="col">Error</th>
                                 <th scope="col">Error</th>
                                 <th scope="col">${formatTS(user["timeadded"])}</th>
+                                <th scope="col">${formatTS(user["user"]["last_action"])}</th>
                                 <th scope="col">
                                     <a href="https://www.torn.com/loader.php?sid=attack&user2ID=${user['tid']}">
                                         <i class="fas fa-crosshairs"></i>
@@ -88,6 +89,7 @@ $(document).ready(function() {
                                 <th scope="col">${ff.toFixed(2)}</th>
                                 <th scope="col">${(ff * baseRespect).toFixed(2)}</th>
                                 <th scope="col">${formatTS(user["timeadded"])}</th>
+                                <th scope="col">${formatTS(user["user"]["last_action"])}</th>
                                 <th scope="col">
                                     <a href="https://www.torn.com/loader.php?sid=attack&user2ID=${user['tid']}">
                                         <i class="fas fa-crosshairs"></i>
