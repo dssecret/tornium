@@ -72,7 +72,7 @@ $(document).ready(function() {
 
                             var ff = 1 + 8/3 * user["battlescore"] / userResponse["battlescore"];
                             ff = Math.min(ff, 3);
-                            var baseRespect = ((Math.log2(user["user"]["level"]) + 1)/4).toFixed(2);
+                            var baseRespect = ((Math.log(user["user"]["level"]) + 1)/4).toFixed(2);
 
                             newNode.innerHTML = `
                             <tr>
