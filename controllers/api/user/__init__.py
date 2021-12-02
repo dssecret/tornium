@@ -31,7 +31,7 @@ def get_user(*args, **kwargs):
         'battlescore_update': kwargs['user'].battlescore_update,
         'discord_id': kwargs['user'].discord_id,
         'servers': kwargs['user'].servers,
-        'factiontid': kwargs['user'].factiontid,
+        'factiontid': kwargs['user'].factionid,
         'aa': kwargs['user'].factionaa,
         'status': kwargs['user'].status,
         'last_action': kwargs['user'].last_action
