@@ -111,7 +111,7 @@ class Faction:
 
     def get_vault_config(self):
         if self.guild == 0:
-            return {}
+            return {'banking': 0, 'banker': 0, 'withdrawal': 0}
 
         server = Server(self.guild)
         if self.tid not in server.factions:
@@ -121,19 +121,19 @@ class Faction:
 
     def get_stat_config(self):
         if self.guild == 0:
-            return {}
+            return {'global': 0}
 
         return self.stat_config
 
     def get_chain_config(self):
         if self.guild == 0:
-            return {}
+            return {'od': 0, 'odchannel': 0}
 
         return self.chain_config
 
     def get_config(self):
         if self.guild == 0:
-            return {}
+            return {'vault': 0, 'stats': 1}
 
         server = Server(self.guild)
         if self.tid not in server.factions:
