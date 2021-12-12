@@ -35,3 +35,6 @@ class UserModel(DynamicDocument):
 
     status = StringField(default='')
     last_action = IntField(default=0)
+
+    pro = BooleanField(default=False)
+    pro_expiration = IntField(default=0)

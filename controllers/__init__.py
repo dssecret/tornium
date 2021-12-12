@@ -24,6 +24,11 @@ def index():
     return render_template('index.html')
 
 
+@mod.route('/pricing')
+def pricing():
+    return render_template('pricing.html')
+
+
 @mod.route('/robots.txt')
 @mod.route('/toast.js')
 @mod.route('/favicon.svg')
