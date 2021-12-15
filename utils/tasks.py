@@ -15,7 +15,6 @@
 
 import datetime
 import json
-import logging
 import math
 import os
 import random
@@ -345,8 +344,8 @@ def refresh_factions():
             if user is None:
                 user = UserModel(
                     tid=int(member_id),
-                    name='',
-                    level=0,
+                    name=member['name'],
+                    level=member['level'],
                     last_refresh=utils.now(),
                     admin=False,
                     key=utils.now(),
@@ -354,11 +353,11 @@ def refresh_factions():
                     battlescore_update=utils.now(),
                     discord_id=0,
                     servers=[],
-                    factionid=0,
+                    factionid=faction.tid,
                     factionaa=False,
                     chain_hits=0,
-                    status='',
-                    last_action=''
+                    status=member['last_action']['status'],
+                    last_action=member['last_action']['timestamp']
                 )
                 user.save()
 
@@ -368,6 +367,7 @@ def refresh_factions():
             user.factiontid = faction.tid
             user.status = member['last_action']['status']
             user.last_action = member['last_action']['timestamp']
+            user.save()
 
             if user.key == '' and len(keys) != 0:
                 try:
@@ -389,8 +389,7 @@ def refresh_factions():
                 user.speed = user_data['spy']['speed']
                 user.dexterity = user_data['spy']['dexterity']
                 user.battlescore_update = utils.now()
-
-            user.save()
+                user.save()
 
         if faction.chainconfig['od'] == 1:
             try:
