@@ -141,13 +141,12 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
                         faction.keys.remove(key)
                     faction.save()
         elif request['error']['code'] == 7:
-            user = utils.first(UserModel.objects(key=key))
+            user: UserModel = utils.first(UserModel.objects(key=key))
             user.factionaa = False
             user.save()
 
-            faction = utils.first(FactionModel.objects(tid=user.factionid))
-
-            if key in faction.keys:
+            faction: FactionModel = utils.first(FactionModel.objects(tid=user.factionid))
+            if faction is not None and key in faction.keys:
                 faction.keys.remove(key)
             faction.save()
 
@@ -491,6 +490,9 @@ def refresh_users():
     timestamp = utils.now()
 
     for user in UserModel.objects(key__ne=''):
+        if user.key == '':
+            continue
+
         try:
             user_data = tornget.call_local(f'user/?selections=profile,battlestats,discord', user.key,
                                            session=requests_session)
@@ -519,6 +521,9 @@ def refresh_users():
         user.save()
 
     for user in UserModel.objects(key__ne=''):
+        if user.key == '':
+            continue
+
         try:
             tornget.call_local(f'faction/?selections=positions', user.key, session=requests_session)
         except Exception as e:
