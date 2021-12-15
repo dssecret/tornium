@@ -77,12 +77,6 @@ if redis.get('taskqueue') == 'sqlite':
 else:
     huey = RedisHuey(host='localhost', port=6379)
 
-logger = logging.getLogger('server')
-logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='server.log', encoding='utf-8', mode='a')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(handler)
-
 
 @huey.task()
 def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):

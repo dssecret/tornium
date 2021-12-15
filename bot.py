@@ -17,6 +17,7 @@ import asyncio
 import datetime
 import json
 import logging
+from logging.handlers import TimedRotatingFileHandler
 import os
 import random
 from urllib.parse import urlparse, parse_qs
@@ -75,7 +76,7 @@ import utils
 
 botlogger = logging.getLogger('bot')
 botlogger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='bot.log', encoding='utf-8', mode='a')
+handler = TimedRotatingFileHandler(filename='bot.log', encoding='utf-8', utc=True, when='midnight', backupCount=5)
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 botlogger.addHandler(handler)
 
