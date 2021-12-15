@@ -24,6 +24,10 @@ class UserModel(DynamicDocument):
     admin = BooleanField(default=False)
     key = StringField(default='')
     battlescore = FloatField(default=0.0)
+    strength = FloatField(default=0.0)
+    defense = FloatField(default=0.0)
+    speed = FloatField(default=0.0)
+    dexterity = FloatField(default=0.0)
     battlescore_update = IntField(default=0)
 
     discord_id = IntField(default=0)

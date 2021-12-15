@@ -387,6 +387,10 @@ def refresh_factions():
                     continue
 
                 user.battlescore = user_data['spy']['target_score']
+                user.strength = user_data['spy']['strength']
+                user.defense = user_data['spy']['defense']
+                user.speed = user_data['spy']['speed']
+                user.dexterity = user_data['spy']['dexterity']
                 user.battlescore_update = utils.now()
 
             user.save()
@@ -496,7 +500,7 @@ def refresh_users():
             utils.get_logger().exception(e)
             continue
 
-        user = utils.first(UserModel.objects(_id=user_data['player_id']))
+        user: UserModel = utils.first(UserModel.objects(_id=user_data['player_id']))
         user.factiontid = user_data['faction']['faction_id']
         user.name = user_data['name']
         user.last_refresh = timestamp
@@ -505,8 +509,12 @@ def refresh_users():
         user.level = user_data['level']
         user.discord_id = user_data['discord']['discordID'] if user_data['discord']['discordID'] != '' else 0
         user.factiontid = user_data['faction']['faction_id']
+        user.strength = user_data['strength']
+        user.defense = user_data['defense']
+        user.speed = user_data['speed']
+        user.dexterity = user_data['dexterity']
 
-        battlescore = math.sqrt(user_data['strength']) + math.sqrt(user_data['speed']) + \
+        battlescore = math.sqrt(user_data['strength']) + math.sqrt(user_data['defense']) + \
                       math.sqrt(user_data['speed']) + math.sqrt(user_data['dexterity'])
         user.battlescore = battlescore
         user.battlescore_update = timestamp
