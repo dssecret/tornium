@@ -8,3 +8,4 @@ Code, Error Code, HTTP Status Code, Message
 4004, InsufficientPermissions, 403, Server failed to fulfill the request. The scope of the Tornium key provided was not sufficient for the request.
 4005, InsufficientFactionPermissions, 403, Server failed to fulfill the request. The provided authentication code was not sufficient for an AA level request.
 4010, EndpointNotFound, 404, Server failed to find the requested endpoint.
+4011, InsufficientUserType, 401, Server failed to fulfill the request. The provided authentication code was not sufficient for a pro level request.
