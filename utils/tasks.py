@@ -348,7 +348,7 @@ def refresh_factions():
                     level=member['level'],
                     last_refresh=utils.now(),
                     admin=False,
-                    key=utils.now(),
+                    key='',
                     battlescore=0,
                     battlescore_update=utils.now(),
                     discord_id=0,
