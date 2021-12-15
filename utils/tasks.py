@@ -99,10 +99,13 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
     if redis.ttl(key) < 0:
         redis.expire(key, 1)
 
-    if redis.get(key) and int(redis.get(key)) > 0:
-        redis.decrby(key, 1)
-    else:
-        time.sleep(60 - datetime.datetime.utcnow().second)
+    try:
+        if redis.get(key) and int(redis.get(key)) > 0:
+            redis.decrby(key, 1)
+        else:
+            time.sleep(60 - datetime.datetime.utcnow().second)
+    except TypeError:
+        utils.get_logger().info(f'Error raised on API key {key}')
 
     if session is None:  # Utilizes https://docs.python-requests.org/en/latest/user/advanced/#session-objects
         request = requests.get(url)
@@ -148,7 +151,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
             faction: FactionModel = utils.first(FactionModel.objects(tid=user.factionid))
             if faction is not None and key in faction.keys:
                 faction.keys.remove(key)
-            faction.save()
+                faction.save()
 
         utils.get_logger().info(f'The Torn API has responded with error code {request["error"]["code"]} '
                                 f'({request["error"]["error"]}) to {url}).')
