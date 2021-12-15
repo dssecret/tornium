@@ -487,15 +487,12 @@ def refresh_guilds():
 @huey.periodic_task(crontab(minute='0'))
 def refresh_users():
     requests_session = requests.Session()
-    users = []
     timestamp = utils.now()
 
     for user in UserModel.objects(key__ne=''):
-        users.append(tornget(f'user/?selections=profile,battlestats,discord', user.key, session=requests_session))
-
-    for user in users:
         try:
-            user_data = user(blocking=True)
+            user_data = tornget.call_local(f'user/?selections=profile,battlestats,discord', user.key,
+                                           session=requests_session)
         except Exception as e:
             utils.get_logger().exception(e)
             continue
@@ -518,6 +515,16 @@ def refresh_users():
                       math.sqrt(user_data['speed']) + math.sqrt(user_data['dexterity'])
         user.battlescore = battlescore
         user.battlescore_update = timestamp
+        user.save()
+
+    for user in UserModel.objects(key__ne=''):
+        try:
+            tornget.call_local(f'faction/?selections=positions', user.key, session=requests_session)
+        except Exception as e:
+            utils.get_logger().exception(e)
+            continue
+
+        user.factionaa = True
         user.save()
 
 

@@ -124,9 +124,10 @@ class User(UserMixin):
         except:
             self.aa = False
             user.factionaa = False
-        finally:
-            self.aa = True
-            user.factionaa = True
+            return
+
+        self.aa = True
+        user.factionaa = True
 
         user.save()
 
