@@ -424,7 +424,7 @@ def refresh_user_stats(user: UserModel, keys):
         return
 
     try:
-        user_data = torn_stats_get(f'spy/{user.tid}', random.choice(keys), session=requests_session)
+        user_data = torn_stats_get(f'spy/{user.tid}', random.choice(keys))
     except Exception as e:
         utils.get_logger().exception(e)
         return
