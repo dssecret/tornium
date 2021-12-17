@@ -497,7 +497,7 @@ def refresh_users():
             continue
 
         user: UserModel = utils.first(UserModel.objects(_id=user_data['player_id']))
-        user.factiontid = user_data['faction']['faction_id']
+        user.factionid = user_data['faction']['faction_id']
         user.name = user_data['name']
         user.last_refresh = timestamp
         user.status = user_data['last_action']['status']
