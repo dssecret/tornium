@@ -264,10 +264,10 @@ def userbankingdata():
 
     for withdrawal in WithdrawalModel.objects(requester=current_user.tid):
         fulfiller = f'{User(withdrawal.fulfiller).name} [{withdrawal.fulfiller}]' if withdrawal.fulfiller != 0 else ''
-        timefulfilled = withdrawal.time_fulfilled if withdrawal.time_fulfilled != 0 else ''
+        timefulfilled = utils.torn_timestamp(withdrawal.time_fulfilled) if withdrawal.time_fulfilled != 0 else ''
 
         withdrawals.append([withdrawal.wid, f'${withdrawal.amount:,}', utils.torn_timestamp(withdrawal.time_requested),
-                            fulfiller, utils.torn_timestamp(timefulfilled)])
+                            fulfiller, timefulfilled])
 
     withdrawals = withdrawals[start:start+length]
     data = {
