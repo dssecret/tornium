@@ -364,7 +364,7 @@ def refresh_factions():
             user.name = member['name']
             user.level = member['level']
             user.last_refresh = utils.now()
-            user.factiontid = faction.tid
+            user.factionid = faction.tid
             user.status = member['last_action']['status']
             user.last_action = member['last_action']['timestamp']
             user.save()
