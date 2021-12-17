@@ -385,8 +385,11 @@ def refresh_faction(faction: FactionModel):
     if coleader is not None and coleader.key != '':
         keys.append(coleader.key)
 
+    users = []
+
     for member_id, member in faction_data['members'].items():
         user = utils.first(UserModel.objects(tid=int(member_id)))
+        users.append(int(member_id))
 
         if user is None:
             user = UserModel(
@@ -416,6 +419,14 @@ def refresh_faction(faction: FactionModel):
         user.last_action = member['last_action']['timestamp']
         user.save()
         refresh_user_stats(user, keys)()
+
+    for user in UserModel.objects(factionid=faction.tid):
+        if user.tid in users:
+            continue
+
+        user.factionid = 0
+        user.aa = False
+        user.save()
 
 
 @huey.task()
