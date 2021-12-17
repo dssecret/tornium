@@ -304,130 +304,145 @@ def torn_stats_get(endpoint, key, session=None):
 
 @huey.periodic_task(crontab(minute='0'))
 def refresh_factions():
-    requests_session = requests.Session()
-
     for faction in FactionModel.objects():
         if len(faction.keys) == 0:
             continue
 
-        try:
-            faction_data = tornget.call_local(f'faction/?selections=', random.choice(faction.keys),
-                                              session=requests_session)
-        except Exception as e:
-            utils.get_logger().exception(e)
-            continue
+        refresh_faction(faction)
 
-        if faction_data is None:
-            continue
+        # if faction.chainconfig['od'] == 1:
+        #     try:
+        #         faction_od = tornget.call_local('faction/?selections=contributors',
+        #                                         stat='drugoverdoses',
+        #                                         key=random.choice(faction.keys),
+        #                                         session=requests_session)
+        #     except Exception as e:
+        #         utils.get_logger().exception(e)
+        #         continue
+        #
+        #     if len(faction.chainod) != 0:
+        #         for tid, user_od in faction_od['contributors']['drugoverdoses'].items():
+        #             if user_od != faction.chainod.get(tid):
+        #                 overdosed_user = utils.first(UserModel.objects(tid=tid))
+        #                 payload = {
+        #                     'embeds': [
+        #                         {
+        #                             'title': 'User Overdose',
+        #                             'description': f'User {tid if overdosed_user is None else overdosed_user.name} of '
+        #                                            f'faction {faction.name} has overdosed.',
+        #                             'timestamp': datetime.datetime.utcnow().isoformat(),
+        #                             'footer': {
+        #                                 'text': utils.torn_timestamp()
+        #                             }
+        #                         }
+        #                     ]
+        #                 }
+        #
+        #                 try:
+        #                     discordpost.call_local(f'channels/{faction.chainconfig["odchannel"]}/messages', payload=payload)
+        #                 except Exception as e:
+        #                     utils.get_logger().exception(e)
+        #                     continue
+        #
+        #     faction.chainod = faction_od['contributors']['drugoverdoses']
+        #
+        # faction.save()
 
-        faction = utils.first(FactionModel.objects(tid=faction.tid))
-        faction.name = faction_data['name']
-        faction.respect = faction_data['respect']
-        faction.capacity = faction_data['capacity']
-        faction.leader = faction_data['leader']
-        faction.coleader = faction_data['co-leader']
-        faction.last_members = utils.now()
 
-        keys = []
+@huey.task()
+def refresh_faction(faction: FactionModel):
+    if len(faction.keys) == 0:
+        return
 
-        leader = utils.first(UserModel.objects(tid=faction.leader))
-        coleader = utils.first(UserModel.objects(tid=faction.coleader))
+    requests_session = requests.Session()
 
-        if leader is not None and leader.key != '':
-            keys.append(leader.key)
-        if coleader is not None and coleader.key != '':
-            keys.append(coleader.key)
+    try:
+        faction_data = tornget.call_local(f'faction/?selections=', random.choice(faction.keys),
+                                          session=requests_session)
+    except Exception as e:
+        utils.get_logger().exception(e)
+        return
 
-        for member_id, member in faction_data['members'].items():
-            user = utils.first(UserModel.objects(tid=int(member_id)))
+    if faction_data is None:
+        return
 
-            if user is None:
-                user = UserModel(
-                    tid=int(member_id),
-                    name=member['name'],
-                    level=member['level'],
-                    last_refresh=utils.now(),
-                    admin=False,
-                    key='',
-                    battlescore=0,
-                    battlescore_update=utils.now(),
-                    discord_id=0,
-                    servers=[],
-                    factionid=faction.tid,
-                    factionaa=False,
-                    chain_hits=0,
-                    status=member['last_action']['status'],
-                    last_action=member['last_action']['timestamp']
-                )
-                user.save()
+    faction = utils.first(FactionModel.objects(tid=faction.tid))
+    faction.name = faction_data['name']
+    faction.respect = faction_data['respect']
+    faction.capacity = faction_data['capacity']
+    faction.leader = faction_data['leader']
+    faction.coleader = faction_data['co-leader']
+    faction.last_members = utils.now()
+    faction.save()
 
-            user.name = member['name']
-            user.level = member['level']
-            user.last_refresh = utils.now()
-            user.factionid = faction.tid
-            user.status = member['last_action']['status']
-            user.last_action = member['last_action']['timestamp']
+    keys = []
+
+    leader = utils.first(UserModel.objects(tid=faction.leader))
+    coleader = utils.first(UserModel.objects(tid=faction.coleader))
+
+    if leader is not None and leader.key != '':
+        keys.append(leader.key)
+    if coleader is not None and coleader.key != '':
+        keys.append(coleader.key)
+
+    for member_id, member in faction_data['members'].items():
+        user = utils.first(UserModel.objects(tid=int(member_id)))
+
+        if user is None:
+            user = UserModel(
+                tid=int(member_id),
+                name=member['name'],
+                level=member['level'],
+                last_refresh=utils.now(),
+                admin=False,
+                key='',
+                battlescore=0,
+                battlescore_update=utils.now(),
+                discord_id=0,
+                servers=[],
+                factionid=faction.tid,
+                factionaa=False,
+                chain_hits=0,
+                status=member['last_action']['status'],
+                last_action=member['last_action']['timestamp']
+            )
             user.save()
 
-            if user.key == '' and len(keys) != 0:
-                try:
-                    user_data = torn_stats_get(f'spy/{user.tid}', random.choice(keys), session=requests_session)
-                except Exception as e:
-                    utils.get_logger().exception(e)
-                    continue
+        user.name = member['name']
+        user.level = member['level']
+        user.last_refresh = utils.now()
+        user.factionid = faction.tid
+        user.status = member['last_action']['status']
+        user.last_action = member['last_action']['timestamp']
+        user.save()
+        refresh_user_stats(user, keys)()
 
-                if not user_data['status']:
-                    continue
-                elif not user_data['spy']['status']:
-                    continue
-                elif user_data['spy']['type'] != 'faction-share':
-                    continue
 
-                user.battlescore = user_data['spy']['target_score']
-                user.strength = user_data['spy']['strength']
-                user.defense = user_data['spy']['defense']
-                user.speed = user_data['spy']['speed']
-                user.dexterity = user_data['spy']['dexterity']
-                user.battlescore_update = utils.now()
-                user.save()
+@huey.task()
+def refresh_user_stats(user: UserModel, keys):
+    if len(keys) == 0 or user.key != '':
+        return
 
-        if faction.chainconfig['od'] == 1:
-            try:
-                faction_od = tornget.call_local('faction/?selections=contributors',
-                                                stat='drugoverdoses',
-                                                key=random.choice(faction.keys),
-                                                session=requests_session)
-            except Exception as e:
-                utils.get_logger().exception(e)
-                continue
+    try:
+        user_data = torn_stats_get(f'spy/{user.tid}', random.choice(keys), session=requests_session)
+    except Exception as e:
+        utils.get_logger().exception(e)
+        return
 
-            if len(faction.chainod) != 0:
-                for tid, user_od in faction_od['contributors']['drugoverdoses'].items():
-                    if user_od != faction.chainod.get(tid):
-                        overdosed_user = utils.first(UserModel.objects(tid=tid))
-                        payload = {
-                            'embeds': [
-                                {
-                                    'title': 'User Overdose',
-                                    'description': f'User {tid if overdosed_user is None else overdosed_user.name} of '
-                                                   f'faction {faction.name} has overdosed.',
-                                    'timestamp': datetime.datetime.utcnow().isoformat(),
-                                    'footer': {
-                                        'text': utils.torn_timestamp()
-                                    }
-                                }
-                            ]
-                        }
+    if not user_data['status']:
+        return
+    elif not user_data['spy']['status']:
+        return
+    elif user_data['spy']['type'] != 'faction-share':
+        return
 
-                        try:
-                            discordpost.call_local(f'channels/{faction.chainconfig["odchannel"]}/messages', payload=payload)
-                        except Exception as e:
-                            utils.get_logger().exception(e)
-                            continue
-
-            faction.chainod = faction_od['contributors']['drugoverdoses']
-
-        faction.save()
+    user.battlescore = user_data['spy']['target_score']
+    user.strength = user_data['spy']['strength']
+    user.defense = user_data['spy']['defense']
+    user.speed = user_data['spy']['speed']
+    user.dexterity = user_data['spy']['dexterity']
+    user.battlescore_update = utils.now()
+    user.save()
 
 
 @huey.periodic_task(crontab(minute='30'))
