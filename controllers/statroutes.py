@@ -111,7 +111,7 @@ def user_data():
             'globalstat': stat_entry.globalstat
         })
 
-    user = User(tid=tid, key=current_user.key)
+    user = User(tid=tid)
     user.refresh()
 
     return render_template('stats/statmodal.html', user=user, stats=stats)
