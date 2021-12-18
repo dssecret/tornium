@@ -65,7 +65,7 @@ connect(
 
 from controllers import mod as base_mod
 from controllers.authroutes import mod as auth_mod
-from controllers.factionroutes import mod as faction_mod
+from controllers.faction import mod as faction_mod
 from controllers.bot import mod as bot_mod
 from controllers.errors import mod as error_mod
 from controllers.adminroutes import mod as admin_mod

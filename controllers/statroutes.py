@@ -21,7 +21,7 @@ from flask_login import login_required, current_user
 from mongoengine.queryset.visitor import Q
 
 import utils
-from controllers.factionroutes import aa_required
+from controllers.faction.decorators import aa_required
 from models.faction import Faction
 from models.factionmodel import FactionModel
 from models.statmodel import StatModel
