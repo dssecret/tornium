@@ -25,6 +25,8 @@ from controllers.faction.decorators import aa_required
 from models.faction import Faction
 from models.factionmodel import FactionModel
 from models.statmodel import StatModel
+from models.user import User
+from models.usermodel import UserModel
 
 mod = Blueprint('statroutes', __name__)
 
@@ -80,21 +82,39 @@ def user_data():
     stats = []
     stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))
 
+    factions = {}
+    users = {}
+
     for stat_entry in stat_entries:
         if stat_entry.tid != tid:
             continue
+
+        if str(stat_entry.addedid) in users:
+            user = users[str(stat_entry.addedid)]
+        else:
+            user = utils.first(UserModel.objects(tid=stat_entry.addedid))
+            users[str(stat_entry.addedid)] = user
+
+        if str(stat_entry.addedfactiontid) in factions:
+            faction = factions[str(stat_entry.addedfactiontid)]
+        else:
+            faction = utils.first(FactionModel.objects(tid=stat_entry.addedfactiontid))
+            factions[str(stat_entry.addedfactiontid)] = faction
 
         stats.append({
             'statid': stat_entry.statid,
             'tid': stat_entry.tid,
             'battlescore': stat_entry.battlescore,
             'timeadded': stat_entry.timeadded,
-            'addedid': stat_entry.addedid,
-            'addedfactiontid': stat_entry.addedfactiontid,
+            'addedid': user,
+            'addedfactiontid': faction,
             'globalstat': stat_entry.globalstat
         })
 
-    return render_template('stats/statmodal.html', user=tid, stats=stats)
+    user = User(tid=tid, key=current_user.key)
+    user.refresh()
+
+    return render_template('stats/statmodal.html', user=user, stats=stats)
 
 
 @mod.route('/stats/chain')

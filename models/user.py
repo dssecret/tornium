@@ -81,7 +81,7 @@ class User(UserMixin):
             if self.key != "":
                 key = self.key
             elif key is None:
-                key = current_user.get_key()
+                key = current_user.key
                 if key == '':
                     raise Exception  # TODO: Make exception more descriptive
 
