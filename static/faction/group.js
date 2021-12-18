@@ -98,4 +98,28 @@ $(document).ready(function() {
             'action': 'invite'
         }));
     });
+
+    $("#delete-group").on("click", function(e) {
+        const xhttp = new XMLHttpRequest();
+
+        xhttp.onload = function() {
+            var response = xhttp.response;
+
+            if("code" in response && response["code"] !== 1) {
+                generateToast("Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
+            } else {
+                generateToast("Request Successfully Sent", `The request to the Tornium API server has been successfully submitted to the server.`);
+                window.location = "/faction/groups";
+            }
+        }
+
+        xhttp.responseType = "json";
+        xhttp.open("POST", "/api/faction/group");
+        xhttp.setRequestHeader("Authorization", `Basic ${btoa(`${key}:`)}`);
+        xhttp.setRequestHeader("Content-Type", "application/json");
+        xhttp.send(JSON.stringify({
+            'groupid': tid,
+            'action': 'delete'
+        }));
+    });
 });

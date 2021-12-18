@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+import uuid
+
 from flask import render_template, redirect
 from flask_login import login_required
 
@@ -40,7 +42,8 @@ def create_group():
         tid=FactionGroupModel.objects.count(),
         name=str(FactionGroupModel.objects.count()),
         creator=current_user.factiontid,
-        members=[faction.tid]
+        members=[faction.tid],
+        invite=uuid.uuid4().hex
     )
     group.save()
 

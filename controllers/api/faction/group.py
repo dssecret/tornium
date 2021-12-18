@@ -17,6 +17,7 @@ import json
 import uuid
 
 from controllers.api.decorators import *
+from models.factionmodel import FactionModel
 from models.factiongroupmodel import FactionGroupModel
 from models.user import User
 import utils
@@ -56,7 +57,7 @@ def group_modify(*args, **kwargs):
     action = data.get('action')
     value = data.get('value')
 
-    if action is None or action not in ['name', 'remove', 'invite']:
+    if action is None or action not in ['name', 'remove', 'invite', 'delete']:
         return jsonify({
             'code': 0,
             'name': 'GeneralError',
@@ -97,6 +98,23 @@ def group_modify(*args, **kwargs):
     elif action == 'invite':
         group.invite = uuid.uuid4().hex
         group.save()
+    elif action == 'delete':
+        for faction in group.members:
+            faction: FactionModel = utils.first(FactionModel.objects(tid=faction))
+            faction.groups.remove(group.tid)
+            faction.save()
+
+        group.delete()
+
+        return jsonify({
+            'code': 1,
+            'name': 'OK',
+            'message': 'Server request was successful.'
+        }), 200, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
 
     return jsonify({
         'tid': group.tid,
