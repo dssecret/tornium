@@ -39,8 +39,10 @@ Tornium - Faction Group {{ group.name }}
 
                             <p class="card-text mt-2">
                                 Invite Link: <a href="/faction/group/invite/{{ group.invite }}">{{ group.invite }}</a>
-                                <br />
-                                <button type="button" class="btn btn-primary" id="refresh-invite">Refresh Invite Link</button>
+                                {% if current_user.factiontid == group.creator %}
+                                    <br />
+                                    <button type="button" class="btn btn-primary" id="refresh-invite">Refresh Invite Link</button>
+                                {% endif %}
                             </p>
                         </div>
                     </div>
