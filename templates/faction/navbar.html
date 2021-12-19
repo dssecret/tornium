@@ -20,15 +20,15 @@
                     </a><!-- TODO: Remove disabled once targets is implemented -->
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" aria-current="page" href="/faction/banking">
-                        <i class="fas fa-money-check-alt"></i>
-                        Banking
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link" aria-current="page" href="/faction/chain">
                         <i class="fas fa-link"></i>
                         Chains
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" aria-current="page" href="/faction/banking">
+                        <i class="fas fa-money-check-alt"></i>
+                        Banking
                     </a>
                 </li>
                 {% if current_user.is_authenticated and current_user.is_aa() %}
@@ -36,12 +36,6 @@
                     <a class="nav-link" aria-current="page" href="/faction/bankingaa">
                         <i class="fas fa-money-check-alt"></i>
                         Banking AA
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link disabled" aria-current="page" href="/faction/schedule">
-                        <i class="fas fa-calendar-alt"></i>
-                        Chain Scheduling
                     </a>
                 </li>
                 <li class="nav-item">
