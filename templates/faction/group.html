@@ -33,6 +33,7 @@ Tornium - Faction Group {{ group.name }}
                                     {% if current_user.factiontid == group.creator and member.tid != group.creator %}
                                         <i class="fas fa-user-slash remove" id="remove-{{ member.tid }}"></i>
                                     {% endif %}
+                                    <br />
                                 {% endfor %}
                             </p>
 
