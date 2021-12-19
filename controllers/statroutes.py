@@ -121,6 +121,7 @@ def user_data():
         faction = None
 
     ff = 1 + (8 / 3 * stats[-1]['battlescore'] / current_user.battlescore)
+    ff = ff if ff <= 3 else 3
     respect = math.log(user.level + 1) / 4 * ff
 
     return render_template('stats/statmodal.html', user=user, faction=faction, stats=stats, ff=round(ff, 2),
