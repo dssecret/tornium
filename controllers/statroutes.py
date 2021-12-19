@@ -15,6 +15,7 @@
 
 import datetime
 import json
+import math
 
 from flask import Blueprint, render_template, request
 from flask_login import login_required, current_user
@@ -61,7 +62,7 @@ def stats_data():
         if stat_entry.tid in users:
             continue
 
-        stats.append([stat_entry.tid, 'NYI', int(stat_entry.battlescore),
+        stats.append([stat_entry.tid, int(stat_entry.battlescore),
                       utils.rel_time(datetime.datetime.fromtimestamp(stat_entry.timeadded))])
         users.append(stat_entry.tid)
 
@@ -114,7 +115,16 @@ def user_data():
     user = User(tid=tid)
     user.refresh()
 
-    return render_template('stats/statmodal.html', user=user, stats=stats)
+    if user.factiontid != 0:
+        faction = Faction(tid=user.factiontid)
+    else:
+        faction = None
+
+    ff = 1 + (8 / 3 * stats[-1]['battlescore'] / current_user.battlescore)
+    respect = math.log(user.level + 1) / 4 * ff
+
+    return render_template('stats/statmodal.html', user=user, faction=faction, stats=stats, ff=round(ff, 2),
+                           respect=round(respect, 2))
 
 
 @mod.route('/stats/chain')

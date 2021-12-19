@@ -12,6 +12,14 @@
             </div>
 
             <div class="modal-body">
+                <p>
+                    Current level: {{ user.level }}<br />
+                    Faction: {{ faction.name if faction is not none else "None" }}<br />
+                    Last Action: {{ user.last_action|reltime }}<br />
+                    Estimated FF: {{ ff }}<br />
+                    Estimated Respect: {{ respect }}
+                </p>
+
                 <table id="user-table" class="table table-striped table-bordered responsive">
                     <thead>
                         <tr>
