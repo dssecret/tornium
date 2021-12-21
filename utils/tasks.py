@@ -425,7 +425,7 @@ def refresh_faction(faction: FactionModel):
             continue
 
         user.factionid = 0
-        user.aa = False
+        user.factionaa = False
         user.save()
 
 
