@@ -530,7 +530,6 @@ def refresh_users():
         user.last_action = user_data['last_action']['timestamp']
         user.level = user_data['level']
         user.discord_id = user_data['discord']['discordID'] if user_data['discord']['discordID'] != '' else 0
-        user.factiontid = user_data['faction']['faction_id']
         user.strength = user_data['strength']
         user.defense = user_data['defense']
         user.speed = user_data['speed']
