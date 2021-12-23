@@ -51,26 +51,21 @@ def stats_data():
     search_value = request.args.get('search[value]')
 
     stats = []
-    users = []
 
     if utils.get_tid(search_value):
-        stat_entries = StatModel.objects(Q(tid__startswith=utils.get_tid(search_value)) & (Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid)))
+        stat_entries = StatModel.objects(Q(tid__startswith=utils.get_tid(search_value)) & (Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid)))[start:start+length]
     else:
-        stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))
+        stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))[start:start+length]
 
     for stat_entry in stat_entries:
-        if stat_entry.tid in users:
-            continue
-
         stats.append([stat_entry.tid, int(stat_entry.battlescore),
                       utils.rel_time(datetime.datetime.fromtimestamp(stat_entry.timeadded))])
-        users.append(stat_entry.tid)
 
     data = {
         'draw': request.args.get('draw'),
         'recordsTotal': StatModel.objects().count(),
         'recordsFiltered': len(stats),
-        'data': stats[start:start+length]
+        'data': stats
     }
 
     return data
