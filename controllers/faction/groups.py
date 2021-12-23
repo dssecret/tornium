@@ -77,11 +77,15 @@ def group_invite(invite: str):
 @aa_required
 def group(tid: int):
     dbgroup: FactionGroupModel = utils.first(FactionGroupModel.objects(tid=tid))
+    faction: FactionModel = utils.first(FactionModel.objects(tid=current_user.factiontid))
 
     if dbgroup is None:
+        raise Exception
+    elif faction is None:
         raise Exception
 
     return render_template('faction/group.html', group=dbgroup,
                            members=[utils.first(FactionModel.objects(tid=int(member))) for member in
                                     dbgroup.members],
-                           key=current_user.key)
+                           key=current_user.key,
+                           faction=faction)

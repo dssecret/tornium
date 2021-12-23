@@ -57,7 +57,7 @@ def group_modify(*args, **kwargs):
     action = data.get('action')
     value = data.get('value')
 
-    if action is None or action not in ['name', 'remove', 'invite', 'delete']:
+    if action is None or action not in ['name', 'remove', 'invite', 'delete', 'share-statdb']:
         return jsonify({
             'code': 0,
             'name': 'GeneralError',
@@ -67,7 +67,7 @@ def group_modify(*args, **kwargs):
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
-    elif value is None and action in ['name']:
+    elif value is None and action in ['name', 'share-statdb']:
         return jsonify({
             'code': 0,
             'name': 'GeneralError',
@@ -115,12 +115,19 @@ def group_modify(*args, **kwargs):
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
+    elif action == 'share-statdb':
+        if value:
+            group.sharestats.append(kwargs['user'].factiontid)
+        else:
+            group.sharestats.remove(kwargs['user'].factiontid)
+        group.save()
 
     return jsonify({
         'tid': group.tid,
         'name': group.name,
         'creator': group.creator,
-        'members': group.members
+        'members': group.members,
+        'sharestats': group.sharestats
     }), 200, {
         'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),

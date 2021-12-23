@@ -86,6 +86,8 @@ class Faction:
         self.chain_config = faction.chainconfig
         self.chain_od = faction.chainod
 
+        self.groups = faction.groups
+
     def rand_key(self):
         return random.choice(self.keys)
 

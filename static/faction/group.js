@@ -122,4 +122,29 @@ $(document).ready(function() {
             'action': 'delete'
         }));
     });
+
+    $("#share-statdb").on("click", function(e) {
+        const xhttp = new XMLHttpRequest();
+
+        xhttp.onload = function() {
+            var response = xhttp.response;
+
+            if("code" in response && response["code"] !== 1) {
+                generateToast("Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
+                window.location.reload();
+            } else {
+                generateToast("Request Successfully Sent", `The request to the Tornium API server has been successfully submitted to the server.`);
+            }
+        }
+
+        xhttp.responseType = "json";
+        xhttp.open("POST", "/api/faction/group");
+        xhttp.setRequestHeader("Authorization", `Basic ${btoa(`${key}:`)}`);
+        xhttp.setRequestHeader("Content-Type", "application/json");
+        xhttp.send(JSON.stringify({
+            'groupid': tid,
+            'action': 'share-statdb',
+            'value': this.checked
+        }));
+    });
 });

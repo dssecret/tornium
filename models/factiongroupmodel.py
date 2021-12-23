@@ -23,3 +23,5 @@ class FactionGroupModel(DynamicDocument):
     creator = IntField()
     members = ListField()
     invite = StringField()
+
+    sharestats = ListField(default=[])
