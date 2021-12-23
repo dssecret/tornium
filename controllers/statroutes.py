@@ -54,7 +54,7 @@ def stats_data():
     users = []
 
     if utils.get_tid(search_value):
-        stat_entries = StatModel.objects(Q(tid_startswith=utils.get_tid(search_value)) & (Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid)))
+        stat_entries = StatModel.objects(Q(tid__startswith=utils.get_tid(search_value)) & (Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid)))
     else:
         stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))
 
