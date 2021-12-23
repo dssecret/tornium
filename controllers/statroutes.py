@@ -54,7 +54,7 @@ def stats_data():
 
     if utils.get_tid(search_value):
         stat_entries = StatModel.objects(Q(tid__startswith=utils.get_tid(search_value)) & (Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid)))[start:start+length]
-        count = StatModel.objects(Q(tid__startswith=utils.get_tod(search_value)) & (Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))).count()
+        count = StatModel.objects(Q(tid__startswith=utils.get_tid(search_value)) & (Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))).count()
     else:
         stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))[start:start+length]
         count = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid)).count()
