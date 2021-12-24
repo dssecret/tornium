@@ -32,6 +32,9 @@ def group_modify(*args, **kwargs):
     user = User(kwargs['user'].tid)
     group: FactionGroupModel = utils.first(FactionGroupModel.objects(tid=data.get('groupid')))
 
+    action = data.get('action')
+    value = data.get('value')
+
     if group is None:
         return jsonify({
             'code': 0,
@@ -42,22 +45,7 @@ def group_modify(*args, **kwargs):
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
-    elif user.factiontid != group.creator:
-        return jsonify({
-            'code': 0,
-            'name': 'GeneralError',
-            'message': 'Server failed to fulfill the request. THe provided faction group can not be modified. Only AA '
-                       'users within the creating faction can modify the faction group.'
-        }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
-        }
-
-    action = data.get('action')
-    value = data.get('value')
-
-    if action is None or action not in ['name', 'remove', 'invite', 'delete', 'share-statdb']:
+    elif action is None or action not in ['name', 'remove', 'invite', 'delete', 'share-statdb']:
         return jsonify({
             'code': 0,
             'name': 'GeneralError',
@@ -72,6 +60,17 @@ def group_modify(*args, **kwargs):
             'code': 0,
             'name': 'GeneralError',
             'message': 'Server failed to fulfill the request. There was no correct value provided but was required.'
+        }), 400, {
+            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+    elif user.factiontid != group.creator and action not in ['share-statdb']:
+        return jsonify({
+            'code': 0,
+            'name': 'GeneralError',
+            'message': 'Server failed to fulfill the request. The provided faction group can not be modified. Only AA '
+                       'users within the creating faction can modify the faction group.'
         }), 400, {
             'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
