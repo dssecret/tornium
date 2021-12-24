@@ -24,6 +24,7 @@ from mongoengine.queryset.visitor import Q
 import utils
 from controllers.faction.decorators import aa_required
 from models.faction import Faction
+from models.factiongroupmodel import FactionGroupModel
 from models.factionmodel import FactionModel
 from models.statmodel import StatModel
 from models.user import User
@@ -53,11 +54,22 @@ def stats_data():
     stats = []
 
     if utils.get_tid(search_value):
-        stat_entries = StatModel.objects(Q(tid__startswith=utils.get_tid(search_value)) & (Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid)))[start:start+length]
-        count = StatModel.objects(Q(tid__startswith=utils.get_tid(search_value)) & (Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))).count()
+        stat_entries = StatModel.objects(Q(tid__startswith=utils.get_tid(search_value)) & (Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid)))
     else:
-        stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))[start:start+length]
-        count = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid)).count()
+        stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))
+
+    factions = []
+    faction: FactionModel = utils.first(FactionModel.objects(tid=current_user.factiontid))
+    stat_entries.filter(globalstat=1)
+
+    if faction is not None:
+        for group in faction.groups:
+            group: FactionGroupModel = utils.first(FactionGroupModel.objects(tid=group))
+            for faction in group.members:
+                stat_entries.filter(addedfactiontid=faction)
+
+    count = stat_entries.count()
+    stat_entries = stat_entries[start:start+length]
 
     for stat_entry in stat_entries:
         stats.append([stat_entry.tid, int(stat_entry.battlescore),

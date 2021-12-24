@@ -131,7 +131,6 @@ $(document).ready(function() {
 
             if("code" in response && response["code"] !== 1) {
                 generateToast("Request Failed", `The Tornium API server has responded with \"${response["message"]} to the submitted request.\"`);
-                window.location.reload();
             } else {
                 generateToast("Request Successfully Sent", `The request to the Tornium API server has been successfully submitted to the server.`);
             }
