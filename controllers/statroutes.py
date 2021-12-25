@@ -80,7 +80,7 @@ def stats_data():
 def user_data():
     tid = int(request.args.get('user'))
     stats = []
-    stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid) | Q(allowedfactions__in=current_user.factiontid))
+    stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid) | Q(allowedfactions=current_user.factiontid))
 
     factions = {}
     users = {}
