@@ -15,6 +15,8 @@
 
 import datetime
 import json
+import logging
+from logging.handlers import TimedRotatingFileHandler
 import math
 import os
 import random
@@ -63,7 +65,14 @@ connect(
     connect=False
 )
 
+logger = logging.getLogger('hueyserver')
+logger.setLevel(logging.DEBUG)
+handler = TimedRotatingFileHandler(filename='hueyserver.log', encoding='utf-8', utc=True, when='midnight', backupCount=5)
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
+
 from models.factionmodel import FactionModel
+from models.factiongroupmodel import FactionGroupModel
 from models.factionstakeoutmodel import FactionStakeoutModel
 from models.servermodel import ServerModel
 from models.statmodel import StatModel
@@ -77,11 +86,15 @@ else:
     huey = RedisHuey(host='localhost', port=6379)
 
 
+def get_logger():
+    return logging.getLogger('hueyserver')
+
+
 @huey.task()
 def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
     url = f'https://api.torn.com/{endpoint}&key={key}&comment=Tornium{"" if fromts == 0 else f"&from={fromts}"}' \
           f'{"" if tots == 0 else f"&to={tots}"}{stat if stat == "" else f"stat={stat}"}'
-    utils.get_logger().info(f'The API call has been made to {url}).')
+    get_logger().info(f'The API call has been made to {url}).')
 
     if key is None or key == '':
         raise Exception
@@ -98,7 +111,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
         else:
             time.sleep(60 - datetime.datetime.utcnow().second)
     except TypeError:
-        utils.get_logger().info(f'Error raised on API key {key}')
+        get_logger().info(f'Error raised on API key {key}')
 
     if session is None:  # Utilizes https://docs.python-requests.org/en/latest/user/advanced/#session-objects
         request = requests.get(url)
@@ -106,7 +119,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
         request = session.get(url)
 
     if request.status_code != 200:
-        utils.get_logger().warning(f'The Torn API has responded with status code {request.status_code} to endpoint '
+        get_logger().warning(f'The Torn API has responded with status code {request.status_code} to endpoint '
                                    f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
 
@@ -146,7 +159,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
                 faction.keys.remove(key)
                 faction.save()
 
-        utils.get_logger().info(f'The Torn API has responded with error code {request["error"]["code"]} '
+        get_logger().info(f'The Torn API has responded with error code {request["error"]["code"]} '
                                 f'({request["error"]["error"]}) to {url}).')
         raise utils.TornError(request["error"]["code"])
 
@@ -167,7 +180,7 @@ def discordget(endpoint, session=None):
         request_json = request.json()
     except:
         if str(request.status_code)[:1] != '2':
-            utils.get_logger().warning(
+            get_logger().warning(
                 f'The Discord API has responded with status code {request.status_code} to endpoint '
                 f'"{endpoint}".')
             raise utils.NetworkingError(request.status_code)
@@ -178,13 +191,13 @@ def discordget(endpoint, session=None):
         # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
         # explanations
 
-        utils.get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
+        get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
                                 f'({request_json["message"]}) to {url}).')
         if redis.get('dev'):
-            utils.get_logger().debug(request_json)
+            get_logger().debug(request_json)
         raise utils.DiscordError(request_json["code"])
     elif str(request.status_code)[:1] != '2':
-        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
+        get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
                                    f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
 
@@ -209,7 +222,7 @@ def discordpost(endpoint, payload, session=None):
         request_json = request.json()
     except:
         if str(request.status_code)[:1] != '2':
-            utils.get_logger().warning(
+            get_logger().warning(
                 f'The Discord API has responded with status code {request.status_code} to endpoint '
                 f'"{endpoint}".')
             raise utils.NetworkingError(request.status_code)
@@ -220,13 +233,13 @@ def discordpost(endpoint, payload, session=None):
         # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
         # explanations
 
-        utils.get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
+        get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
                                 f'({request_json["message"]}) to {url}).')
         if redis.get('dev'):
-            utils.get_logger().debug(request_json)
+            get_logger().debug(request_json)
         raise utils.DiscordError(request_json["code"])
     elif str(request.status_code)[:1] != '2':
-        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
+        get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
                                    f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
 
@@ -249,7 +262,7 @@ def discorddelete(endpoint, session=None):
         request_json = request.json()
     except:
         if str(request.status_code)[:1] != '2':
-            utils.get_logger().warning(
+            get_logger().warning(
                 f'The Discord API has responded with status code {request.status_code} to endpoint '
                 f'"{endpoint}".')
             raise utils.NetworkingError(request.status_code)
@@ -260,13 +273,13 @@ def discorddelete(endpoint, session=None):
         # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a fill list of error code
         # explanations
 
-        utils.get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
+        get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
                                 f'({request_json["message"]}) to {url}).')
         if redis.get('dev'):
-            utils.get_logger().debug(request_json)
+            get_logger().debug(request_json)
         raise utils.DiscordError(request_json["code"])
     elif str(request.status_code)[:1] != '2':
-        utils.get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
+        get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
                                    f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
 
@@ -294,7 +307,7 @@ def torn_stats_get(endpoint, key, session=None):
         request = session.get(url)
 
     if request.status_code != 200:
-        utils.get_logger().warning(f'The Torn API has responded with status code {request.status_code} to endpoint '
+        get_logger().warning(f'The Torn API has responded with status code {request.status_code} to endpoint '
                                    f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
 
@@ -317,7 +330,7 @@ def refresh_factions():
         #                                         key=random.choice(faction.keys),
         #                                         session=requests_session)
         #     except Exception as e:
-        #         utils.get_logger().exception(e)
+        #         get_logger().exception(e)
         #         continue
         #
         #     if len(faction.chainod) != 0:
@@ -341,7 +354,7 @@ def refresh_factions():
         #                 try:
         #                     discordpost.call_local(f'channels/{faction.chainconfig["odchannel"]}/messages', payload=payload)
         #                 except Exception as e:
-        #                     utils.get_logger().exception(e)
+        #                     get_logger().exception(e)
         #                     continue
         #
         #     faction.chainod = faction_od['contributors']['drugoverdoses']
@@ -360,7 +373,7 @@ def refresh_faction(faction: FactionModel):
         faction_data = tornget.call_local(f'faction/?selections=', random.choice(faction.keys),
                                           session=requests_session)
     except Exception as e:
-        utils.get_logger().exception(e)
+        get_logger().exception(e)
         return
 
     if faction_data is None:
@@ -437,7 +450,7 @@ def refresh_user_stats(user: UserModel, keys):
     try:
         user_data = torn_stats_get(f'spy/{user.tid}', random.choice(keys))
     except Exception as e:
-        utils.get_logger().exception(e)
+        get_logger().exception(e)
         return
 
     if not user_data['status']:
@@ -463,7 +476,7 @@ def refresh_guilds():
     try:
         guilds = discordget.call_local('users/@me/guilds', session=requests_session)
     except Exception as e:
-        utils.get_logger().exception(e)
+        get_logger().exception(e)
         return
 
     for guild in guilds:
@@ -473,16 +486,16 @@ def refresh_guilds():
             if int(str(e)) == 10007:
                 continue
             else:
-                utils.get_logger().exception(e)
+                get_logger().exception(e)
                 return
         except Exception as e:
-            utils.get_logger().exception(e)
+            get_logger().exception(e)
             continue
 
         try:
             guild = discordget.call_local(f'guilds/{guild["id"]}', session=requests_session)
         except Exception as e:
-            utils.get_logger().exception(e)
+            get_logger().exception(e)
             continue
 
         owner = utils.first(UserModel.objects(discord_id=guild['owner_id']))
@@ -519,7 +532,7 @@ def refresh_users():
             user_data = tornget.call_local(f'user/?selections=profile,battlestats,discord', user.key,
                                            session=requests_session)
         except Exception as e:
-            utils.get_logger().exception(e)
+            get_logger().exception(e)
             continue
 
         user: UserModel = utils.first(UserModel.objects(_id=user_data['player_id']))
@@ -548,7 +561,7 @@ def refresh_users():
         try:
             tornget.call_local(f'faction/?selections=positions', user.key, session=requests_session)
         except Exception as e:
-            utils.get_logger().exception(e)
+            get_logger().exception(e)
             continue
 
         user.factionaa = True
@@ -565,6 +578,19 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
     except AttributeError:
         last_timestamp = 0
 
+    faction_shares = {}
+
+    group: FactionGroupModel
+    for group in FactionGroupModel.objects():
+        for member in group.sharestats:
+            if str(member) in faction_shares:
+                faction_shares[str(member)].extend(group.members)
+            else:
+                faction_shares[str(member)] = group.members
+
+    for factiontid, shares in faction_shares.items():
+        faction_shares[factiontid] = list(set(shares))
+
     for faction in FactionModel.objects():
         if len(faction.keys) == 0:
             continue
@@ -576,7 +602,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
                                               random.choice(faction.keys),
                                               session=requests_session)
         except Exception as e:
-            utils.get_logger().exception(e)
+            get_logger().exception(e)
             continue
 
         for attack in faction_data['attacks'].values():
@@ -618,7 +644,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
                     )
                     user.save()
                 except Exception as e:
-                    utils.get_logger().exception(e)
+                    get_logger().exception(e)
                     continue
 
             try:
@@ -637,12 +663,19 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             if defender_score == 0:
                 continue
 
-            stat_faction = utils.first(FactionModel.objects(tid=user.factionid))
+            stat_faction: FactionModel = utils.first(FactionModel.objects(tid=user.factionid))
 
             if stat_faction is None:
                 globalstat = 1
+                allowed_factions = []
             else:
                 globalstat = stat_faction.statconfig['global']
+                allowed_factions = [stat_faction.tid]
+
+                if str(stat_faction.tid) in faction_shares:
+                    allowed_factions.extend(faction_shares[str(stat_faction.tid)])
+
+                allowed_factions = list(set(allowed_factions))
 
             stat_entry = StatModel(
                 statid=statid,
@@ -651,7 +684,8 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
                 timeadded=timestamp,
                 addedid=attack['attacker_id'],
                 addedfactiontid=user.factionid,
-                globalstat=globalstat
+                globalstat=globalstat,
+                allowedfactions=allowed_factions
             )
             stat_entry.save()
             statid += 1
@@ -699,7 +733,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
             admin = utils.first(UserModel.objects(tid=random.choice(guild.admins)))
             data = tornget.call_local(f'user/{stakeout.tid}?selections=', key=admin.key, session=requests_session)
     except Exception as e:
-        utils.get_logger().exception(e)
+        get_logger().exception(e)
         return
 
     stakeout_data = stakeout.data
@@ -733,7 +767,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
             try:
                 discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
-                utils.get_logger().exception(e)
+                get_logger().exception(e)
                 return
 
         if 'status' in guild_stakeout['keys'] and data['status']['state'] != stakeout_data['status']['state']:
@@ -753,7 +787,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
             try:
                 discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
-                utils.get_logger().exception(e)
+                get_logger().exception(e)
                 return
 
         if 'flyingstatus' in guild_stakeout['keys'] and \
@@ -776,7 +810,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
             try:
                 discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
-                utils.get_logger().exception(e)
+                get_logger().exception(e)
                 return
 
         if 'online' in guild_stakeout['keys'] and data['last_action']['status'] == 'Online' \
@@ -797,7 +831,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
             try:
                 discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
-                utils.get_logger().exception(e)
+                get_logger().exception(e)
                 return
 
         if 'offline' in guild_stakeout['keys'] and data['last_action']['status'] in ['Offline', 'Idle'] and \
@@ -825,7 +859,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
             try:
                 discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
-                utils.get_logger().exception(e)
+                get_logger().exception(e)
                 return
 
 
@@ -857,7 +891,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
             data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=admin.key,
                                       session=requests_session)
     except Exception as e:
-        utils.get_logger().exception(e)
+        get_logger().exception(e)
         return
 
     stakeout_data = stakeout.data
@@ -896,7 +930,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logger().exception(e)
+                        get_logger().exception(e)
                         return
                 elif 'racket' in territory and 'racket' not in data['territory'][territoryid]:
                     payload = {
@@ -916,7 +950,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logger().exception(e)
+                        get_logger().exception(e)
                         return
 
             for territoryid, territory in data['territory'].items():
@@ -937,7 +971,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logger().exception(e)
+                        get_logger().exception(e)
                         return
                 if 'racket' in territory and 'racket' not in stakeout_data['territory'][territoryid]:
                     payload = {
@@ -958,7 +992,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logger().exception(e)
+                        get_logger().exception(e)
                         return
                 elif territory['racket']['level'] > stakeout_data['territory'][territoryid]['racket']['level']:
                     payload = {
@@ -979,7 +1013,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logger().exception(e)
+                        get_logger().exception(e)
                         return
                 elif territory['racket']['level'] > stakeout_data['territory'][territoryid]['racket']['level']:
                     payload = {
@@ -1000,7 +1034,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logger().exception(e)
+                        get_logger().exception(e)
                         return
         if 'members' in guild_stakeout['keys'] and data['members'] != stakeout_data['members']:
             for memberid, member in stakeout_data['members'].items():
@@ -1020,7 +1054,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logger().exception(e)
+                        get_logger().exception(e)
                         return
 
             for memberid, member in data['members'].items():
@@ -1040,7 +1074,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logger().exception(e)
+                        get_logger().exception(e)
                         return
         if 'memberstatus' in guild_stakeout['keys'] and data['members'] != stakeout_data['members']:
             for memberid, member in stakeout_data['members'].items():
@@ -1069,7 +1103,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logger().exception(e)
+                        get_logger().exception(e)
                         return
         if 'memberactivity' in guild_stakeout['keys'] and data['members'] != stakeout_data['members']:
             for memberid, member in stakeout_data['members'].items():
@@ -1100,7 +1134,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logger().exception(e)
+                        get_logger().exception(e)
                         return
                 elif member['last_action']['status'] in ('Online', 'Idle') and \
                         data['members'][memberid]['last_action']['status'] in ('Offline', 'Idle'):
@@ -1129,7 +1163,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logger().exception(e)
+                        get_logger().exception(e)
                         return
         if 'assault' in guild_stakeout['keys'] and data['territory_wars'] != stakeout_data['territory_wars']:
             for war in data['territory_wars']:
@@ -1162,7 +1196,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logger().exception(e)
+                        get_logger().exception(e)
                         return
             for war in stakeout_data['territory_wars']:
                 existing = False
@@ -1194,7 +1228,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     try:
                         discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                     except Exception as e:
-                        utils.get_logger().exception(e)
+                        get_logger().exception(e)
                         return
         if 'armory' in guild_stakeout['keys']:
             server = utils.first(ServerModel.objects(sid=guildid))
@@ -1215,7 +1249,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                                                   session=requests_session,
                                                   fromts=utils.now() - 60)
                 except Exception as e:
-                    utils.get_logger().exception(e)
+                    get_logger().exception(e)
                     break
 
                 if len(data['armorynews']) == 0:
@@ -1242,7 +1276,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         try:
                             discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                         except Exception as e:
-                            utils.get_logger().exception(e)
+                            get_logger().exception(e)
                             return
 
                         pass
@@ -1264,7 +1298,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                                                   session=requests_session,
                                                   fromts=utils.now() - 60)
                 except Exception as e:
-                    utils.get_logger().exception(e)
+                    get_logger().exception(e)
                     break
 
                 if len(data['armorynews']) == 0:
@@ -1291,7 +1325,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         try:
                             discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
                         except Exception as e:
-                            utils.get_logger().exception(e)
+                            get_logger().exception(e)
                             return
 
                         pass

@@ -54,19 +54,9 @@ def stats_data():
     stats = []
 
     if utils.get_tid(search_value):
-        stat_entries = StatModel.objects(Q(tid__startswith=utils.get_tid(search_value)) & (Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid)))
+        stat_entries = StatModel.objects(Q(tid__startswith=utils.get_tid(search_value)) & (Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid) | Q(allowedfactions=current_user.factiontid)))
     else:
-        stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))
-
-    factions = []
-    faction: FactionModel = utils.first(FactionModel.objects(tid=current_user.factiontid))
-    stat_entries.filter(globalstat=1)
-
-    if faction is not None:
-        for group in faction.groups:
-            group: FactionGroupModel = utils.first(FactionGroupModel.objects(tid=group))
-            for faction in group.members:
-                stat_entries.filter(addedfactiontid=faction)
+        stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid) | Q(allowedfactions=current_user.factiontid))
 
     count = stat_entries.count()
     stat_entries = stat_entries[start:start+length]
@@ -90,7 +80,7 @@ def stats_data():
 def user_data():
     tid = int(request.args.get('user'))
     stats = []
-    stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid))
+    stat_entries = StatModel.objects(Q(globalstat=1) | Q(addedfactiontid=current_user.factiontid) | Q(allowedfactions__in=current_user.factiontid))
 
     factions = {}
     users = {}
