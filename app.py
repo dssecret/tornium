@@ -22,6 +22,7 @@ import os
 import flask
 from flask_cors import CORS
 from flask_login import LoginManager
+from honeybadger.contrib import FlaskHoneybadger
 from mongoengine import connect
 
 from redisdb import get_redis
@@ -38,7 +39,9 @@ except FileNotFoundError:
         'taskqueue': 'redis',
         'username': 'tornium',
         'password': '',
-        'host': ''
+        'host': '',
+        'honeyenv': 'production',
+        'honeykey': '',
     }
     with open(f'settings.json', 'w') as file:
         json.dump(data, file, indent=4)
@@ -81,6 +84,10 @@ logger.addHandler(handler)
 
 app = flask.Flask(__name__)
 app.secret_key = redis.get('secret')
+app.config['HONEYBADGER_ENVIRONMENT'] = data.get('honeyenv')
+app.config['HONEYBADGER_API_KEY'] = data.get('honeykey')
+app.config['HONEYBADGER_PARAMS_FILTERS'] = 'password, secret, credit-card'
+FlaskHoneybadger(app, report_exceptions=True)
 
 cors = CORS(app, resources={r'/api/*': {'origins': '*'}})
 
