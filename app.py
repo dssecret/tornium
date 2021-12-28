@@ -22,6 +22,7 @@ import os
 import flask
 from flask_cors import CORS
 from flask_login import LoginManager
+import honeybadger
 from honeybadger.contrib import FlaskHoneybadger
 from mongoengine import connect
 
@@ -48,6 +49,8 @@ except FileNotFoundError:
 
 with open('settings.json', 'r') as file:
     data = json.load(file)
+
+honeybadger.honeybadger.configure(api_key=data.get('honeykey'))
 
 redis = get_redis()
 redis.set('dev', str(data['dev']))

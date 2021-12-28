@@ -14,7 +14,6 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 from flask import Blueprint, render_template, send_from_directory, request
-import honeybadger
 
 mod = Blueprint('baseroutes', __name__)
 
