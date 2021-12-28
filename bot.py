@@ -24,6 +24,7 @@ from urllib.parse import urlparse, parse_qs
 
 import discord
 from discord.ext import commands
+import honeybadger
 from mongoengine import connect
 
 from redisdb import get_redis
@@ -40,13 +41,17 @@ except FileNotFoundError:
         'taskqueue': 'redis',
         'username': 'tornium',
         'password': '',
-        'host': ''
+        'host': '',
+        'honeyenv': 'production',
+        'honeykey': '',
     }
     with open(f'settings.json', 'w') as file:
         json.dump(data, file, indent=4)
 
 with open('settings.json', 'r') as file:
     data = json.load(file)
+
+honeybadger.honeybadger.configure(api_key=data.get('honeykey'))
 
 redis = get_redis()
 redis.set('dev', str(data['dev']))
