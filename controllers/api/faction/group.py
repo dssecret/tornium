@@ -116,9 +116,9 @@ def group_modify(*args, **kwargs):
         }
     elif action == 'share-statdb':
         if value:
-            group.sharestats.append(kwargs['user'].factiontid)
+            group.sharestats.append(kwargs['user'].factionid)
         else:
-            group.sharestats.remove(kwargs['user'].factiontid)
+            group.sharestats.remove(kwargs['user'].factionid)
         group.save()
 
     return jsonify({
