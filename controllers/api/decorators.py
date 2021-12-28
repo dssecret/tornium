@@ -30,7 +30,7 @@ def ratelimit(func):
     def wrapper(*args, **kwargs):
         client = redisdb.get_redis()
         key = kwargs['user'].tid
-        limit = 150
+        limit = 250 if kwargs['user'].pro else 150
 
         if client.setnx(key, limit):
             client.expire(key, 60 - datetime.datetime.utcnow().second)
