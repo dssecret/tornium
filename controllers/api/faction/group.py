@@ -41,7 +41,7 @@ def group_modify(*args, **kwargs):
             'name': 'GeneralError',
             'message': 'Server failed to fulfill the request. The provided faction group ID was not a valid ID.'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -51,7 +51,7 @@ def group_modify(*args, **kwargs):
             'name': 'GeneralError',
             'message': 'Server failed to fulfill the request. There was no correct action provided but was required.'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -61,7 +61,7 @@ def group_modify(*args, **kwargs):
             'name': 'GeneralError',
             'message': 'Server failed to fulfill the request. There was no correct value provided but was required.'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -72,7 +72,7 @@ def group_modify(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided faction group can not be modified. Only AA '
                        'users within the creating faction can modify the faction group.'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -87,7 +87,7 @@ def group_modify(*args, **kwargs):
                 'name': 'GeneralError',
                 'message': 'Server failed to fulfill the request. The group creator can not be removed from the group.'
             }), 400, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
                 'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
                 'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
             }
@@ -110,7 +110,7 @@ def group_modify(*args, **kwargs):
             'name': 'OK',
             'message': 'Server request was successful.'
         }), 200, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -128,7 +128,7 @@ def group_modify(*args, **kwargs):
         'members': group.members,
         'sharestats': group.sharestats
     }), 200, {
-        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
         'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }

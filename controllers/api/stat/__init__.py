@@ -38,7 +38,7 @@ def generate_chain_list(*args, **kwargs):
             'message': 'Server failed the fulfill the request. There was no battle stats scored for the user but the '
                        'battle stats are required.'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -79,7 +79,7 @@ def generate_chain_list(*args, **kwargs):
         'variance': variance,
         'data': jsonified_stat_entires
     }), 200, {
-        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
         'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }
@@ -118,7 +118,7 @@ def get_stat_user(tid, *args, **kwargs):
         'limit': limit,
         'data': jsonified_stat_entries
     }), 200, {
-        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
         'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }

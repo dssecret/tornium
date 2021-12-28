@@ -38,7 +38,7 @@ def create_schedule(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
                        'for an AA level request.'
         }), 403, {
-           'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+           'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -46,7 +46,7 @@ def create_schedule(*args, **kwargs):
     schedule = Schedule(uuid=uuid.uuid4().hex, factiontid=user.factiontid)
 
     return schedule.file, 200, {
-       'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+       'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }
@@ -67,7 +67,7 @@ def delete_schedule(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
                        'for an AA level request.'
         }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -79,7 +79,7 @@ def delete_schedule(*args, **kwargs):
         'name': 'OK',
         'message': 'Server request was successful.'
     }, 200, {
-        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
         'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }
@@ -100,7 +100,7 @@ def add_chain_watcher(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
                        'for an AA level request.'
         }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -110,7 +110,7 @@ def add_chain_watcher(*args, **kwargs):
     schedule.set_weight(tid=data['tid'], weight=data['weight'])
 
     return schedule.file, 200, {
-       'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+       'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }
@@ -131,7 +131,7 @@ def remove_chain_watcher(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
                        'for an AA level request.'
         }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -140,7 +140,7 @@ def remove_chain_watcher(*args, **kwargs):
     schedule.remove_user(data['tid'])
 
     return schedule.file, 200, {
-        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
         'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }
@@ -161,7 +161,7 @@ def add_chain_availability(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
                        'for an AA level request.'
         }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -172,7 +172,7 @@ def add_chain_availability(*args, **kwargs):
             'name': 'GeneralError',
             'message': 'Sever failed to fulfill the request. The from and to values are required for this endpoint.'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -182,7 +182,7 @@ def add_chain_availability(*args, **kwargs):
             'name': 'GeneralError',
             'message': 'Sever failed to fulfill the request. The to value must be greater than the from value.'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -196,7 +196,7 @@ def add_chain_availability(*args, **kwargs):
             'message': 'Sever failed to fulfill the request. The interval must be within the specified chain '
                        'interval or the chain interval must be set.'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -212,7 +212,7 @@ def add_chain_availability(*args, **kwargs):
                 'message': 'Sever failed to fulfill the request. The interval must be within the specified chain '
                            'interval or the chain interval must be set.'
             }), 400, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
                 'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
                 'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
             }
@@ -220,7 +220,7 @@ def add_chain_availability(*args, **kwargs):
     schedule.add_activity(tid=data['tid'], activity=f'{data["from"]}-{data["to"]}')
 
     return schedule.file, 200, {
-        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
         'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }
@@ -241,7 +241,7 @@ def schedule_setup(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
                        'for an AA level request.'
         }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -252,7 +252,7 @@ def schedule_setup(*args, **kwargs):
             'name': 'GeneralError',
             'message': 'Sever failed to fulfill the request. The from and to values are required for this endpoint.'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -262,7 +262,7 @@ def schedule_setup(*args, **kwargs):
             'name': 'GeneralError',
             'message': 'Sever failed to fulfill the request. The to value must be greater than the from value.'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -273,7 +273,7 @@ def schedule_setup(*args, **kwargs):
     schedule.update_file()
 
     return schedule.file, 200, {
-        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
         'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }
@@ -293,7 +293,7 @@ def execute_scheduler(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
                        'for an AA level request.'
         }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -307,7 +307,7 @@ def execute_scheduler(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
                        'due to a cross-faction request.'
         }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -319,14 +319,14 @@ def execute_scheduler(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
                        'due to a cross-faction request.'
         }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
 
     schedule.generate()
     return schedule.schedule, 200, {
-        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
         'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }
@@ -346,7 +346,7 @@ def get_schedule(uuid, *args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
                        'for an AA level request.'
         }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -361,7 +361,7 @@ def get_schedule(uuid, *args, **kwargs):
                 'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
                            'due to a cross-faction request.'
             }), 403, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
                 'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
                 'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
             }
@@ -373,13 +373,13 @@ def get_schedule(uuid, *args, **kwargs):
                 'message': 'Server failed to fulfill the request. The provided authentication code was not sufficient '
                            'due to a cross-faction request.'
             }), 403, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
                 'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
                 'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
             }
 
         return send_file(f'{os.getcwd()}/schedule/{uuid}.json'), 200, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -389,7 +389,7 @@ def get_schedule(uuid, *args, **kwargs):
             schedules.append(schedule.uuid)
 
         return jsonify(schedules), 200, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }

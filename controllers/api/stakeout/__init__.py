@@ -49,7 +49,7 @@ def create_stakeout(stype, *args, **kwargs):
             'message': 'Server failed to fulfill the request. There was no guild ID provided but a guild ID was '
                        'required.'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -60,7 +60,7 @@ def create_stakeout(stype, *args, **kwargs):
             'message': 'Server failed to fulfill the request. There was no Torn ID provided but a Torn ID was '
                        'required.'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -76,7 +76,7 @@ def create_stakeout(stype, *args, **kwargs):
             'message': 'Server failed to create the stakeout. The provided stakeout type did not match a known '
                        'stakeout type.'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -87,7 +87,7 @@ def create_stakeout(stype, *args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided guild ID did not match a guild that the '
                        'owner of the provided Tornium key was marked as an administrator in.'
         }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -98,7 +98,7 @@ def create_stakeout(stype, *args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided server ID has not enabled stakeouts. '
                        'Contact a server administrator in order to enable this feature.'
         }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -109,7 +109,7 @@ def create_stakeout(stype, *args, **kwargs):
             'name': 'StakeoutAlreadyExists',
             'message': 'Server failed to fulfill the request. The provided user ID is already being staked'
         }), 400, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -120,7 +120,7 @@ def create_stakeout(stype, *args, **kwargs):
             'name': 'StakeoutAlreadyExists',
             'message': 'Server failed to fulfill the request. The provided faction ID is already being staked'
         }), 400, {
-               'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+               'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
            }
@@ -132,7 +132,7 @@ def create_stakeout(stype, *args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided array of stakeout keys included a '
                        'stakeout key that was invalid for the provided stakeout type..'
         }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -145,7 +145,7 @@ def create_stakeout(stype, *args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided array of stakeout keys included a '
                        'stakeout key that was invalid for the provided stakeout type..'
         }), 403, {
-            'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
@@ -219,7 +219,7 @@ def create_stakeout(stype, *args, **kwargs):
         'data': stakeout.data,
         'last_update': stakeout.last_update
     }), 200, {
-        'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
         'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
         'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
     }

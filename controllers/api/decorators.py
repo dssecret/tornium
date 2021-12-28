@@ -48,7 +48,7 @@ def ratelimit(func):
                 'name': 'Too Many Requests',
                 'message': 'Server failed to respond to request. Too many requests were received.'
             }), 429, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
                 'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
                 'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
             }
@@ -73,7 +73,7 @@ def requires_scopes(func=None, scopes=None):
                 'message': 'Server failed to fulfill the request. The scope of the Tornium key provided was not '
                            'sufficient for the request.'
             }), 403, {
-                'X-RateLimit-Limit': 150,  # TODO: Update based on per-user quota
+                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
                 'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
                 'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
             }
