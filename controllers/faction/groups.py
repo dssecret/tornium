@@ -24,6 +24,7 @@ from models.factionmodel import FactionModel
 import utils
 
 
+@login_required
 @aa_required
 def groups():
     return render_template('faction/groups.html',
@@ -31,12 +32,14 @@ def groups():
                                    utils.first(FactionModel.objects(tid=current_user.factiontid)).groups])
 
 
+@login_required
 @aa_required
 def create_group():
     faction: FactionModel = utils.first(FactionModel.objects(tid=current_user.factiontid))
 
     if faction is None:
-        raise Exception
+        return render_template('errors/error.html', title='Faction Missing', error='No faction was found to be '
+                                                                                   'attached to the logged in user.')
 
     group = FactionGroupModel(
         tid=FactionGroupModel.objects.count(),
@@ -53,17 +56,20 @@ def create_group():
     return redirect(f'/faction/group/{group.tid}')
 
 
+@login_required
 @aa_required
 def group_invite(invite: str):
     dbgroup: FactionGroupModel = utils.first(FactionGroupModel.objects(invite=invite))
     faction: FactionModel = utils.first(FactionModel.objects(tid=current_user.factiontid))
 
     if faction is None:
-        raise Exception
+        return render_template('errors/error.html', title='Faction Missing', error='No faction was found to be '
+                                                                                   'attached to the logged in user.')
     elif dbgroup is None:
-        raise Exception
+        return render_template('errors/error.html', title='Faction Group Missing', error='No faction group was found '
+                                                                                         'with the specific ID.')
     elif dbgroup.tid in faction.groups:
-        raise Exception
+        return render_template('errors/error.html', title='Error', error='Faction is already a member of the group.')
 
     dbgroup.members.append(current_user.factiontid)
     dbgroup.save()
@@ -74,15 +80,18 @@ def group_invite(invite: str):
     return redirect(f'/faction/group/{dbgroup.tid}')
 
 
+@login_required
 @aa_required
 def group(tid: int):
     dbgroup: FactionGroupModel = utils.first(FactionGroupModel.objects(tid=tid))
     faction: FactionModel = utils.first(FactionModel.objects(tid=current_user.factiontid))
 
-    if dbgroup is None:
-        raise Exception
-    elif faction is None:
-        raise Exception
+    if faction is None:
+        return render_template('errors/error.html', title='Faction Missing', error='No faction was found to be '
+                                                                                   'attached to the logged in user.')
+    elif dbgroup is None:
+        return render_template('errors/error.html', title='Faction Group Missing', error='No faction group was found '
+                                                                                         'with the specific ID.')
 
     return render_template('faction/group.html', group=dbgroup,
                            members=[utils.first(FactionModel.objects(tid=int(member))) for member in
