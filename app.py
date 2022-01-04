@@ -90,6 +90,7 @@ app.secret_key = redis.get('secret')
 app.config['HONEYBADGER_ENVIRONMENT'] = data.get('honeyenv')
 app.config['HONEYBADGER_API_KEY'] = data.get('honeykey')
 app.config['HONEYBADGER_PARAMS_FILTERS'] = 'password, secret, credit-card'
+app.config['REMEMBER_COOKIE_DURATION'] = 604800
 FlaskHoneybadger(app, report_exceptions=True)
 
 cors = CORS(app, resources={r'/api/*': {'origins': '*'}})
@@ -98,7 +99,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'authroutes.login'
 login_manager.refresh_view = 'authroutes.login'
-login_manager.session_protection = 'basic'
+login_manager.session_protection = 'strong'
 
 
 @login_manager.user_loader
