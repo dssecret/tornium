@@ -6,3 +6,4 @@ venv/
 .idea/
 huey.*
 schedule/
+**/__pycache__/
