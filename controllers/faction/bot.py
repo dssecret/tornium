@@ -13,12 +13,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from flask import render_template, request
+from flask import render_template, request, flash
 from flask_login import login_required
 
 from controllers.faction.decorators import *
 from models.faction import Faction
 from models.factionmodel import FactionModel
+from models.server import Server
 import utils
 
 
@@ -26,6 +27,22 @@ import utils
 @login_required
 def bot():
     faction = Faction(current_user.factiontid)
+
+    if faction.guild == 0:
+        vault_config = {'banking': 0, 'banker': 0, 'withdrawal': 0}
+        config = {'vault': 0, 'stats': 1}
+        flash('Remember to set the faction server before performing any other setup.')
+    else:
+        server = Server(faction.guild)
+
+        if faction.tid not in server.factions:
+            vault_config = {'banking': 0, 'banker': 0, 'withdrawal': 0}
+            config = {'vault': 0, 'stats': 1}
+            flash('Remember to add the faction to the server\'s list of factions before performing any other setup')
+        else:
+            vault_config = faction.vault_config
+            config = faction.config
+
 
     if request.method == 'POST':
         faction_model = utils.first(FactionModel.objects(tid=current_user.factiontid))
@@ -97,5 +114,5 @@ def bot():
 
             faction_model.save()
 
-    return render_template('faction/bot.html', guildid=faction.guild, vault_config=faction.get_vault_config(),
-                           config=faction.get_config())
+    return render_template('faction/bot.html', guildid=faction.guild, vault_config=vault_config,
+                           config=config)

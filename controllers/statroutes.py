@@ -143,7 +143,7 @@ def config():
         faction_model = utils.first(FactionModel.objects(tid=current_user.factiontid))
 
         if (request.form.get('enabled') is not None) ^ (request.form.get('disabled') is not None):
-            config = faction.get_stat_config()
+            config = faction.stat_config
 
             if request.form.get('enabled') is not None:
                 config['global'] = 1
@@ -154,4 +154,4 @@ def config():
 
             faction_model.save()
 
-    return render_template('stats/config.html', config=faction.get_stat_config())
+    return render_template('stats/config.html', config=faction.stat_config)

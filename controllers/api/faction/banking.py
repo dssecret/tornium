@@ -17,6 +17,7 @@ import json
 
 from controllers.api.decorators import *
 from models.faction import Faction
+from models.server import Server
 from models.user import User
 from models.withdrawalmodel import WithdrawalModel
 import utils
@@ -62,8 +63,22 @@ def banking_request(*args, **kwargs):
             }
 
     faction = Faction(user.factiontid, key=user.key)
-    vault_config = faction.get_vault_config()
-    config = faction.get_config()
+    server = Server(faction.guild)
+
+    if faction.tid not in server.factions:
+        return jsonify({
+            'code': 0,
+            'name': 'GeneralError',
+            'message': 'Server failed to fulfill the request. The user\'s faction is not in the stored server\'s list '
+                       'of factions.'
+        }), 400, {
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+
+    vault_config = faction.vault_config
+    config = faction.config
 
     if vault_config.get('banking') == 0 or vault_config.get('banker') == 0 or config.get('vault') == 0:
         return jsonify({

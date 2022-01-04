@@ -44,7 +44,7 @@ def chain():
                 else:
                     raise e
 
-            config = faction.get_chain_config()
+            config = faction.chain_config
             config['odchannel'] = int(channel['id'])
             faction_model.chainconfig = config
             faction_model.save()
