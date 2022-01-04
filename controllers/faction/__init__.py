@@ -52,11 +52,3 @@ mod.add_url_rule('/faction/targets/<int:tid>/refresh', view_func=target.refresh_
 @mod.route('/faction')
 def index():
     return render_template('faction/index.html')
-
-
-@mod.route('/faction/members')
-@login_required
-def members():
-    faction_members = UserModel.objects(factionid=current_user.factiontid)
-
-    return render_template('faction/members.html', members=faction_members)
