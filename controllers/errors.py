@@ -78,7 +78,7 @@ def error500(e):
     :param e: HTTP error
     """
 
-    return render_template('/errors/500.html'), 500
+    return render_template('/errors/500.html', error=e), 500
 
 
 @mod.app_errorhandler(501)
