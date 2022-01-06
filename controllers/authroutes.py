@@ -38,7 +38,7 @@ def login():
     except utils.TornError as e:
         return utils.handle_torn_error(str(e))
     except Exception as e:
-        raise e
+        return render_template('errors/error.html', title='Error', message=str(e))
 
     user = User(torn_user['player_id'])
 
