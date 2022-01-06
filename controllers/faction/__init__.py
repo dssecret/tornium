@@ -16,7 +16,7 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 
-from controllers.faction import banking, bot, chain, groups, schedule, target
+from controllers.faction import banking, bot, chain, groups, schedule
 from models.usermodel import UserModel
 
 mod = Blueprint('factionroutes', __name__)
