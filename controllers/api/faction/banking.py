@@ -63,6 +63,18 @@ def banking_request(*args, **kwargs):
             }
 
     faction = Faction(user.factiontid, key=user.key)
+    
+    if faction.guild == 0:
+        return jsonify({
+            'code': 0,
+            'name': 'GeneralError',
+            'message': 'Server failed to fulfill the request. The faction does not currently have a Discord server set.'
+        }), 400, {
+            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        }
+    
     server = Server(faction.guild)
 
     if faction.tid not in server.factions:
