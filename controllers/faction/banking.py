@@ -75,7 +75,7 @@ def userbankingdata():
     data = {
         'draw': request.args.get('draw'),
         'recordsTotal': WithdrawalModel.objects().count(),
-        'recordsFiltered': WithdrawalModel.objects(factiontid=current_user.factiontid).count(),
+        'recordsFiltered': WithdrawalModel.objects(requester=current_user.tid).count(),
         'data': withdrawals
     }
     return data
