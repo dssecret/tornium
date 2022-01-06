@@ -113,6 +113,11 @@ def relative_time(s):
     return utils.rel_time(datetime.datetime.fromtimestamp(s))
 
 
+@app.template_filter('tcttime')
+def tct_time(s):
+    return utils.torn_timestamp(int(s))
+
+
 if redis.get("dev") == "True" and __name__ == "__main__":
     app.register_blueprint(base_mod)
     app.register_blueprint(auth_mod)
