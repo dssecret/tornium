@@ -43,11 +43,6 @@ mod.add_url_rule('/faction/group/invite/<string:invite>', view_func=groups.group
 mod.add_url_rule('/faction/schedule', view_func=schedule.schedule, methods=['GET'])
 mod.add_url_rule('/faction/scheduledata', view_func=schedule.schedule, methods=['GET'])
 
-# Target Routes
-mod.add_url_rule('/faction/targets', view_func=target.targets, methods=['GET', 'POST'])
-mod.add_url_rule('/faction/targets/<int:tid>/remove', view_func=target.remove_target, methods=['GET'])
-mod.add_url_rule('/faction/targets/<int:tid>/refresh', view_func=target.refresh_target, methods=['GET'])
-
 
 @mod.route('/faction')
 def index():
