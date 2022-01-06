@@ -44,10 +44,12 @@ def generate_chain_list(*args, **kwargs):
         }
 
     stat_entries = StatModel.objects((Q(globalstat=1) |
-                                      Q(addedfactiontid=kwargs['user'].factionid)) &
-                                     Q(battlescore__gte=(kwargs['user']['battlescore'] * (defender_stats - variance))) &
-                                     Q(battlescore__lte=(kwargs['user']['battlescore'] * (defender_stats + variance))) &
-                                     Q(timeadded__gte=(utils.now() - 2678400)))  # Thirty one days
+                                      Q(addedid=kwargs['user'].tid) |
+                                      Q(addedfactiontid=kwargs['user'].factionid) |
+                                      Q(allowedfactions=kwargs['user'].factionid)) &
+                                      Q(battlescore__gte=(kwargs['user']['battlescore'] * (defender_stats - variance))) &
+                                      Q(battlescore__lte=(kwargs['user']['battlescore'] * (defender_stats + variance))) &
+                                      Q(timeadded__gte=(utils.now() - 2678400)))  # Thirty one days
     stat_entries = list(stat_entries.all().values_list('statid'))
     random.shuffle(stat_entries)
     stat_entries = stat_entries[:10]
@@ -93,8 +95,10 @@ def get_stat_user(tid, *args, **kwargs):
     limit = request.args.get('limit') if request.args.get('limit') is not None else 10
 
     stat_entries = StatModel.objects((Q(globalstat=1) |
-                                      Q(addedfactiontid=kwargs['user'].factionid)) &
-                                     Q(tid=tid)).order_by('-statid')[:limit].all()
+                                      Q(addedid=kwargs['user'].tid) |
+                                      Q(addedfactiontid=kwargs['user'].factionid) |
+                                      Q(allowedfactions=kwargs['user'].factionid)) &
+                                      Q(tid=tid)).order_by('-statid')[:limit].all()
     jsonified_stat_entries = []
     users = []
 
