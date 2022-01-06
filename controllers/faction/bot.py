@@ -57,7 +57,7 @@ def bot():
                                        error=f'The Discord API has responded with HTTP error code '
                                              f'{utils.remove_str(str(e))}.')
             except Exception as e:
-                raise e
+                return render_template('errors/error.html', title='Error', error=str(e))
 
             faction.guild = request.form.get('guildid')
             faction_model.guild = request.form.get('guildid')
@@ -72,7 +72,7 @@ def bot():
                                        error=f'The Discord API has responded with HTTP error code '
                                              f'{utils.remove_str(str(e))}.')
             except Exception as e:
-                raise e
+                return render_template('errors/error.html', title='Error', error=str(e))
 
             faction_model.vaultconfig['withdrawal'] = int(channel['id'])
             faction_model.save()
@@ -86,7 +86,7 @@ def bot():
                                        error=f'The Discord API has responded with HTTP error code '
                                              f'{utils.remove_str(str(e))}.')
             except Exception as e:
-                raise e
+                return render_template('errors/error.html', title='Error', error=str(e))
 
             faction_model.vaultconfig['banking'] = int(channel['id'])
             faction_model.save()
@@ -100,7 +100,7 @@ def bot():
                                        error=f'The Discord API has responded with HTTP error code '
                                              f'{utils.remove_str(str(e))}.')
             except Exception as e:
-                raise e
+                return render_template('errors/error.html', title='Error', error=str(e))
 
             for role in roles:  # TODO: Add error message for role not found in server
                 if role['id'] == request.form.get('banker'):
