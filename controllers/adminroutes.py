@@ -37,14 +37,14 @@ def admin_required(f):
 
 
 @mod.route('/admin')
-@login_required
+@fresh_login_required
 @admin_required
 def index():
     return render_template('admin/index.html')
 
 
 @mod.route('/admin/dashboard', methods=['GET', 'POST'])
-@login_required
+@fresh_login_required
 @admin_required
 def dashboard():
     if request.method == 'POST':
@@ -65,7 +65,7 @@ def dashboard():
 
 
 @mod.route('/admin/bot', methods=['GET', 'POST'])
-@login_required
+@fresh_login_required
 @admin_required
 def bot():
     redis = get_redis()
@@ -75,3 +75,10 @@ def bot():
             redis.set('bottoken', request.form.get('bottoken'))
 
     return render_template('admin/bot.html', bottoken=redis.get('bottoken'))
+
+
+@mod.route('/admin/database')
+@fresh_login_required
+@admin_required
+def database():
+    return render_template('admin/database.html')
