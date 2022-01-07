@@ -16,7 +16,7 @@
 from functools import wraps
 
 from flask import Blueprint, render_template, abort, request
-from flask_login import login_required, current_user
+from flask_login import fresh_login_required, current_user
 
 from redisdb import get_redis
 from models.usermodel import UserModel
