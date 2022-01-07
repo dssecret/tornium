@@ -16,5 +16,19 @@ along with Tornium.  If not, see <https://www.gnu.org/licenses/>. */
 const key = document.currentScript.getAttribute('data-key');
 
 $(document).ready(function() {
+    var table = $('#user-table').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "ordering": false,
+        "responsive": true,
+        "ajax": {
+            url: "/admin/users"
+        }
+    });
     
+    $.fn.dataTable.ext.pager.numbers_length = 5;
+    
+    $('#user-table tbody').on('click', 'tr', function() {
+        window.location.href = `/admin/database/user/{table.row(this).data[0]}`;
+    });
 });
