@@ -151,6 +151,11 @@ def rel_time(time):
             return f'{int(round(delta/86400))} day ago'
         else:
             return f'{int(round(delta/86400))} days ago'
+    elif delta < 31104000:  # Twelve months
+        if int(round(delta/2592000)) == 1:
+            return f'{int(round(delta/2592000))} month ago'
+        else:
+            return f'{int(round(delta/2592000))} months ago'
     else:
         return 'A long time ago'
 
