@@ -32,8 +32,6 @@ class FactionModel(DynamicDocument):
     config = DictField(default={'vault': 0, 'stats': 1})  # Dictionary of faction's bot configuration
     vaultconfig = DictField(default={'banking': 0, 'banker': 0, 'withdrawal': 0})  # Dictionary of vault configuration
 
-    targets = DictField(default={})  # Dictionary of targets
-
     statconfig = DictField(default={'global': 0})  # Dictionary of target config
 
     chainconfig = DictField(default={'od': 0, 'odchannel': 0})  # Dictionary of chain config

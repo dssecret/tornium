@@ -50,7 +50,6 @@ class Faction:
                 guild=0,
                 config={'vault': 0, 'stats': 1},
                 vaultconfig={'banking': 0, 'banker': 0, 'withdrawal': 0},
-                targets={},
                 statconfig={'global': 0},
                 chainconfig={'od': 0, 'odchannel': 0},
                 chainod={}
@@ -78,8 +77,6 @@ class Faction:
         self.guild = faction.guild
         self.config = faction.config
         self.vault_config = faction.vaultconfig
-
-        self.targets = faction.targets
 
         self.stat_config = faction.statconfig
 
