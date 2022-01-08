@@ -16,9 +16,11 @@ Tornium - Admin User Database
 
             <table id="user-table" class="table table-striped table-bordered responsive">
                 <thead>
-                    <tr>User ID</tr>
-                    <tr>User Name</tr>
-                    <tr>Discord ID</tr>
+                    <tr>
+                        <th>User ID</th>
+                        <th>User Name</th>
+                        <th>Discord ID</th>
+                    </tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -26,7 +28,6 @@ Tornium - Admin User Database
     </div>
 </div>
 
-{% endblock %}
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script src="/admin/database/user.js" data-key="{{ key }}"></script>
+<script src="/admin/database/user.js"></script>
+{% endblock %}

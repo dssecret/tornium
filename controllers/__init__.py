@@ -28,6 +28,7 @@ def index():
 @mod.route('/toast.js')
 @mod.route('/favicon.svg')
 @mod.route('/login.css')
+@mod.route('/admin/database/user.js')
 @mod.route('/bot/stakeouts.js')
 @mod.route('/bot/guild.js')
 @mod.route('/faction/banking.js')

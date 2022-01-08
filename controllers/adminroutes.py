@@ -12,7 +12,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
-
+import reprlib
 from functools import wraps
 
 from flask import Blueprint, render_template, abort, request
@@ -99,3 +99,23 @@ def user(tid: int):
     user = utils.first(UserModel.objects(tid=tid))
     
     return render_template('admin/user.html', user=user)
+
+
+@mod.route('/admin/database/users')
+@fresh_login_required
+@admin_required
+def users():
+    start = int(request.args.get('start'))
+    length = int(request.args.get('length'))
+
+    users = []
+
+    for user in UserModel.objects().all()[start:start+length]:
+        users.append([user.tid, user.name, user.discord_id if user.discord_id != 0 else ''])
+
+    return {
+        'draw': request.args.get('draw'),
+        'recordsTotal': UserModel.objects.count(),
+        'recordsFiltered': UserModel.objects.count(),
+        'data': users
+    }

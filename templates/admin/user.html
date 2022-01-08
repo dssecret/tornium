@@ -20,7 +20,7 @@ Tornium - Admin User
             <li class="list-group-item">Name: {{ user.name }}</li>
             <li class="list-group-item">Level: {{ user.level }}</li>
             <li class="list-group-item">Last Refresh: {{ user.last_refresh | tcttime }}</li>
-            <li class="list-group-item">Admin: {{ user.admin }}<li>
+            <li class="list-group-item">Admin: {{ user.admin }}</li>
             <li class="list-group-item">Battlescore Update: {{ user.battlescore_update | tcttime }}</li>
             <li class="list-group-item">Discord ID: {{ user.discordid }}</li>
             <li class="list-group-item">Faction ID: {{ user.factionid }}</li>
@@ -30,12 +30,16 @@ Tornium - Admin User
             {% if user.servers|length != 0 %}
             <li class="list-group-item">
                 Servers:
-                
-                <ul class="list-group list-group-flush">
-                    {% for server in user.servers %}
-                        <li class="list-group-item"><a href="/admin/server/{{ server }}">Link to {{ server }}</a></li>
-                    {% endfor %}
-                </ul>
+
+                <div class="row">
+                    <div class="col-sm-12 col-md-6 col-lg-2">
+                        <ul class="list-group">
+                            {% for server in user.servers %}
+                                <li class="list-group-item"><a href="/admin/server/{{ server }}">Link to {{ server }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
             </li>
             {% else %}
             <li class="list-group-item">Servers: None</li>

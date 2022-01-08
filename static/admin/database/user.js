@@ -13,8 +13,6 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with Tornium.  If not, see <https://www.gnu.org/licenses/>. */
 
-const key = document.currentScript.getAttribute('data-key');
-
 $(document).ready(function() {
     var table = $('#user-table').DataTable({
         "processing": true,
@@ -22,13 +20,13 @@ $(document).ready(function() {
         "ordering": false,
         "responsive": true,
         "ajax": {
-            url: "/admin/users"
+            url: "/admin/database/users"
         }
     });
     
     $.fn.dataTable.ext.pager.numbers_length = 5;
     
     $('#user-table tbody').on('click', 'tr', function() {
-        window.location.href = `/admin/database/user/{table.row(this).data[0]}`;
+        window.location.href = '/admin/database/user/' + table.row(this).data()[0];
     });
 });
