@@ -107,11 +107,17 @@ def user(tid: int):
 def users():
     start = int(request.args.get('start'))
     length = int(request.args.get('length'))
+    search_value = request.args.get('search[value]')
 
     users = []
 
-    for user in UserModel.objects().all()[start:start+length]:
-        users.append([user.tid, user.name, user.discord_id if user.discord_id != 0 else ''])
+    if search_value is None:
+        for user in UserModel.objects().all()[start:start+length]:
+            users.append([user.tid, user.name, user.discord_id if user.discord_id != 0 else ''])
+    else:
+        for user in UserModel.objects(name__startswith=search_value)[start:start+length]:
+            users.append([user.tid, user.name, user.discord_id if user.discord_id != 0 else ''])
+
 
     return {
         'draw': request.args.get('draw'),
