@@ -24,6 +24,8 @@ $(document).ready(function() {
         }
     });
 
+    $.fn.dataTable.ext.pager.numbers_length = 3;
+
     $('#stats-table tbody').on('click', 'tr', function() {
         const xhttp = new XMLHttpRequest();
         xhttp.onload = function() {
