@@ -118,7 +118,6 @@ def users():
         for user in UserModel.objects(name__startswith=search_value)[start:start+length]:
             users.append([user.tid, user.name, user.discord_id if user.discord_id != 0 else ''])
 
-
     return {
         'draw': request.args.get('draw'),
         'recordsTotal': UserModel.objects.count(),

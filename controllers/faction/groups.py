@@ -42,8 +42,8 @@ def create_group():
                                                                                    'attached to the logged in user.')
 
     group = FactionGroupModel(
-        tid=FactionGroupModel.objects.count(),
-        name=str(FactionGroupModel.objects.count()),
+        tid=utils.last(FactionGroupModel.objects()).tid + 1,
+        name=str(utils.last(FactionGroupModel.objects()).tid + 1),
         creator=current_user.factiontid,
         members=[faction.tid],
         invite=uuid.uuid4().hex
