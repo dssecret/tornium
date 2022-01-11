@@ -123,7 +123,7 @@ def factions():
         'draw': request.args.get('draw'),
         'recordsTotal': FactionModel.objects.count(),
         'recordsFiltered': FactionModel.objects.count(),
-        'data: factions
+        'data': factions
     }
 
 
