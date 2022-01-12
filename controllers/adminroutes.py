@@ -19,6 +19,7 @@ from flask import Blueprint, render_template, abort, request
 from flask_login import fresh_login_required, current_user
 
 from redisdb import get_redis
+from models.factionmodel import FactionModel
 from models.usermodel import UserModel
 import utils.tasks
 
@@ -83,6 +84,47 @@ def bot():
 @admin_required
 def database():
     return render_template('admin/database.html')
+
+
+@mod.route('/admin/database/faction')
+@fresh_login_required
+@admin_required
+def faction_database():
+    return render_template('admin/factiondb.html')
+
+
+@mod.route('/admin/database/faction/<int:tid>')
+@fresh_login_required
+@admin_required
+def faction(tid: int):
+    faction = utils.first(FactionModel.objects(tid=tid))
+    
+    return render_template('admin/faction.html', faction=faction)
+
+
+@mod.route('/admin/database/factions')
+@fresh_login_required
+@admin_required
+def factions():
+    start = int(request.args.get('start'))
+    length = int(request.args.get('length'))
+    search_value = request.args.get('search[value]')
+    
+    factions = []
+    
+    if search_value is None:
+        for faction in FactionModel.objects().all()[start:start+length]:
+            factions.append([faction.tid, faction.name])
+    else:
+        for faction in FactionModel.objects(name__startswith=search_value)[start:start+length]:
+            factions.append([faction.tid, faction.name])
+    
+    return {
+        'draw': request.args.get('draw'),
+        'recordsTotal': FactionModel.objects.count(),
+        'recordsFiltered': FactionModel.objects.count(),
+        'data': factions
+    }
 
 
 @mod.route('/admin/database/user')
