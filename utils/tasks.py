@@ -742,7 +742,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
         return
 
     stakeout_data = stakeout.data
-    stakeout.lastupdate = utils.now()
+    stakeout.last_update = utils.now()
     stakeout.data = data
     stakeout.save()
 
@@ -900,7 +900,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
         return
 
     stakeout_data = stakeout.data
-    stakeout.lastupdate = utils.now()
+    stakeout.last_update = utils.now()
     stakeout.data = data
     stakeout.save()
 
