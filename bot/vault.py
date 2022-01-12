@@ -70,9 +70,9 @@ class Vault(commands.Cog):
             await ctx.send(embed=embed)
             return None
 
-        faction = Faction(user.factiontid)
+        faction = Faction(user.factionid)
 
-        if user.factiontid not in server.factions:
+        if user.factionid not in server.factions:
             embed = discord.Embed()
             embed.title = 'Server Configuration Required'
             embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
