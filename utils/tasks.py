@@ -328,43 +328,43 @@ def refresh_factions():
 
         refresh_faction(faction)
 
-        # if faction.chainconfig['od'] == 1:
-        #     try:
-        #         faction_od = tornget.call_local('faction/?selections=contributors',
-        #                                         stat='drugoverdoses',
-        #                                         key=random.choice(faction.keys),
-        #                                         session=requests_session)
-        #     except Exception as e:
-        #         get_logger().exception(e)
-        #         continue
-        #
-        #     if len(faction.chainod) != 0:
-        #         for tid, user_od in faction_od['contributors']['drugoverdoses'].items():
-        #             if user_od != faction.chainod.get(tid):
-        #                 overdosed_user = utils.first(UserModel.objects(tid=tid))
-        #                 payload = {
-        #                     'embeds': [
-        #                         {
-        #                             'title': 'User Overdose',
-        #                             'description': f'User {tid if overdosed_user is None else overdosed_user.name} of '
-        #                                            f'faction {faction.name} has overdosed.',
-        #                             'timestamp': datetime.datetime.utcnow().isoformat(),
-        #                             'footer': {
-        #                                 'text': utils.torn_timestamp()
-        #                             }
-        #                         }
-        #                     ]
-        #                 }
-        #
-        #                 try:
-        #                     discordpost.call_local(f'channels/{faction.chainconfig["odchannel"]}/messages', payload=payload)
-        #                 except Exception as e:
-        #                     get_logger().exception(e)
-        #                     continue
-        #
-        #     faction.chainod = faction_od['contributors']['drugoverdoses']
-        #
-        # faction.save()
+        if faction.chainconfig['od'] == 1:
+            try:
+                faction_od = tornget.call_local('faction/?selections=contributors',
+                                                stat='drugoverdoses',
+                                                key=random.choice(faction.keys),
+                                                session=requests_session)
+            except Exception as e:
+                get_logger().exception(e)
+                continue
+        
+            if len(faction.chainod) != 0:
+                for tid, user_od in faction_od['contributors']['drugoverdoses'].items():
+                    if user_od != faction.chainod.get(tid):
+                        overdosed_user = utils.first(UserModel.objects(tid=tid))
+                        payload = {
+                            'embeds': [
+                                {
+                                    'title': 'User Overdose',
+                                    'description': f'User {tid if overdosed_user is None else overdosed_user.name} of '
+                                                   f'faction {faction.name} has overdosed.',
+                                    'timestamp': datetime.datetime.utcnow().isoformat(),
+                                    'footer': {
+                                        'text': utils.torn_timestamp()
+                                    }
+                                }
+                            ]
+                        }
+        
+                        try:
+                            discordpost.call_local(f'channels/{faction.chainconfig["odchannel"]}/messages', payload=payload)
+                        except Exception as e:
+                            get_logger().exception(e)
+                            continue
+        
+            faction.chainod = faction_od['contributors']['drugoverdoses']
+        
+        faction.save()
 
 
 @huey.task()
