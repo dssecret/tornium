@@ -736,7 +736,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
                     return
             
             if len(guild.admins) == 0:
-                continue
+                return
 
             admin = utils.first(UserModel.objects(tid=random.choice(guild.admins)))
             data = tornget.call_local(f'user/{stakeout.tid}?selections=', key=admin.key, session=requests_session)
@@ -896,7 +896,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                     return
             
             if len(guild.admins) == 0:
-                continue
+                return
 
             admin = utils.first(UserModel.objects(tid=random.choice(guild.admins)))
             data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=admin.key,
