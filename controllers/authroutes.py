@@ -34,6 +34,18 @@ def login():
     global torn_user
 
     try:
+        key_info = tornget.call_local(endpoint='key/?selections=info', key=request.form['key'])
+    except utils.TornError as e:
+        return utils.handle_torn_error(str(e))
+    except Exception as e:
+        return render_template('errors/error.html', title='Error', message=str(e))
+
+    if key_info['access_level'] < 3:
+        return render_template('errors/error.html', title='Bad API Key',
+                               message='Only Torn API keys that are full or limited access can currently be used. '
+                                       'Keys with custom permissions are not currently supported either.')
+
+    try:
         torn_user = tornget.call_local(endpoint='user/?selections=', key=request.form['key'])
     except utils.TornError as e:
         return utils.handle_torn_error(str(e))
