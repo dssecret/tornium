@@ -453,6 +453,8 @@ def refresh_faction(faction: FactionModel):
 def refresh_user_stats(user: UserModel, keys):
     if len(keys) == 0 or user.key != '':
         return
+    elif utils.now() - user.battlescore_update <= 3600:
+        return
 
     try:
         user_data = torn_stats_get(f'spy/{user.tid}', random.choice(keys))
