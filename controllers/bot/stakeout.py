@@ -227,13 +227,21 @@ def stakeout_update(guildid):
             server.factionstakeouts.remove(int(faction))
 
             stakeout = utils.first(FactionStakeoutModel.objects(tid=faction))
-            stakeout.delete()
+            stakeout.guilds.pop(str(guildid))
+
+            if len(stakeout.guilds) == 0:
+                stakeout.delete()
+
             discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
         elif user is not None:
             server.userstakeouts.remove(int(user))
 
             stakeout = utils.first(UserStakeoutModel.objects(tid=user))
-            stakeout.delete()
+            stakeout.guilds.pop(str(guildid))
+
+            if len(stakeout.guilds) == 0:
+                stakeout.delete()
+
             discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
 
         server.save()
