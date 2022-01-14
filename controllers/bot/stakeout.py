@@ -42,13 +42,21 @@ def stakeouts_dashboard(guildid: str):
                 stakeouts.append(int(request.form.get('factionid')))
                 server.factionstakeouts = list(set(stakeouts))
 
-                payload = {
-                    'name': f'faction-{stakeout.data["name"]}',
-                    'type': 0,
-                    'topic': f'The bot-created channel for stakeout notifications for {stakeout.data["name"]} '
-                             f'[{stakeout.data["ID"]}] by the Tornium bot.',
-                    'parent_id': server.stakeout_config['category']
-                }  # TODO: Add permission overwrite: everyone write false
+                if server.stakeout_config['category'] != 0:
+                    payload = {
+                        'name': f'faction-{stakeout.data["name"]}',
+                        'type': 0,
+                        'topic': f'The bot-created channel for stakeout notifications for {stakeout.data["name"]} '
+                                 f'[{stakeout.data["ID"]}] by the Tornium bot.',
+                        'parent_id': server.stakeout_config['category']
+                    }  # TODO: Add permission overwrite: everyone write false
+                else:
+                    payload = {
+                        'name': f'faction-{stakeout.data["name"]}',
+                        'type': 0,
+                        'topic': f'The bot-created channel for stakeout notifications for {stakeout.data["name"]} '
+                                 f'[{stakeout.data["ID"]}] by the Tornium bot.'
+                    }  # TODO: Add permission overwrite: everyone write false
 
                 channel = discordpost.call_local(f'guilds/{guildid}/channels', payload=payload)
 
@@ -79,13 +87,21 @@ def stakeouts_dashboard(guildid: str):
                 server.userstakeouts = list(set(server.userstakeouts))
                 server.save()
 
-                payload = {
-                    'name': f'user-{stakeout.data["name"]}',
-                    'type': 0,
-                    'topic': f'The bot-created channel for stakeout notifications for {stakeout.data["name"]} '
-                             f'[{stakeout.data["player_id"]}] by the Tornium bot.',
-                    'parent_id': server.stakeoutconfig['category']
-                }  # TODO: Add permission overwrite: everyone write false
+                if server.stakeoutconfig['category'] != 0:
+                    payload = {
+                        'name': f'user-{stakeout.data["name"]}',
+                        'type': 0,
+                        'topic': f'The bot-created channel for stakeout notifications for {stakeout.data["name"]} '
+                                 f'[{stakeout.data["player_id"]}] by the Tornium bot.',
+                        'parent_id': server.stakeoutconfig['category']
+                    }  # TODO: Add permission overwrite: everyone write false
+                else:
+                    payload = {
+                        'name': f'user-{stakeout.data["name"]}',
+                        'type': 0,
+                        'topic': f'The bot-created channel for stakeout notifications for {stakeout.data["name"]} '
+                                 f'[{stakeout.data["player_id"]}] by the Tornium bot.'
+                    }  # TODO: Add permission overwrite: everyone write false
 
                 channel = discordpost.call_local(f'guilds/{guildid}/channels', payload=payload)
 
@@ -211,14 +227,14 @@ def stakeout_update(guildid):
             server.factionstakeouts.remove(int(faction))
 
             stakeout = utils.first(FactionStakeoutModel.objects(tid=faction))
-            discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
             stakeout.delete()
+            discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
         elif user is not None:
             server.userstakeouts.remove(int(user))
 
             stakeout = utils.first(UserStakeoutModel.objects(tid=user))
-            discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
             stakeout.delete()
+            discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
 
         server.save()
     elif action == 'addkey':
