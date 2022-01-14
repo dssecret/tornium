@@ -322,6 +322,8 @@ def torn_stats_get(endpoint, key, session=None):
 
 @huey.periodic_task(crontab(minute='0'))
 def refresh_factions():
+    requests_session = requests.Session()
+
     for faction in FactionModel.objects():
         if len(faction.keys) == 0:
             continue
