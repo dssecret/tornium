@@ -233,7 +233,7 @@ async def on_message(message):
 
         if faction is None:
             continue
-        elif faction.vaultconfig['banking'] == 0:
+        elif faction.vaultconfig['withdrawal'] == 0:
             continue
 
         if message.channel.id == faction.vaultconfig['withdrawal'] and message.clean_content[0] != server.prefix:
