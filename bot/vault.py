@@ -44,19 +44,20 @@ class Vault(commands.Cog):
         server = Server(ctx.message.guild.id)
         user = utils.first(UserModel.objects(discord_id=ctx.message.author.id))
 
-        if user.tid == 0:
+        if user is None:
+            embed = discord.Embed()
+            embed.title = 'Requires Verification'
+            embed.description = 'NYI. Please wait until the top of the hour for the faction refresh task to execute ' \
+                                'or log into Tornium with your API key'
+            await ctx.send(embed=embed)
+            return None
+        elif user.tid == 0:
             embed = discord.Embed()
             embed.title = 'Requires Verification'
             embed.description = 'You are required to be verified officially through the ' \
                                 '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
                                 'utilize the banking features of this bot. If you have recently verified, please ' \
                                 'wait for a minute or two before trying again.'
-            await ctx.send(embed=embed)
-            return None
-        elif user is None:
-            embed = discord.Embed()
-            embed.title = 'Requires Verification'
-            embed.description = 'NYI. Contact tiksan for more details.'
             await ctx.send(embed=embed)
             return None
 
@@ -151,19 +152,20 @@ class Vault(commands.Cog):
         server = Server(ctx.message.guild.id)
         user = utils.first(UserModel.objects(discord_id=ctx.message.author.id))
 
-        if user.tid == 0:
+        if user is None:
+            embed = discord.Embed()
+            embed.title = 'Requires Verification'
+            embed.description = 'NYI. Please wait until the top of the hour for the faction refresh task to execute ' \
+                                'or log into Tornium with your API key'
+            await ctx.send(embed=embed)
+            return None
+        elif user.tid == 0:
             embed = discord.Embed()
             embed.title = 'Requires Verification'
             embed.description = 'You are required to be verified officially through the ' \
                                 '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
                                 'utilize the banking features of this bot. If you have recently verified, please ' \
                                 'wait for a minute or two before trying again.'
-            await ctx.send(embed=embed)
-            return None
-        elif user is None:
-            embed = discord.Embed()
-            embed.title = 'Requires Verification'
-            embed.description = 'NYI. Contact tiksan for more details.'
             await ctx.send(embed=embed)
             return None
 
@@ -244,19 +246,20 @@ class Vault(commands.Cog):
         server = Server(ctx.message.guild.id)
         user = utils.first(UserModel.objects(discord_id=ctx.message.author.id))
 
-        if user.tid == 0:
+        if user is None:
+            embed = discord.Embed()
+            embed.title = 'Requires Verification'
+            embed.description = 'NYI. Please wait until the top of the hour for the faction refresh task to execute ' \
+                                'or log into Tornium with your API key'
+            await ctx.send(embed=embed)
+            return None
+        elif user.tid == 0:
             embed = discord.Embed()
             embed.title = 'Requires Verification'
             embed.description = 'You are required to be verified officially through the ' \
                                 '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
                                 'utilize the banking features of this bot. If you have recently verified, please ' \
                                 'wait for a minute or two before trying again.'
-            await ctx.send(embed=embed)
-            return None
-        elif user is None:
-            embed = discord.Embed()
-            embed.title = 'Requires Verification'
-            embed.description = 'NYI. Contact tiksan for more details.'
             await ctx.send(embed=embed)
             return None
 
@@ -324,19 +327,20 @@ class Vault(commands.Cog):
         server = Server(ctx.message.guild.id)
         user = utils.first(UserModel.objects(discord_id=ctx.message.author.id))
 
-        if user.tid == 0:
+        if user is None:
+            embed = discord.Embed()
+            embed.title = 'Requires Verification'
+            embed.description = 'NYI. Please wait until the top of the hour for the faction refresh task to execute ' \
+                                'or log into Tornium with your API key'
+            await ctx.send(embed=embed)
+            return None
+        elif user.tid == 0:
             embed = discord.Embed()
             embed.title = 'Requires Verification'
             embed.description = 'You are required to be verified officially through the ' \
                                 '[official Torn Discord server](https://www.torn.com/discord) before being able to ' \
                                 'utilize the banking features of this bot. If you have recently verified, please ' \
                                 'wait for a minute or two before trying again.'
-            await ctx.send(embed=embed)
-            return None
-        elif user is None:
-            embed = discord.Embed()
-            embed.title = 'Requires Verification'
-            embed.description = 'NYI. Contact tiksan for more details.'
             await ctx.send(embed=embed)
             return None
 
