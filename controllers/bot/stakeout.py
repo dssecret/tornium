@@ -42,13 +42,13 @@ def stakeouts_dashboard(guildid: str):
                 stakeouts.append(int(request.form.get('factionid')))
                 server.factionstakeouts = list(set(stakeouts))
 
-                if server.stakeout_config['category'] != 0:
+                if server.stakeoutconfig['category'] != 0:
                     payload = {
                         'name': f'faction-{stakeout.data["name"]}',
                         'type': 0,
                         'topic': f'The bot-created channel for stakeout notifications for {stakeout.data["name"]} '
                                  f'[{stakeout.data["ID"]}] by the Tornium bot.',
-                        'parent_id': server.stakeout_config['category']
+                        'parent_id': server.stakeoutconfig['category']
                     }  # TODO: Add permission overwrite: everyone write false
                 else:
                     payload = {
@@ -231,6 +231,8 @@ def stakeout_update(guildid):
 
             if len(stakeout.guilds) == 0:
                 stakeout.delete()
+            else:
+                stakeout.save()
 
             discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
         elif user is not None:
@@ -241,6 +243,8 @@ def stakeout_update(guildid):
 
             if len(stakeout.guilds) == 0:
                 stakeout.delete()
+            else:
+                stakeout.save()
 
             discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
 
