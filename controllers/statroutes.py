@@ -115,9 +115,9 @@ def user_data():
     
     # If user's last action was over a month ago and last refresh was over a week ago
     if utils.now() - user.last_action > 30 * 24 * 60 * 60 and utils.now() - user.last_refresh > 604800:
-        user.refresh()
+        user.refresh(key=current_user.key)
     elif utils.now() - user.last_action <= 30 * 24 * 60 * 60:
-        user.refresh()
+        user.refresh(key=current_user.key)
 
     if user.factiontid != 0:
         faction = Faction(tid=user.factiontid)
