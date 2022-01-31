@@ -25,15 +25,17 @@ from utils.tasks import *
 
 @login_required
 def stakeouts_dashboard(guildid: str):
-    if guildid not in current_user.servers:
-        abort(403)
+    server: ServerModel = utils.first(ServerModel.objects(sid=guildid))
+
+    if server is None:
+        return render_template('errors/error.html', title='Error', error='Server not found.'), 400
+    elif server.sid not in current_user.servers:
+        return render_template('errors/error.html',
+                               title='Permission Denied',
+                               error=f'{current_user.name} [{current_user.tid}] is required to be an administrator '
+                                     f'of {server.name}.'), 403
 
     if request.method == 'POST':
-        server = utils.first(ServerModel.objects(sid=guildid))
-
-        if server is None:
-            abort(400)
-
         if request.form.get('factionid') is not None:
             if int(request.form.get('factionid')) not in server.factionstakeouts:
                 stakeout = Stakeout(int(request.form.get('factionid')), user=False, key=current_user.key,
@@ -131,25 +133,31 @@ def stakeouts_dashboard(guildid: str):
 
 @login_required
 def stakeouts(guildid: str, stype: int):
-    if guildid not in current_user.servers:
-        abort(403)
+    server: ServerModel = utils.first(ServerModel.objects(sid=guildid))
+
+    if server is None:
+        return render_template('errors/error.html', title='Error', error='Server not found.'), 400
+    elif server.sid not in current_user.servers:
+        return render_template('errors/error.html',
+                               title='Permission Denied',
+                               error=f'{current_user.name} [{current_user.tid}] is required to be an administrator '
+                                     f'of {server.name}.'), 403
 
     start = int(request.args.get('start'))
     length = int(request.args.get('length'))
-    server = Server(guildid)
     stakeouts = []
 
     if stype == 0:  # user
-        filtered = len(server.user_stakeouts)
-        for stakeout in server.user_stakeouts:
+        filtered = len(server.userstakeouts)
+        for stakeout in server.userstakeouts:
             stakeout = Stakeout(int(stakeout), key=current_user.key)
             stakeouts.append(
                 [stakeout.tid, stakeout.guilds[guildid]['keys'],
                  utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update))]
             )
     elif stype == 1:  # faction
-        filtered = len(server.faction_stakeouts)
-        for stakeout in server.faction_stakeouts:
+        filtered = len(server.factionstakeouts)
+        for stakeout in server.factionstakeouts:
             stakeout = Stakeout(int(stakeout), user=False, key=current_user.key)
             stakeouts.append(
                 [stakeout.tid, stakeout.guilds[guildid]['keys'],
@@ -161,7 +169,7 @@ def stakeouts(guildid: str, stype: int):
     stakeouts = stakeouts[start:start+length]
     data = {
         'draw': request.args.get('draw'),
-        'recordsTotal': len(server.user_stakeouts) + len(server.faction_stakeouts),
+        'recordsTotal': len(server.userstakeouts) + len(server.factionstakeouts),
         'recordsFiltered': filtered,
         'data': stakeouts
     }
@@ -170,8 +178,15 @@ def stakeouts(guildid: str, stype: int):
 
 @login_required
 def stakeout_data(guildid: str):
-    if guildid not in current_user.servers:
-        abort(404)
+    server: ServerModel = utils.first(ServerModel.objects(sid=guildid))
+
+    if server is None:
+        return render_template('errors/error.html', title='Error', error='Server not found.'), 400
+    elif server.sid not in current_user.servers:
+        return render_template('errors/error.html',
+                               title='Permission Denied',
+                               error=f'{current_user.name} [{current_user.tid}] is required to be an administrator '
+                                     f'of {server.name}.'), 403
 
     faction = request.args.get('faction')
     user = request.args.get('user')
@@ -179,10 +194,8 @@ def stakeout_data(guildid: str):
     if (not faction and not user) or (faction and user):
         raise Exception  # TODO: make exception more descriptive
 
-    server = Server(guildid)
-
     if faction:
-        if int(faction) not in server.faction_stakeouts:
+        if int(faction) not in server.factionstakeouts:
             raise Exception
 
         stakeout = Stakeout(faction, user=False)
@@ -196,7 +209,7 @@ def stakeout_data(guildid: str):
                                armory=(int(faction) not in Server(guildid).factions or
                                        Faction(faction).guild != int(guildid)))
     elif user:
-        if int(user) not in server.user_stakeouts:
+        if int(user) not in server.userstakeouts:
             raise Exception
 
         stakeout = Stakeout(user)
@@ -210,6 +223,16 @@ def stakeout_data(guildid: str):
 
 @login_required
 def stakeout_update(guildid):
+    server: ServerModel = utils.first(ServerModel.objects(sid=guildid))
+
+    if server is None:
+        return render_template('errors/error.html', title='Error', error='Server not found.'), 400
+    elif server.sid not in current_user.servers:
+        return render_template('errors/error.html',
+                               title='Permission Denied',
+                               error=f'{current_user.name} [{current_user.tid}] is required to be an administrator '
+                                     f'of {server.name}.'), 403
+
     action = request.args.get('action')
     faction = request.args.get('faction')
     user = request.args.get('user')

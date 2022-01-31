@@ -16,7 +16,7 @@ import reprlib
 from functools import wraps
 
 from flask import Blueprint, render_template, abort, request
-from flask_login import fresh_login_required, current_user
+from flask_login import login_required, current_user
 
 from redisdb import get_redis
 from models.factionmodel import FactionModel
@@ -39,14 +39,14 @@ def admin_required(f):
 
 
 @mod.route('/admin')
-@fresh_login_required
+@login_required
 @admin_required
 def index():
     return render_template('admin/index.html')
 
 
 @mod.route('/admin/dashboard', methods=['GET', 'POST'])
-@fresh_login_required
+@login_required
 @admin_required
 def dashboard():
     if request.method == 'POST':
@@ -67,7 +67,7 @@ def dashboard():
 
 
 @mod.route('/admin/bot', methods=['GET', 'POST'])
-@fresh_login_required
+@login_required
 @admin_required
 def bot():
     redis = get_redis()
@@ -80,21 +80,21 @@ def bot():
 
 
 @mod.route('/admin/database')
-@fresh_login_required
+@login_required
 @admin_required
 def database():
     return render_template('admin/database.html')
 
 
 @mod.route('/admin/database/faction')
-@fresh_login_required
+@login_required
 @admin_required
 def faction_database():
     return render_template('admin/factiondb.html')
 
 
 @mod.route('/admin/database/faction/<int:tid>')
-@fresh_login_required
+@login_required
 @admin_required
 def faction(tid: int):
     faction = utils.first(FactionModel.objects(tid=tid))
@@ -103,7 +103,7 @@ def faction(tid: int):
 
 
 @mod.route('/admin/database/factions')
-@fresh_login_required
+@login_required
 @admin_required
 def factions():
     start = int(request.args.get('start'))
@@ -128,14 +128,14 @@ def factions():
 
 
 @mod.route('/admin/database/user')
-@fresh_login_required
+@login_required
 @admin_required
 def user_database():
     return render_template('admin/userdb.html')
 
 
 @mod.route('/admin/database/user/<int:tid>')
-@fresh_login_required
+@login_required
 @admin_required
 def user(tid: int):
     user = utils.first(UserModel.objects(tid=tid))
@@ -144,7 +144,7 @@ def user(tid: int):
 
 
 @mod.route('/admin/database/users')
-@fresh_login_required
+@login_required
 @admin_required
 def users():
     start = int(request.args.get('start'))

@@ -43,7 +43,6 @@ def bot():
             vault_config = faction.vault_config
             config = faction.config
 
-
     if request.method == 'POST':
         faction_model = utils.first(FactionModel.objects(tid=current_user.factiontid))
 
