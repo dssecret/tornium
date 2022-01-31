@@ -16,7 +16,6 @@
 import datetime
 import json
 import logging
-from logging.handlers import TimedRotatingFileHandler
 import math
 import os
 import random
@@ -72,7 +71,7 @@ connect(
 
 logger = logging.getLogger('hueyserver')
 logger.setLevel(logging.DEBUG)
-handler = TimedRotatingFileHandler(filename='hueyserver.log', encoding='utf-8', utc=True, when='midnight', backupCount=5)
+handler = logging.FileHandler(filename='hueyserver.log', encoding='utf-8', mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 

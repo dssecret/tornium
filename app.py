@@ -16,7 +16,6 @@
 import datetime
 import json
 import logging
-from logging.handlers import TimedRotatingFileHandler
 import os
 
 import flask
@@ -81,7 +80,7 @@ import utils
 
 logger = logging.getLogger('server')
 logger.setLevel(logging.DEBUG)
-handler = TimedRotatingFileHandler(filename='server.log', encoding='utf-8', utc=True, when='midnight', backupCount=5)
+handler = logging.FileHandler(filename='server.log', encoding='utf-8', mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
