@@ -41,8 +41,10 @@ except FileNotFoundError:
         'username': 'tornium',
         'password': '',
         'host': '',
+        'url': '',
         'honeyenv': 'production',
         'honeykey': '',
+        'honeysitecheckin': '',
     }
     with open(f'settings.json', 'w') as file:
         json.dump(data, file, indent=4)
@@ -317,6 +319,21 @@ def torn_stats_get(endpoint, key, session=None):
 
     request = request.json()
     return request
+
+
+@huey.periodic_task(crontab(minute='*'))
+def honeybadger_site_checkin():
+    if data.get('honeysitecheckin') is None or data.get('honeysitecheckin') == '':
+        return
+    elif data.get('url') is None or data.get('url') == '':
+        return
+    
+    site = requests.get(data.get('url'))
+    
+    if site.status_code != requests.codes.ok:
+        return
+    
+    requests.get(f'https://api.honeybadger.io/v1/check_in/{data["honeysitecheckin"]}')
 
 
 @huey.periodic_task(crontab(minute='0'))
