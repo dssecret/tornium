@@ -44,20 +44,17 @@ def chain():
                 else:
                     raise e
 
-            config = faction.chain_config
+            config = faction_model.chainconfig
             config['odchannel'] = int(channel['id'])
-            faction_model.chainconfig = config
             faction_model.save()
         elif (request.form.get('odenabled') is not None) ^ (request.form.get('oddisabled') is not None):
-            config = faction.chain_config
+            config = faction_model.chainconfig
 
             if request.form.get('odenabled') is not None:
                 config['od'] = 1
-                faction_model.chainconfig = config
                 faction_model.save()
             if request.form.get('oddisabled') is not None:
                 config['od'] = 0
-                faction_model.chainconfig = config
                 faction_model.save()
 
     return render_template('faction/chain.html', faction=faction)
