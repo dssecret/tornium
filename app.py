@@ -25,40 +25,12 @@ import honeybadger
 from honeybadger.contrib import FlaskHoneybadger
 from mongoengine import connect
 
+import settings  # Do not remove - initializes redis values
 from redisdb import get_redis
 
-try:
-    file = open('settings.json')
-    file.close()
-except FileNotFoundError:
-    data = {
-        'jsonfiles': ['settings'],
-        'dev': False,
-        'bottoken': '',
-        'secret': str(os.urandom(32)),
-        'taskqueue': 'redis',
-        'username': 'tornium',
-        'password': '',
-        'host': '',
-        'honeyenv': 'production',
-        'honeykey': '',
-    }
-    with open(f'settings.json', 'w') as file:
-        json.dump(data, file, indent=4)
-
-with open('settings.json', 'r') as file:
-    data = json.load(file)
-
-honeybadger.honeybadger.configure(api_key=data.get('honeykey'))
 
 redis = get_redis()
-redis.set('dev', str(data['dev']))
-redis.set('bottoken', data['bottoken'])
-redis.set('secret', data['secret'])
-redis.set('taskqueue', data['taskqueue'])
-redis.set('username', data['username'])
-redis.set('password', data['password'])
-redis.set('host', data['host'])
+honeybadger.honeybadger.configure(api_key=redis.get('honeykey'))
 
 connect(
     db='Tornium',
@@ -86,8 +58,8 @@ logger.addHandler(handler)
 
 app = flask.Flask(__name__)
 app.secret_key = redis.get('secret')
-app.config['HONEYBADGER_ENVIRONMENT'] = data.get('honeyenv')
-app.config['HONEYBADGER_API_KEY'] = data.get('honeykey')
+app.config['HONEYBADGER_ENVIRONMENT'] = redis.get('honeyenv')
+app.config['HONEYBADGER_API_KEY'] = redis.get('honeykey')
 app.config['HONEYBADGER_PARAMS_FILTERS'] = 'password, secret, credit-card'
 app.config['REMEMBER_COOKIE_DURATION'] = 604800
 FlaskHoneybadger(app, report_exceptions=True)

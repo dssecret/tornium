@@ -17,7 +17,6 @@ import datetime
 import json
 import logging
 import math
-import os
 import random
 import time
 
@@ -27,39 +26,11 @@ from mongoengine import connect
 import requests
 
 from redisdb import get_redis
-
-try:
-    file = open('settings.json')
-    file.close()
-except FileNotFoundError:
-    data = {
-        'jsonfiles': ['settings'],
-        'dev': False,
-        'bottoken': '',
-        'secret': str(os.urandom(32)),
-        'taskqueue': 'redis',
-        'username': 'tornium',
-        'password': '',
-        'host': '',
-        'honeyenv': 'production',
-        'honeykey': '',
-    }
-    with open(f'settings.json', 'w') as file:
-        json.dump(data, file, indent=4)
-
-with open('settings.json', 'r') as file:
-    data = json.load(file)
-
-honeybadger.honeybadger.configure(api_key=data.get('honeykey'))
+import settings  # Do not remove - initializes redis values
 
 redis = get_redis()
-redis.set('dev', str(data['dev']))
-redis.set('bottoken', data['bottoken'])
-redis.set('secret', data['secret'])
-redis.set('taskqueue', data['taskqueue'])
-redis.set('username', data['username'])
-redis.set('password', data['password'])
-redis.set('host', data['host'])
+
+honeybadger.honeybadger.configure(api_key=redis.get('honeykey'))
 
 connect(
     db='Tornium',
@@ -124,7 +95,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
 
     if request.status_code != 200:
         get_logger().warning(f'The Torn API has responded with status code {request.status_code} to endpoint '
-                                   f'"{endpoint}".')
+                             f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
 
     request = request.json()
@@ -164,7 +135,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None):
                 faction.save()
 
         get_logger().info(f'The Torn API has responded with error code {request["error"]["code"]} '
-                                f'({request["error"]["error"]}) to {url}).')
+                          f'({request["error"]["error"]}) to {url}).')
         raise utils.TornError(request["error"]["code"])
 
     return request
@@ -196,13 +167,13 @@ def discordget(endpoint, session=None):
         # explanations
 
         get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
-                                f'({request_json["message"]}) to {url}).')
+                          f'({request_json["message"]}) to {url}).')
         if redis.get('dev'):
             get_logger().debug(request_json)
         raise utils.DiscordError(request_json["code"])
     elif str(request.status_code)[:1] != '2':
         get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
-                                   f'"{endpoint}".')
+                             f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
 
     return request_json
@@ -238,13 +209,13 @@ def discordpost(endpoint, payload, session=None):
         # explanations
 
         get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
-                                f'({request_json["message"]}) to {url}).')
+                          f'({request_json["message"]}) to {url}).')
         if redis.get('dev'):
             get_logger().debug(request_json)
         raise utils.DiscordError(request_json["code"])
     elif str(request.status_code)[:1] != '2':
         get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
-                                   f'"{endpoint}".')
+                             f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
 
     return request_json
@@ -278,13 +249,13 @@ def discorddelete(endpoint, session=None):
         # explanations
 
         get_logger().info(f'The Discord API has responded with error code {request_json["code"]} '
-                                f'({request_json["message"]}) to {url}).')
+                          f'({request_json["message"]}) to {url}).')
         if redis.get('dev'):
             get_logger().debug(request_json)
         raise utils.DiscordError(request_json["code"])
     elif str(request.status_code)[:1] != '2':
         get_logger().warning(f'The Discord API has responded with status code {request.status_code} to endpoint '
-                                   f'"{endpoint}".')
+                             f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
 
     return request_json
@@ -312,11 +283,26 @@ def torn_stats_get(endpoint, key, session=None):
 
     if request.status_code != 200:
         get_logger().warning(f'The Torn API has responded with status code {request.status_code} to endpoint '
-                                   f'"{endpoint}".')
+                             f'"{endpoint}".')
         raise utils.NetworkingError(request.status_code)
 
     request = request.json()
     return request
+
+
+@huey.periodic_task(crontab(minute='*'))
+def honeybadger_site_checkin():
+    if redis.get('honeysitecheckin') is None or redis.get('honeysitecheckin') == '':
+        return
+    elif redis.get('url') is None or redis.get('url') == '':
+        return
+
+    site = requests.get(redis.get('url'))
+
+    if site.status_code != requests.codes.ok:
+        return
+
+    requests.get(f'https://api.honeybadger.io/v1/check_in/{redis.get("honeysitecheckin")}')
 
 
 @huey.periodic_task(crontab(minute='0'))
@@ -338,7 +324,7 @@ def refresh_factions():
             except Exception as e:
                 get_logger().exception(e)
                 continue
-        
+
             if len(faction.chainod) != 0:
                 for tid, user_od in faction_od['contributors']['drugoverdoses'].items():
                     if user_od != faction.chainod.get(tid):
@@ -356,15 +342,16 @@ def refresh_factions():
                                 }
                             ]
                         }
-        
+
                         try:
-                            discordpost.call_local(f'channels/{faction.chainconfig["odchannel"]}/messages', payload=payload)
+                            discordpost.call_local(f'channels/{faction.chainconfig["odchannel"]}/messages',
+                                                   payload=payload)
                         except Exception as e:
                             get_logger().exception(e)
                             continue
-        
+
             faction.chainod = faction_od['contributors']['drugoverdoses']
-        
+
         faction.save()
 
 
@@ -737,7 +724,7 @@ def user_stakeout(stakeout, requests_session=None, key=None):
                         break
                 if not guild_discorvered:
                     return
-            
+
             if len(guild.admins) == 0:
                 return
 
@@ -897,7 +884,7 @@ def faction_stakeout(stakeout, requests_session=None, key=None):
                         break
                 if not guild_discorvered:
                     return
-            
+
             if len(guild.admins) == 0:
                 return
 
