@@ -33,15 +33,18 @@ $(document).ready(function() {
         const xhttp = new XMLHttpRequest();
         var value = $("#requestamount").val();
         value = value.toLowerCase();
-        var stringvalue = value.replace(",", "");
-        value = Number(stringvalue.replace(/[^0-9\.]+/g, ""));
 
-        if (stringvalue.endsWith("k")) {
-            value *= 1000;
-        } else if (stringvalue.endsWith("m")) {
-            value *= 1000000;
-        } else if (stringvalue.endsWith("b")) {
-            value *= 1000000000;
+        if(value !== "all") {
+            var stringvalue = value.replace(",", "");
+            value = Number(stringvalue.replace(/[^0-9\.]+/g, ""));
+
+            if (stringvalue.endsWith("k")) {
+                value *= 1000;
+            } else if (stringvalue.endsWith("m")) {
+                value *= 1000000;
+            } else if (stringvalue.endsWith("b")) {
+                value *= 1000000000;
+            }
         }
 
         xhttp.onload = function() {

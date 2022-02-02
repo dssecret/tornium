@@ -61,7 +61,10 @@ class Vault(commands.Cog):
             await ctx.send(embed=embed)
             return None
 
-        cash = botutils.text_to_num(arg)
+        if arg.lower() == 'all':
+            cash = 'all'
+        else:
+            cash = botutils.text_to_num(arg)
 
         if user.factionid == 0:
             embed = discord.Embed()
@@ -85,7 +88,7 @@ class Vault(commands.Cog):
         vault_config = faction.vault_config
         config = faction.config
 
-        if vault_config.get('banking') == 0 or vault_config.get('banker') == 0 or config.get('vault') == 0:
+        if vault_config.get('banking') in [0, None] or vault_config.get('banker') in [0, None] or config.get('vault') in [0, None]:
             embed = discord.Embed()
             embed.title = 'Server Configuration Required'
             embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
@@ -97,12 +100,21 @@ class Vault(commands.Cog):
         vault_balances = await botutils.tornget(ctx, self.logger, f'faction/?selections=donations', faction.rand_key())
 
         if str(user.tid) in vault_balances['donations']:
-            if cash > vault_balances['donations'][str(user.tid)]['money_balance']:
+            if cash != 'all' and cash > vault_balances['donations'][str(user.tid)]['money_balance']:
                 embed = discord.Embed()
                 embed.title = 'Not Enough Money'
                 embed.description = f'You have requested {arg}, but only have ' \
                                     f'{botutils.commas(vault_balances["donations"][str(user.tid)]["money_balance"])} ' \
                                     f'in the vault.'
+                message = await ctx.send(embed=embed)
+                await asyncio.sleep(30)
+                await message.delete()
+                return None
+            elif cash == 'all' and vault_balances['donations'][str(user.tid)]['money_balance'] <= 0:
+                embed = discord.Embed()
+                embed.title = 'Not Enough Money'
+                embed.description = f'You have requested all of you money, but have no cash in the vault or ' \
+                                    f'a negative vault balance.'
                 message = await ctx.send(embed=embed)
                 await asyncio.sleep(30)
                 await message.delete()
@@ -118,14 +130,21 @@ class Vault(commands.Cog):
 
             embed = discord.Embed()
             embed.title = f'Vault Request #{request_id}'
-            embed.description = f'{user.name if user.name != "" else ctx.message.author.nick} is requesting {arg} ' \
-                                f'from the faction vault. To fulfill this request, ' \
-                                f'enter `?f {request_id}` in this channel.'
+
+            if cash != 'all':
+                embed.description = f'{user.name if user.name != "" else ctx.message.author.nick} is requesting {arg} ' \
+                                    f'from the faction vault. To fulfill this request, ' \
+                                    f'enter `?f {request_id}` in this channel.'
+            else:
+                embed.description = f'{user.name if user.name != "" else ctx.message.author.nick} is requesting ' \
+                                    f'{vault_balances["donations"][str(user.tid)]["money_balance"]} ' \
+                                    f'from the faction vault. To fulfill this request, ' \
+                                    f'enter `?f {request_id}` in this channel.'
             message = await channel.send(f'<@&{vault_config["banker"]}>', embed=embed)
 
             withdrawal = WithdrawalModel(
                 wid=request_id,
-                amount=cash,
+                amount=cash if cash != 'all' else vault_balances["donations"][str(user.tid)]["money_balance"],
                 requester=user.tid,
                 factiontid=user.factionid,
                 time_requested=utils.now(),
@@ -197,7 +216,7 @@ class Vault(commands.Cog):
         vault_config = faction.vault_config
         config = faction.config
 
-        if vault_config.get('banking') == 0 or vault_config.get('banker') == 0 or config.get('vault') == 0:
+        if vault_config.get('banking') in [0, None] or vault_config.get('banker') in [0, None] or config.get('vault') in [0, None]:
             embed = discord.Embed()
             embed.title = 'Server Configuration Required'
             embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
@@ -290,7 +309,7 @@ class Vault(commands.Cog):
 
         config = faction.config
 
-        if config.get('vault') == 0:
+        if config.get('vault') in [0, None]:
             embed = discord.Embed()
             embed.title = 'Server Configuration Required'
             embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \
@@ -371,7 +390,7 @@ class Vault(commands.Cog):
 
         config = faction.config
 
-        if config.get('vault') == 0:
+        if config.get('vault') in [0, None]:
             embed = discord.Embed()
             embed.title = 'Server Configuration Required'
             embed.description = f'{ctx.guild.name} needs to be added to {faction.name}\'s bot configuration and to ' \

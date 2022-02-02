@@ -44,7 +44,11 @@ def banking_request(*args, **kwargs):
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
 
-    amount_requested = int(amount_requested)
+    if amount_requested.lower() != 'all':
+        amount_requested = int(amount_requested)
+    else:
+        amount_requested = 'all'
+
     user.refresh()
 
     if user.factiontid == 0:
@@ -107,7 +111,7 @@ def banking_request(*args, **kwargs):
     vault_balances = utils.tasks.tornget.call_local(f'faction/?selections=donations', faction.rand_key())
 
     if str(user.tid) in vault_balances['donations']:
-        if amount_requested > vault_balances['donations'][str(user.tid)]['money_balance']:
+        if amount_requested != 'all' and amount_requested > vault_balances['donations'][str(user.tid)]['money_balance']:
             return jsonify({
                 'code': 0,
                 'name': 'GeneralError',
@@ -118,25 +122,53 @@ def banking_request(*args, **kwargs):
                 'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
                 'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
             }
+        elif amount_requested == 'all' and vault_balances['donations'][str(user.tid)]['money_balance'] <= 0:
+            return jsonify({
+                'code': 0,
+                'name': 'GeneralError',
+                'message': 'Server failed to fulfill the request. The user has no cash in the faction vault or a '
+                           'negative vault balance.'
+            }), 400, {
+                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
+                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            }
 
         request_id = WithdrawalModel.objects().count()
-        message_payload = {
-            'content': f'<@&{vault_config["banker"]}>',
-            'embeds': [
-                {
-                    'title': f'Vault Request #{request_id}',
-                    'description': f'{user.name} [{user.tid}] is requesting {amount_requested} from the faction vault. '
-                                   f'To fulfill this request, enter `?f {request_id}` in this channel.',
-                    'timestamp': datetime.datetime.utcnow().isoformat()
-                }
-            ]
-        }
+
+        if amount_requested != 'all':
+            message_payload = {
+                'content': f'<@&{vault_config["banker"]}>',
+                'embeds': [
+                    {
+                        'title': f'Vault Request #{request_id}',
+                        'description': f'{user.name} [{user.tid}] is requesting {amount_requested} from the '
+                                       f'faction vault. '
+                                       f'To fulfill this request, enter `?f {request_id}` in this channel.',
+                        'timestamp': datetime.datetime.utcnow().isoformat()
+                    }
+                ]
+            }
+        else:
+            message_payload = {
+                'content': f'<@&{vault_config["banker"]}>',
+                'embeds': [
+                    {
+                        'title': f'Vault Request #{request_id}',
+                        'description': f'{user.name} [{user.tid}] is requesting '
+                                       f'{vault_balances["donations"][str(user.tid)]["money_balance"]} from the '
+                                       f'faction vault. '
+                                       f'To fulfill this request, enter `?f {request_id}` in this channel.',
+                        'timestamp': datetime.datetime.utcnow().isoformat()
+                    }
+                ]
+            }
         message = utils.tasks.discordpost.call_local(f'channels/{vault_config["banking"]}/messages',
                                                      payload=message_payload)
 
         withdrawal = WithdrawalModel(
             wid=request_id,
-            amount=amount_requested,
+            amount=amount_requested if amount_requested != 'all' else vault_balances["donations"][str(user.tid)]["money_balance"],
             requester=user.tid,
             factiontid=user.factiontid,
             time_requested=utils.now(),
@@ -148,7 +180,7 @@ def banking_request(*args, **kwargs):
 
         return jsonify({
             'id': request_id,
-            'amount': amount_requested,
+            'amount': withdrawal.amount,
             'requester': user.tid,
             'timerequested': withdrawal.time_requested,
             'withdrawalmessage': message['id']
