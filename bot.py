@@ -39,6 +39,7 @@ connect(
 )
 
 from bot import botutils
+from bot.periodic import Periodic
 from bot.vault import Vault
 from models.factionmodel import FactionModel
 from models.server import Server
@@ -69,6 +70,7 @@ async def on_ready():
 
     print(f'Bot is in {guild_count} guilds.')
 
+    bot.add_cog(Periodic(bot, botlogger))
     bot.add_cog(Vault(bot, botlogger))
 
 
