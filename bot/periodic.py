@@ -13,7 +13,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+import sys
+
 from discord.ext import commands, tasks
+import requests
+
+sys.path.append('..')
+
+from redisdb import get_redis
 
 
 class Periodic(commands.Cog):
@@ -26,5 +33,10 @@ class Periodic(commands.Cog):
         self.honeybadger.cancel()
         
     @tasks.loop(minutes=1)
-    async def honeybadger():
-        pass
+    async def honeybadger(self):
+        redis = get_redis()
+
+        if redis.get('honeybotcheckin') is None or redis.get('honeybotcheckin') == '':
+            return
+
+        requests.get(f'https://api.honeybadger.io/v1/check_in/{redis.get("honeybotcheckin")}')
