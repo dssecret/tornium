@@ -302,7 +302,7 @@ def honeybadger_site_checkin():
     if site.status_code != requests.codes.ok:
         return
 
-    requests.get(f'https://api.honeybadger.io/v1/check_in/{redis.get("honeysitecheckin")}')
+    requests.get(redis.get("honeysitecheckin"))
 
 
 @huey.periodic_task(crontab(minute='0'))

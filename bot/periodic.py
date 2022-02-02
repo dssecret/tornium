@@ -39,5 +39,5 @@ class Periodic(commands.Cog):
         if redis.get('honeybotcheckin') is None or redis.get('honeybotcheckin') == '':
             return
 
-        request = requests.get(f'https://api.honeybadger.io/v1/check_in/{redis.get("honeybotcheckin")}')
+        request = requests.get(redis.get("honeybotcheckin"))
         self.logger.debug(f'Check-in made... HoneyBadger has responded with {request.content}.')
