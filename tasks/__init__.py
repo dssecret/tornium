@@ -28,7 +28,7 @@ from models.usermodel import UserModel
 
 from redisdb import get_redis
 import utils
-from utils.errors import NetworkingError, RatelimitError
+from utils.errors import DiscordError, MissingKeyError, NetworkingError, RatelimitError, TornError
 
 
 celery_app: Celery
@@ -99,7 +99,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Fa
     logger.info(f'The API call has been made to {url}).')
 
     if key is None or key == '':
-        raise Exception
+        raise MissingKeyError
     
     redis = get_redis()
 
@@ -126,7 +126,9 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Fa
     
     if requests.status_code != 200:
         logger.warning(f'The Torn API has responded with status code {request.status_code} to endpoint "{endpoint}".')
-        raise NetworkingError(request.status_code)
+        raise NetworkingError(
+            code=request.status_code
+        )
     
     request = request.json()
 
@@ -174,9 +176,60 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Fa
         
         logger.info(f'The Torn API has responded with error code {request["error"]["code"]} '
                     f'({request["error"]["error"]}) to {url}).')
-        raise utils.TornError(request["error"]["code"])
+        raise TornError(
+            code=request["error"]["code"]
+        )
     
     return request
+
+
+@celery_app.task
+def discordget(endpoint, session=None):
+    url = f'https://discord.com/api/v9/{endpoint}'
+    redis = get_redis()
+
+    headers = {
+        'Authorization': f'Bot {redis.get("bottoken")}'
+    }
+
+    if session is None:
+        request = requests.get(url, headers=headers)
+    else:
+        request = session.get(url, headers=headers)
+    
+    try:
+        request_json = request.json()
+    except Exception as e:
+        if request.status_code // 100 != 2:
+            logger.warning(
+                f'The Discord API has responded with status code {request.status_code} to endpoint "{endpoint}".'
+            )
+            raise NetworkingError(
+                code=request.status_code
+            )
+        else:
+            raise e
+    
+    if 'code' in request_json:
+        # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a full list of error code
+        # explanations
+
+        logger.warning(
+            f'The Discord API has responded with error code {request_json["code"]} ({request_json["message"]} to {url}).'
+        )
+        logger.debug(request_json)
+        raise DiscordError(
+            code=request_json["code"]
+        )
+    elif request.status_code // 100 != 2:
+        logger.warning(
+            f'The Discord API has responded with error code {request_json["code"]} ({request_json["message"]} to {url}).'
+        )
+        raise NetworkingError(
+            code=request.status_code
+        )
+    
+    return request_json
 
 
 @celery_app.task
