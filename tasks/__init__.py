@@ -13,16 +13,30 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
+import datetime
+import logging
 import json
+import time
+from xmlrpc.client import Server
 
 from celery import Celery
 from celery.schedules import crontab
 import requests
+from models.factionmodel import FactionModel
+from models.servermodel import ServerModel
+from models.usermodel import UserModel
 
 from redisdb import get_redis
+import utils
+from utils.errors import NetworkingError, RatelimitError
 
 
 celery_app: Celery
+logger: logging.Logger = logging.getLogger('celery')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='celery.log', encoding='utf-8', mode='a')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 
 def make_celery(app):
@@ -76,6 +90,93 @@ def make_celery(app):
 
     celery_app.Task = ContextTask
     return celery_app
+
+
+@celery_app.task
+def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=False):
+    url = f'https://api.torn.com/{endpoint}&key={key}&comment=Tornium{"" if fromts == 0 else f"&from={fromts}"}' \
+          f'{"" if tots == 0 else f"&to={tots}"}{stat if stat == "" else f"&stat={stat}"}'
+    logger.info(f'The API call has been made to {url}).')
+
+    if key is None or key == '':
+        raise Exception
+    
+    redis = get_redis()
+
+    if redis.setnx(key, 100):
+        redis.expire(key, 60 - datetime.datetime.utcnow())
+    if redis.ttl(key) < 0:
+        redis.expire(key, 1)
+    
+    try:
+        if redis.get(key) and int(redis.get(key)) > 0:
+            redis.decrby(key, 1)
+        else:
+            if autosleep:
+                time.sleep(60 - datetime.datetime.utcnow().second)
+            else:
+                raise RatelimitError
+    except TypeError:
+        logger.warning(f'Error raised on API key {key}')
+    
+    if session is None:
+        request = requests.get(url)
+    else:
+        request = session.get(url)
+    
+    if requests.status_code != 200:
+        logger.warning(f'The Torn API has responded with status code {request.status_code} to endpoint "{endpoint}".')
+        raise NetworkingError(request.status_code)
+    
+    request = request.json()
+
+    if 'error' in request:
+        if request['error']['code'] in (13, 10, 2):
+            user = utils.first(UserModel.objects(key=key))
+            
+            if user is not None:
+                factions = FactionModel.objects(keys=key)
+
+                faction: FactionModel
+                for faction in factions:
+                    faction.keys.remove(key)
+                    faction.save()
+
+                user.key = ''
+                user.save()
+
+                for server in user.servers():
+                    server = utils.first(ServerModel.objects(sid=server))
+
+                    if server is not None and user.tid in server.admins:
+                        server.admins.remove(user.tid)
+                    server.save()
+                
+                for server in ServerModel.objects(admins=user.tid):
+                    server.admins.remove(user.tid)
+                    server.save()
+            else:
+                factions = FactionModel.objects(keys=key)
+
+                faction: FactionModel
+                for faction in factions:
+                    faction.keys.remove(key)
+                    faction.save()
+        elif request['error']['code'] == 7:
+            user: UserModel = utils.first(UserModel.objects(key=key))
+            user.factionaa = False
+            user.save()
+
+            faction: FactionModel
+            for faction in FactionModel.objects(keys=key):
+                faction.keys.remove(key)
+                faction.save()
+        
+        logger.info(f'The Torn API has responded with error code {request["error"]["code"]} '
+                    f'({request["error"]["error"]}) to {url}).')
+        raise utils.TornError(request["error"]["code"])
+    
+    return request
 
 
 @celery_app.task

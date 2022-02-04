@@ -12,3 +12,21 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
+
+from tasks import celery_app, tornget
+from models.factionmodel import FactionModel
+
+@celery_app.task
+def refresh_factions():
+    requests_session = requests.Session()
+
+    faction: FactionModel
+    for faction in FactionModel.objects():
+        if len(faction.keys) == 0:
+            continue
+
+        refresh_faction.delay(faction)
+
+        if faction.chainconfig['od'] == 1:
+            try:
+                faction_od = tornget()

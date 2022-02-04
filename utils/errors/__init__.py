@@ -12,7 +12,6 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
-from utils.errors import *
 
 
 class NetworkingError(Exception):
@@ -24,4 +23,12 @@ class TornError(Exception):
 
 
 class DiscordError(Exception):
+    pass
+
+
+class MissingKeyError(Exception):
+    pass
+
+
+class RatelimitError(Exception):
     pass
