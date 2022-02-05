@@ -47,6 +47,7 @@ def make_celery(app):
         data = {
             'honeybadger-site-checkin': {
                 'task': 'tasks.honeybadger_site_checkin',
+                'enabled': False,
                 'schedule': {
                     'type': 'cron',
                     'minute': '*',
@@ -73,15 +74,19 @@ def make_celery(app):
         result_serializer='json'
     )
     celery_app.conf.timezone = 'UTC'
-    celery_app.conf.beat_schedule = {
-        'honeybadger-site-checkin': {
+
+    schedule = {}
+
+    if data['honeybadger-site-checkin']['enabled']:
+        schedule['honeybadger-site-checkin'] = {
             'task': 'tasks.honeybadger_site_checkin',
             'schedule': crontab(
                 minute=data['honeybadger-site-checkin']['schedule']['minute'],
                 hour=data['honeybadger-site-checkin']['schedule']['hour']
             )
         }
-    }
+
+    celery_app.conf.beat_schedule = schedule
 
     class ContextTask(celery_app.Task):
         def __call__(self, *args, **kwargs):
@@ -230,6 +235,138 @@ def discordget(endpoint, session=None):
         )
     
     return request_json
+
+
+@celery_app.task
+def discordpost(endpoint, payload, session=None):
+    url = f'https://discord.com/api/v9/{endpoint}'
+    redis = get_redis()
+
+    headers = {
+        'Authorization': f'Bot {redis.get("bottoken")}',
+        'Content-Type': 'application/json'
+    }
+
+    if session is None:
+        request = requests.post(url, headers=headers, data=json.dumps(payload))
+    else:
+        request = session.post(url, headers=headers, data=json.dumps(payload))
+    
+    try:
+        request_json = request.json()
+    except Exception as e:
+        if request.status_code // 100 != 2:
+            logger.warning(
+                f'The Discord API has responded with status code {request.status_code} to endpoint "{endpoint}".'
+            )
+            raise NetworkingError(
+                code=request.status_code
+            )
+        else:
+            raise e
+    
+    if 'code' in request_json:
+        # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a full list of error code
+        # explanations
+
+        logger.warning(
+            f'The Discord API has responded with error code {request_json["code"]} ({request_json["message"]} to {url}).'
+        )
+        logger.debug(request_json)
+        raise DiscordError(
+            code=request_json["code"]
+        )
+    elif request.status_code // 100 != 2:
+        logger.warning(
+            f'The Discord API has responded with error code {request_json["code"]} ({request_json["message"]} to {url}).'
+        )
+        raise NetworkingError(
+            code=request.status_code
+        )
+    
+    return request_json
+
+
+@celery_app.task
+def discorddelete(endpoint, session=None):
+    url = f'https://discord.com/api/v9/{endpoint}'
+    redis = get_redis()
+
+    headers = {
+        'Authorization': f'Bot {redis.get("bottoken")}',
+        'Content-Type': 'application/json'
+    }
+
+    if session is None:
+        request = requests.delete(url, headers=headers)
+    else:
+        request = session.delete(url, headers=headers)
+    
+    try:
+        request_json = request.json()
+    except Exception as e:
+        if request.status_code // 100 != 2:
+            logger.warning(
+                f'The Discord API has responded with status code {request.status_code} to endpoint "{endpoint}".'
+            )
+            raise NetworkingError(
+                code=request.status_code
+            )
+        else:
+            raise e
+    
+    if 'code' in request_json:
+        # See https://discord.com/developers/docs/topics/opcodes-and-status-codes#json for a full list of error code
+        # explanations
+
+        logger.warning(
+            f'The Discord API has responded with error code {request_json["code"]} ({request_json["message"]} to {url}).'
+        )
+        logger.debug(request_json)
+        raise DiscordError(
+            code=request_json["code"]
+        )
+    elif request.status_code // 100 != 2:
+        logger.warning(
+            f'The Discord API has responded with error code {request_json["code"]} ({request_json["message"]} to {url}).'
+        )
+        raise NetworkingError(
+            code=request.status_code
+        )
+    
+    return request_json
+
+
+@celery_app.task
+def torn_stats_get(endpoint, key, session=None, autosleep=False):
+    url = f'https://www.tornstats.com/api/v2/{key}/{endpoint}'
+
+    redis = get_redis()
+    if redis.get(f'ts-{key}') is None:
+        redis.set(f'ts-{key}', 15)
+        redis.expire(f'ts-{key}', 60 - datetime.datetime.utcnow().second)
+    if redis.ttl(f'ts-{key}') < 0:
+        redis.expire(f'ts-{key}', 1)
+
+    if int(redis.get(f'ts-{key}')) > 0:
+        redis.decrby(f'ts-{key}', 1)
+    else:
+        if autosleep:
+            time.sleep(60 - datetime.datetime.utcnow().second)
+        else:
+            raise RatelimitError
+    
+    if session is None:
+        request = requests.get(url)
+    else:
+        request = session.get(url)
+    
+    if request.status_code // 100 != 200:
+        logger.warning(f'The Torn Stats API has responded with HTTP status code {request.status_code} to endpoint "{endpoint}".')
+        raise NetworkingError(code=request.status_code)
+    
+    request = request.json()
+    return request
 
 
 @celery_app.task
