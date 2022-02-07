@@ -15,9 +15,8 @@
 
 import datetime
 import logging
+import math
 import random
-from shutil import ExecError
-from urllib import request
 
 import honeybadger
 import requests
@@ -26,6 +25,7 @@ from models.factionmodel import FactionModel
 from models.usermodel import UserModel
 from tasks import celery_app, discordpost, logger, tornget
 import utils
+from utils.tasks import torn_stats_get
 
 logger: logging.Logger
 
@@ -71,6 +71,77 @@ def refresh_factions():
             keys.append(leader.key)
         if coleader is not None and coleader.key != '':
             keys.append(coleader.key)
+
+        if len(keys) != 0:
+            try:
+                user_ts_data = torn_stats_get(f'spy/faction/{faction.tid}', random.choice(keys))
+            except Exception as e:
+                logger.exception(e)
+                return
+            
+            if not user_ts_data['status']:
+                return
+            
+            for user_id, user_data in user_ts_data['faction']['members']:
+                if 'spy' not in user_data:
+                    continue
+
+                user: UserModel = utils.first(UserModel.objects(tid=int(member_id)))
+
+                if user is None:
+                    continue
+                elif user_data['spy']['timestamp'] <= user.battlescore_update:
+                    continue
+
+                user.battlescore = math.sqrt(user_data['spy']['strength']) + math.sqrt(user_data['spy']['defense']) + math.sqrt(user_data['spy']['speed']) + math.sqrt(user_data['spy']['dexterity'])
+                user.strength = user_data['spy']['strength']
+                user.defense = user_data['spy']['defense']
+                user.speed = user_data['spy']['speed']
+                user.dexterity = user_data['spy']['dexterity']
+                user.battlescore_update = utils.now()
+                user.save()
+        
+        users = []
+
+        for member_id, member in faction_data['members'].items():
+            user = utils.first(UserModel.objects(tid=int(member_id)))
+            users.append(int(member_id))
+
+            if user is None:
+                user = UserModel(
+                    tid=int(member_id),
+                    name=member['name'],
+                    level=member['level'],
+                    last_refresh=utils.now(),
+                    admin=False,
+                    key='',
+                    battlescore=0,
+                    battlescore_update=utils.now(),
+                    discord_id=0,
+                    servers=[],
+                    factionid=faction.tid,
+                    factionaa=False,
+                    chain_hits=0,
+                    status=member['last_action']['status'],
+                    last_action=member['last_action']['timestamp']
+                )
+                user.save()
+            
+            user.name = member['name']
+            user.level = member['level']
+            user.last_refresh = utils.now()
+            user.factionid = faction.tid
+            user.status = member['last_action']['status']
+            user.last_action = member['last_action']['timestamp']
+            user.save()
+        
+        for user in UserModel.objects(factionid=faction.tid):
+            if user.tid in users:
+                continue
+
+            user.factionid = 0
+            user.factionaa = False
+            user.save()
 
         if faction.chainconfig['od'] == 1:
             try:
