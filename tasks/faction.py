@@ -25,7 +25,7 @@ from models.factionmodel import FactionModel
 from models.usermodel import UserModel
 from tasks import celery_app, discordpost, logger, tornget
 import utils
-from utils.tasks import torn_stats_get
+from utils.tasks import discordget, torn_stats_get
 
 logger: logging.Logger
 
@@ -86,7 +86,7 @@ def refresh_factions():
                 if 'spy' not in user_data:
                     continue
 
-                user: UserModel = utils.first(UserModel.objects(tid=int(member_id)))
+                user: UserModel = utils.first(UserModel.objects(tid=int(user_id)))
 
                 if user is None:
                     continue
