@@ -16,8 +16,8 @@
 import datetime
 import logging
 import json
+from re import M
 import time
-from xmlrpc.client import Server
 
 from celery import Celery
 from celery.schedules import crontab
@@ -44,10 +44,55 @@ def make_celery(app):
         file = open('celery.json')
         file.close()
     except FileNotFoundError:
-        data = {
+        data = {  # Miscellaneous tasks
             'honeybadger-site-checkin': {
                 'task': 'tasks.honeybadger_site_checkin',
                 'enabled': False,
+                'schedule': {
+                    'type': 'cron',
+                    'minute': '*',
+                    'hour': '*'
+                }
+            },  # Faction tasks
+            'refresh-factions': {
+                'task': 'tasks.faction.refresh_factions',
+                'enabled': True,
+                'schedule': {
+                    'type': 'cron',
+                    'minute': '0',
+                    'hour': '*'
+                }
+            },
+            'fetch-attacks': {
+                'task': 'tasks.faction.fetch_attacks',
+                'enabled': True,
+                'schedule': {
+                    'type': 'cron',
+                    'minute': '0',
+                    'hour': '*'
+                }
+            },  # Guild tasks
+            'refresh-guilds': {
+                'task': 'tasks.guild.refresh_guilds',
+                'enabled': True,
+                'schedule': {
+                    'type': 'cron',
+                    'minute': '0',
+                    'hour': '*'
+                }
+            },
+            'user-stakeouts': {
+                'task': 'tasks.stakeouts.user_stakeouts',
+                'enabled': True,
+                'schedule': {
+                    'type': 'cron',
+                    'minute': '*',
+                    'hour': '*'
+                }
+            },
+            'faction-stakeouts': {
+                'task': 'tasks.stakeouts.faction_stakeouts',
+                'enabled': True,
                 'schedule': {
                     'type': 'cron',
                     'minute': '*',
@@ -79,12 +124,37 @@ def make_celery(app):
 
     if data['honeybadger-site-checkin']['enabled']:
         schedule['honeybadger-site-checkin'] = {
-            'task': 'tasks.honeybadger_site_checkin',
+            'task': data['honeybadger-site-checkin']['task'],
             'schedule': crontab(
                 minute=data['honeybadger-site-checkin']['schedule']['minute'],
                 hour=data['honeybadger-site-checkin']['schedule']['hour']
             )
         }
+    if data['refresh-factions']['enabled']:
+        schedule['refresh-factions'] = {
+            'task': data['refresh-factions']['task'],
+            'schedule': crontab(
+                minute=data['refresh-factions']['schedule']['minute'],
+                hour=data['refresh-factions']['schedule']['hour']
+            )
+        }
+    if data['fetch-attacks']['enabled']:
+        schedule['fetch-attacks'] = {
+            'task': data['fetch-attacks']['task'],
+            'schedule': crontab(
+                minute=data['fetch-attacks']['schedule']['minute'],
+                hour=data['refresh-factions']['schedule']['hour']
+            )
+        }
+    if data['refresh-guilds']['enabled']:
+        schedule['refresh-guilds'] = {
+            'task': data['refresh-guilds']['task'],
+            'schedule': crontab(
+                minute=data['refresh-guilds']['schedule']['minute'],
+                hour=data['refresh-guilds']['schedule']['hour']
+            )
+        }
+    if data['user-stakeouts']
 
     celery_app.conf.beat_schedule = schedule
 
