@@ -43,6 +43,8 @@ def banking_request(*args, **kwargs):
             'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
+    
+    amount_requested = str(amount_requested)
 
     if amount_requested.lower() != 'all':
         amount_requested = int(amount_requested)
