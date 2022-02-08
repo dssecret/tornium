@@ -15,17 +15,14 @@
 
 import json
 
-from flask import jsonify, request
-
 from controllers.api.decorators import *
-from models.factionmodel import FactionModel
 from models.factionstakeoutmodel import FactionStakeoutModel
 from models.keymodel import KeyModel
 from models.servermodel import ServerModel
 from models.stakeout import Stakeout
 from models.user import User
 from models.userstakeoutmodel import UserStakeoutModel
-from redisdb import get_redis
+import tasks
 import utils
 
 
@@ -176,7 +173,7 @@ def create_stakeout(stype, *args, **kwargs):
         'parent_id': guild.stakeoutconfig['category'] if category is None else category
     }
 
-    channel = utils.tasks.discordpost.call_local(f'guilds/{guildid}/channels', payload=payload)
+    channel = tasks.discordpost(f'guilds/{guildid}/channels', payload=payload)
 
     stakeout.guilds[str(guildid)]['channel'] = int(channel['id'])
     if stype == 'user':
@@ -210,7 +207,7 @@ def create_stakeout(stype, *args, **kwargs):
 
     db_stakeout.guilds = stakeout.guilds
     db_stakeout.save()
-    utils.tasks.discordpost(f'channels/{channel["id"]}/messages', payload=message_payload)()
+    tasks.discordpost(f'channels/{channel["id"]}/messages', payload=message_payload)()
 
     return jsonify({
         'id': tid,

@@ -14,8 +14,8 @@
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
 from models.servermodel import ServerModel
+import tasks
 import utils
-from utils.tasks import discordget
 
 
 class Server:
@@ -28,7 +28,7 @@ class Server:
 
         server = utils.first(ServerModel.objects(sid=sid))
         if server is None:
-            guild = discordget.call_local(f'guilds/{sid}')
+            guild = tasks.discordget(f'guilds/{sid}')
 
             server = ServerModel(
                 sid=sid,

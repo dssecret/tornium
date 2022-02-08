@@ -20,8 +20,8 @@ from flask_login import current_user
 from models.factionmodel import FactionModel
 from models.server import Server
 from models.user import User
+import tasks
 import utils
-from utils.tasks import tornget
 
 
 class Faction:
@@ -35,7 +35,7 @@ class Faction:
 
         faction = utils.first(FactionModel.objects(tid=tid))
         if faction is None:
-            faction_data = tornget.call_local(f'faction/{tid}?selections=basic', key if key != "" else current_user.key)
+            faction_data = tasks.tornget(f'faction/{tid}?selections=basic', key if key != "" else current_user.key)
             now = utils.now()
 
             faction = FactionModel(
@@ -56,7 +56,7 @@ class Faction:
             )
 
             try:
-                tornget.call_local(f'faction/{tid}?selections=positions', key if key != "" else current_user.key)
+                tasks.tornget(f'faction/{tid}?selections=positions', key if key != "" else current_user.key)
                 faction.keys.append(key if key != "" else current_user.key)
             except:
                 pass
@@ -99,7 +99,7 @@ class Faction:
         if key is None:
             key = random.choice(self.keys)
 
-        factionmembers = tornget.call_local('faction/?selections=', key)
+        factionmembers = tasks.tornget('faction/?selections=', key)
 
         for memberid, member in factionmembers['members'].values():
             user = User(memberid)

@@ -20,6 +20,7 @@ from controllers.faction.decorators import *
 from models.faction import Faction
 from models.factionmodel import FactionModel
 from models.server import Server
+import tasks
 import utils
 
 
@@ -48,7 +49,7 @@ def bot():
 
         if request.form.get('guildid') is not None:
             try:
-                utils.tasks.discordget.call_local(f'guilds/{request.form.get("guildid")}')
+                tasks.discordget(f'guilds/{request.form.get("guildid")}')
             except utils.DiscordError as e:
                 return utils.handle_discord_error(str(e))
             except utils.NetworkingError as e:
@@ -63,7 +64,7 @@ def bot():
             faction_model.save()
         elif request.form.get('withdrawal') is not None:
             try:
-                channel = utils.tasks.discordget.call_local(f'channels/{request.form.get("withdrawal")}')
+                channel = tasks.discordget(f'channels/{request.form.get("withdrawal")}')
             except utils.DiscordError as e:
                 return utils.handle_discord_error(str(e))
             except utils.NetworkingError as e:
@@ -77,7 +78,7 @@ def bot():
             faction_model.save()
         elif request.form.get('banking') is not None:
             try:
-                channel = utils.tasks.discordget.call_local(f'channels/{request.form.get("banking")}')
+                channel = tasks.discordget(f'channels/{request.form.get("banking")}')
             except utils.DiscordError as e:
                 return utils.handle_discord_error(str(e))
             except utils.NetworkingError as e:
@@ -91,7 +92,7 @@ def bot():
             faction_model.save()
         elif request.form.get('banker') is not None:
             try:
-                roles = utils.tasks.discordget.call_local(f'guilds/{faction.guild}/roles')
+                roles = tasks.discordget(f'guilds/{faction.guild}/roles')
             except utils.DiscordError as e:
                 return utils.handle_discord_error(str(e))
             except utils.NetworkingError as e:

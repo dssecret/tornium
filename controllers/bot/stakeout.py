@@ -13,14 +13,21 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from flask import request, jsonify, render_template, redirect, abort, flash
+import datetime
+import json
+
+from flask import request, jsonify, render_template, redirect, flash
 from flask_login import login_required, current_user
 
 from models.faction import Faction
+from models.factionstakeoutmodel import FactionStakeoutModel
 from models.server import Server
+from models.servermodel import ServerModel
 from models.stakeout import Stakeout
 from models.user import User
-from utils.tasks import *
+import tasks
+import utils
+from models.userstakeoutmodel import UserStakeoutModel
 
 
 @login_required
@@ -30,10 +37,12 @@ def stakeouts_dashboard(guildid: str):
     if server is None:
         return render_template('errors/error.html', title='Error', error='Server not found.'), 400
     elif server.sid not in current_user.servers:
-        return render_template('errors/error.html',
-                               title='Permission Denied',
-                               error=f'{current_user.name} [{current_user.tid}] is required to be an administrator '
-                                     f'of {server.name}.'), 403
+        return render_template(
+            'errors/error.html',
+            title='Permission Denied',
+            error=f'{current_user.name} [{current_user.tid}] is required to be an administrator '
+                  f'of {server.name}.'
+        ), 403
 
     if request.method == 'POST':
         if request.form.get('factionid') is not None:
@@ -60,7 +69,7 @@ def stakeouts_dashboard(guildid: str):
                                  f'[{stakeout.data["ID"]}] by the Tornium bot.'
                     }  # TODO: Add permission overwrite: everyone write false
 
-                channel = discordpost.call_local(f'guilds/{guildid}/channels', payload=payload)
+                channel = tasks.discordpost(f'guilds/{guildid}/channels', payload=payload)
 
                 db_stakeout = utils.first(FactionStakeoutModel.objects(tid=request.form.get('factionid')))
                 db_stakeout.guilds[guildid]['channel'] = int(channel['id'])
@@ -78,7 +87,7 @@ def stakeouts_dashboard(guildid: str):
                         }
                     ]
                 }
-                discordpost.call_local(f'channels/{channel["id"]}/messages', payload=message_payload)
+                tasks.discordpost(f'channels/{channel["id"]}/messages', payload=message_payload)
             else:
                 flash(f'Faction ID {request.form.get("factionid")} is already being staked out in {server.name}.',
                       category='error')
@@ -105,7 +114,7 @@ def stakeouts_dashboard(guildid: str):
                                  f'[{stakeout.data["player_id"]}] by the Tornium bot.'
                     }  # TODO: Add permission overwrite: everyone write false
 
-                channel = discordpost.call_local(f'guilds/{guildid}/channels', payload=payload)
+                channel = tasks.discordpost(f'guilds/{guildid}/channels', payload=payload)
 
                 db_stakeout = utils.first(UserStakeoutModel.objects(tid=request.form.get('userid')))
                 db_stakeout.guilds[guildid]['channel'] = int(channel['id'])
@@ -123,7 +132,7 @@ def stakeouts_dashboard(guildid: str):
                         }
                     ]
                 }
-                discordpost.call_local(f'channels/{channel["id"]}/messages', payload=message_payload)
+                tasks.discordpost(f'channels/{channel["id"]}/messages', payload=message_payload)
             else:
                 flash(f'User ID {request.form.get("userid")} is already being staked out in {server.name}.',
                       category='error')
@@ -138,10 +147,12 @@ def stakeouts(guildid: str, stype: int):
     if server is None:
         return render_template('errors/error.html', title='Error', error='Server not found.'), 400
     elif server.sid not in current_user.servers:
-        return render_template('errors/error.html',
-                               title='Permission Denied',
-                               error=f'{current_user.name} [{current_user.tid}] is required to be an administrator '
-                                     f'of {server.name}.'), 403
+        return render_template(
+            'errors/error.html',
+            title='Permission Denied',
+            error=f'{current_user.name} [{current_user.tid}] is required to be an administrator '
+                  f'of {server.name}.'
+        ), 403
 
     start = int(request.args.get('start'))
     length = int(request.args.get('length'))
@@ -166,7 +177,7 @@ def stakeouts(guildid: str, stype: int):
     else:
         filtered = 0
 
-    stakeouts = stakeouts[start:start+length]
+    stakeouts = stakeouts[start:start + length]
     data = {
         'draw': request.args.get('draw'),
         'recordsTotal': len(server.userstakeouts) + len(server.factionstakeouts),
@@ -183,10 +194,12 @@ def stakeout_data(guildid: str):
     if server is None:
         return render_template('errors/error.html', title='Error', error='Server not found.'), 400
     elif server.sid not in current_user.servers:
-        return render_template('errors/error.html',
-                               title='Permission Denied',
-                               error=f'{current_user.name} [{current_user.tid}] is required to be an administrator '
-                                     f'of {server.name}.'), 403
+        return render_template(
+            'errors/error.html',
+            title='Permission Denied',
+            error=f'{current_user.name} [{current_user.tid}] is required to be an administrator '
+                  f'of {server.name}.'
+        ), 403
 
     faction = request.args.get('faction')
     user = request.args.get('user')
@@ -228,10 +241,12 @@ def stakeout_update(guildid):
     if server is None:
         return render_template('errors/error.html', title='Error', error='Server not found.'), 400
     elif server.sid not in current_user.servers:
-        return render_template('errors/error.html',
-                               title='Permission Denied',
-                               error=f'{current_user.name} [{current_user.tid}] is required to be an administrator '
-                                     f'of {server.name}.'), 403
+        return render_template(
+            'errors/error.html',
+            title='Permission Denied',
+            error=f'{current_user.name} [{current_user.tid}] is required to be an administrator '
+                  f'of {server.name}.'
+        ), 403
 
     action = request.args.get('action')
     faction = request.args.get('faction')
@@ -257,7 +272,7 @@ def stakeout_update(guildid):
             else:
                 stakeout.save()
 
-            discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
+            tasks.discorddelete(f'channels/{stakeout.guilds[guildid]["channel"]}')
         elif user is not None:
             server.userstakeouts.remove(int(user))
 
@@ -269,7 +284,7 @@ def stakeout_update(guildid):
             else:
                 stakeout.save()
 
-            discorddelete.call_local(f'channels/{stakeout.guilds[guildid]["channel"]}')
+            tasks.discorddelete(f'channels/{stakeout.guilds[guildid]["channel"]}')
 
         server.save()
     elif action == 'addkey':

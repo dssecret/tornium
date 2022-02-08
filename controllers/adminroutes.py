@@ -12,7 +12,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
-import reprlib
+
 from functools import wraps
 
 from flask import Blueprint, render_template, abort, request
@@ -21,7 +21,11 @@ from flask_login import login_required, current_user
 from redisdb import get_redis
 from models.factionmodel import FactionModel
 from models.usermodel import UserModel
-import utils.tasks
+from tasks import faction as factiontasks
+from tasks import guild as guildtasks
+from tasks import stakeouts as stakeouttasks
+from tasks import user as usertasks
+import utils
 
 
 mod = Blueprint('adminroutes', __name__)
@@ -51,17 +55,17 @@ def index():
 def dashboard():
     if request.method == 'POST':
         if request.form.get('refreshfactions') is not None:
-            utils.tasks.refresh_factions()
+            factiontasks.refresh_factions.delay()
         elif request.form.get('refreshguilds') is not None:
-            utils.tasks.refresh_guilds()
+            guildtasks.refresh_guilds.delay()
         elif request.form.get('refreshusers') is not None:
-            utils.tasks.refresh_users()
+            usertasks.refresh_users.delay()
         elif request.form.get('fetchattacks') is not None:
-            utils.tasks.fetch_attacks()
+            factiontasks.fetch_attacks.delay()
         elif request.form.get('refreshuserstakeouts') is not None:
-            utils.tasks.update_user_stakeouts()
+            stakeouttasks.user_stakeouts.delay()
         elif request.form.get('refreshfactionstakeouts') is not None:
-            utils.tasks.update_faction_stakeouts()
+            stakeouttasks.faction_stakeouts.delay()
 
     return render_template('admin/dashboard.html')
 
@@ -98,7 +102,7 @@ def faction_database():
 @admin_required
 def faction(tid: int):
     faction = utils.first(FactionModel.objects(tid=tid))
-    
+
     return render_template('admin/faction.html', faction=faction)
 
 
@@ -109,16 +113,16 @@ def factions():
     start = int(request.args.get('start'))
     length = int(request.args.get('length'))
     search_value = request.args.get('search[value]')
-    
+
     factions = []
-    
+
     if search_value is None:
         for faction in FactionModel.objects().all()[start:start+length]:
             factions.append([faction.tid, faction.name])
     else:
         for faction in FactionModel.objects(name__startswith=search_value)[start:start+length]:
             factions.append([faction.tid, faction.name])
-    
+
     return {
         'draw': request.args.get('draw'),
         'recordsTotal': FactionModel.objects.count(),
@@ -139,7 +143,7 @@ def user_database():
 @admin_required
 def user(tid: int):
     user = utils.first(UserModel.objects(tid=tid))
-    
+
     return render_template('admin/user.html', user=user)
 
 

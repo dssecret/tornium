@@ -79,10 +79,10 @@ def refresh_factions():
             except Exception as e:
                 logger.exception(e)
                 return
-            
+
             if not user_ts_data['status']:
                 return
-            
+
             for user_id, user_data in user_ts_data['faction']['members']:
                 if 'spy' not in user_data:
                     continue
@@ -102,7 +102,7 @@ def refresh_factions():
                 user.dexterity = user_data['spy']['dexterity']
                 user.battlescore_update = utils.now()
                 user.save()
-        
+
         users = []
 
         for member_id, member in faction_data['members'].items():
@@ -128,7 +128,7 @@ def refresh_factions():
                     last_action=member['last_action']['timestamp']
                 )
                 user.save()
-            
+
             user.name = member['name']
             user.level = member['level']
             user.last_refresh = utils.now()
@@ -136,7 +136,7 @@ def refresh_factions():
             user.status = member['last_action']['status']
             user.last_action = member['last_action']['timestamp']
             user.save()
-        
+
         for user in UserModel.objects(factionid=faction.tid):
             if user.tid in users:
                 continue
@@ -156,7 +156,7 @@ def refresh_factions():
             except Exception as e:
                 logger.exception(e)
                 continue
-            
+
             if len(faction.chainod) > 0:
                 for tid, user_od in faction_od['contributors']['drugoverdoses'].items():
                     if user_od != faction.chainod.get(tid):
@@ -184,9 +184,9 @@ def refresh_factions():
                             logger.exception(e)
                             honeybadger.notify(e)
                             continue
-            
+
             faction.chainod = faction_od['contributors']['drugoverdoses']
-        
+
         faction.save()
 
 
@@ -199,7 +199,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
         last_timestamp = utils.first(StatModel.objects(statid=statid)).timeadded
     except AttributeError:
         last_timestamp = 0
-    
+
     faction_shares = {}
 
     group: FactionGroupModel
@@ -243,9 +243,9 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
 
             if user is None:
                 try:
-                    user_data = tornget.call_local(f'user/{attack["attacker_id"]}/?selections=profile,discord',
-                                                   random.choice(faction.keys),
-                                                   session=requests_session)
+                    user_data = tornget(f'user/{attack["attacker_id"]}/?selections=profile,discord',
+                                        random.choice(faction.keys),
+                                        session=requests_session)
 
                     user = UserModel(
                         tid=attack['attacker_id'],

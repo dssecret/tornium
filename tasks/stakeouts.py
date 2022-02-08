@@ -109,7 +109,7 @@ def user_stakeout(stakeout: UserStakeoutModel, requests_session=None, key=None):
                 ]
             }
             try:
-                discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
+                discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
                 logger.exception(e)
                 return
@@ -129,7 +129,7 @@ def user_stakeout(stakeout: UserStakeoutModel, requests_session=None, key=None):
                 ]
             }
             try:
-                discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
+                discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
                 logger.exception(e)
                 return
@@ -152,7 +152,7 @@ def user_stakeout(stakeout: UserStakeoutModel, requests_session=None, key=None):
                 ]
             }
             try:
-                discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
+                discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
                 logger.exception(e)
                 return
@@ -173,7 +173,7 @@ def user_stakeout(stakeout: UserStakeoutModel, requests_session=None, key=None):
                 ]
             }
             try:
-                discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
+                discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
                 logger.exception(e)
                 return
@@ -201,7 +201,7 @@ def user_stakeout(stakeout: UserStakeoutModel, requests_session=None, key=None):
                 ]
             }
             try:
-                discordpost.call_local(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
+                discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
             except Exception as e:
                 logger.exception(e)
                 return
@@ -211,8 +211,8 @@ def user_stakeout(stakeout: UserStakeoutModel, requests_session=None, key=None):
 def faction_stakeout(stakeout: FactionStakeoutModel, requests_session=None, key=None):
     try:
         if key is not None:
-            data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=key,
-                                      session=requests_session)
+            data = tornget(f'faction/{stakeout.tid}?selections=basic,territory', key=key,
+                           session=requests_session)
         else:
             guild: ServerModel = utils.first(ServerModel.objects(sid=int(random.choice(list(stakeout.guilds)))))
             if guild is None and len(list(stakeout.guilds)) == 1:
@@ -234,8 +234,8 @@ def faction_stakeout(stakeout: FactionStakeoutModel, requests_session=None, key=
             admin: UserModel = utils.first(UserModel.objects(tid=random.choice(guild.admins)))
 
             try:
-                data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=admin.key,
-                                          session=requests_session)
+                data = tornget(f'faction/{stakeout.tid}?selections=basic,territory', key=admin.key,
+                               session=requests_session)
             except Exception as e:
                 logger.exception(e)
                 honeybadger.notify(e)
@@ -600,17 +600,17 @@ def faction_stakeout(stakeout: FactionStakeoutModel, requests_session=None, key=
             if stakeout.tid in server.factions and faction.guild == int(guildid):
                 try:
                     if key is not None:
-                        data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
-                                                  key=key,
-                                                  session=requests_session,
-                                                  fromts=utils.now() - 60)
+                        data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
+                                       key=key,
+                                       session=requests_session,
+                                       fromts=utils.now() - 60)
                     elif len(faction.keys) == 0:
                         break
                     else:
-                        data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
-                                                  key=random.choice(faction.keys),
-                                                  session=requests_session,
-                                                  fromts=utils.now() - 60)
+                        data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
+                                       key=random.choice(faction.keys),
+                                       session=requests_session,
+                                       fromts=utils.now() - 60)
                 except Exception as e:
                     logger.exception(e)
                     honeybadger.notify(e)
@@ -649,17 +649,17 @@ def faction_stakeout(stakeout: FactionStakeoutModel, requests_session=None, key=
             if stakeout.tid in server.factions and faction.guild == int(guildid):
                 try:
                     if key is not None:
-                        data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
-                                                  key=key,
-                                                  session=requests_session,
-                                                  fromts=utils.now() - 60)
+                        data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
+                                       key=key,
+                                       session=requests_session,
+                                       fromts=utils.now() - 60)
                     elif len(faction.keys) == 0:
                         break
                     else:
-                        data = tornget.call_local(f'faction/{stakeout.tid}?selections=armorynews',
-                                                  key=random.choice(faction.keys),
-                                                  session=requests_session,
-                                                  fromts=utils.now() - 60)
+                        data = tornget(f'faction/{stakeout.tid}?selections=armorynews',
+                                       key=random.choice(faction.keys),
+                                       session=requests_session,
+                                       fromts=utils.now() - 60)
                 except Exception as e:
                     logger.exception(e)
                     honeybadger.notify(e)

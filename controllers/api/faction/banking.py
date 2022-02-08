@@ -20,6 +20,7 @@ from models.faction import Faction
 from models.server import Server
 from models.user import User
 from models.withdrawalmodel import WithdrawalModel
+import tasks
 import utils
 
 
@@ -108,7 +109,7 @@ def banking_request(*args, **kwargs):
             'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
         }
 
-    vault_balances = utils.tasks.tornget.call_local(f'faction/?selections=donations', faction.rand_key())
+    vault_balances = tasks.tornget(f'faction/?selections=donations', faction.rand_key())
 
     if str(user.tid) in vault_balances['donations']:
         if amount_requested != 'all' and amount_requested > vault_balances['donations'][str(user.tid)]['money_balance']:
@@ -163,8 +164,7 @@ def banking_request(*args, **kwargs):
                     }
                 ]
             }
-        message = utils.tasks.discordpost.call_local(f'channels/{vault_config["banking"]}/messages',
-                                                     payload=message_payload)
+        message = tasks.discordpost(f'channels/{vault_config["banking"]}/messages', payload=message_payload)
 
         withdrawal = WithdrawalModel(
             wid=request_id,

@@ -46,6 +46,7 @@ from models.server import Server
 from models.servermodel import ServerModel
 from models.user import User
 from models.usermodel import UserModel
+import tasks
 import utils
 
 botlogger = logging.getLogger('bot')
@@ -168,8 +169,8 @@ async def on_message(message):
                 tid = parse_qs(urlparse(content).query)
 
                 try:
-                    user_data = utils.tasks.tornget.call_local(f'user/{tid["user2ID"][0]}?selections=',
-                                                               key=User(random.choice(server.admins)).key)
+                    user_data = tasks.tornget(f'user/{tid["user2ID"][0]}?selections=',
+                                              key=User(random.choice(server.admins)).key)
                 except Exception as e:
                     utils.get_logger().exception(e)
                     return None
