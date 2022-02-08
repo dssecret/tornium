@@ -16,16 +16,15 @@
 import datetime
 import logging
 import json
-from re import M
 import time
 
 from celery import Celery
 from celery.schedules import crontab
 import requests
+
 from models.factionmodel import FactionModel
 from models.servermodel import ServerModel
 from models.usermodel import UserModel
-
 from redisdb import get_redis
 import utils
 from utils.errors import DiscordError, MissingKeyError, NetworkingError, RatelimitError, TornError
@@ -154,7 +153,22 @@ def make_celery(app):
                 hour=data['refresh-guilds']['schedule']['hour']
             )
         }
-    if data['user-stakeouts']
+    if data['user-stakeouts']['enabled']:
+        schedule['user-stakeouts'] = {
+            'task': data['user-stakeouts']['task'],
+            'schedule': crontab(
+                minute=data['user-stakeouts']['schedule']['minute'],
+                hour=data['user-stakeouts']['schedule']['hour']
+            )
+        }
+    if data['faction-stakeouts']['enabled']:
+        schedule['faction-stakeouts'] = {
+            'task': data['faction-stakeouts']['task'],
+            'schedule': crontab(
+                minute=data['faction-stakeouts']['schedule']['minute'],
+                hour=data['faction-stakeouts']['schedule']['hour']
+            )
+        }
 
     celery_app.conf.beat_schedule = schedule
 
@@ -179,7 +193,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Fa
     redis = get_redis()
 
     if redis.setnx(key, 100):
-        redis.expire(key, 60 - datetime.datetime.utcnow())
+        redis.expire(key, 60 - datetime.datetime.utcnow().second)
     if redis.ttl(key) < 0:
         redis.expire(key, 1)
     
@@ -199,7 +213,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Fa
     else:
         request = session.get(url)
     
-    if requests.status_code != 200:
+    if request.status_code != 200:
         logger.warning(f'The Torn API has responded with status code {request.status_code} to endpoint "{endpoint}".')
         raise NetworkingError(
             code=request.status_code
@@ -294,7 +308,8 @@ def discordget(endpoint, session=None):
         )
         logger.debug(request_json)
         raise DiscordError(
-            code=request_json["code"]
+            code=request_json['code'],
+            message=request_json["message"]
         )
     elif request.status_code // 100 != 2:
         logger.warning(
@@ -344,7 +359,8 @@ def discordpost(endpoint, payload, session=None):
         )
         logger.debug(request_json)
         raise DiscordError(
-            code=request_json["code"]
+            code=request_json['code'],
+            message=request_json['message']
         )
     elif request.status_code // 100 != 2:
         logger.warning(
@@ -394,7 +410,8 @@ def discorddelete(endpoint, session=None):
         )
         logger.debug(request_json)
         raise DiscordError(
-            code=request_json["code"]
+            code=request_json['code'],
+            message=request_json['message']
         )
     elif request.status_code // 100 != 2:
         logger.warning(

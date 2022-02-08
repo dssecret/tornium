@@ -15,7 +15,7 @@
 
 import math
 
-import honeybadger
+from honeybadger import honeybadger
 import requests
 
 from models.usermodel import UserModel
@@ -38,7 +38,7 @@ def refresh_users():
 
         user.factionid = user_data['faction']['faction_id']
         user.name = user_data['name']
-        user.last_refresh = timestamp
+        user.last_refresh = utils.now()
         user.status = user_data['last_action']['status']
         user.last_action = user_data['last_action']['timestamp']
         user.level = user_data['level']

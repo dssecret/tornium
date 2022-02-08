@@ -13,11 +13,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-import honeybadger
+from honeybadger import honeybadger
 import requests
 
 from models.usermodel import UserModel
-from tasks import celery_app, discordget, discordpost, logger, tornget
+from tasks import celery_app, discordget, logger
 import utils
 
 

@@ -13,20 +13,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Tornium.  If not, see <https://www.gnu.org/licenses/>.
 
-from ctypes import util
 import datetime
 import logging
 import math
 import random
 
-import honeybadger
+from honeybadger import honeybadger
 import requests
 from models.factiongroupmodel import FactionGroupModel
 
 from models.factionmodel import FactionModel
 from models.statmodel import StatModel
 from models.usermodel import UserModel
-from tasks import celery_app, discordget, discordpost, logger, tornget, torn_stats_get
+from tasks import celery_app, discordpost, logger, tornget, torn_stats_get
 import utils
 
 logger: logging.Logger
@@ -95,7 +94,8 @@ def refresh_factions():
                 elif user_data['spy']['timestamp'] <= user.battlescore_update:
                     continue
 
-                user.battlescore = math.sqrt(user_data['spy']['strength']) + math.sqrt(user_data['spy']['defense']) + math.sqrt(user_data['spy']['speed']) + math.sqrt(user_data['spy']['dexterity'])
+                user.battlescore = math.sqrt(user_data['spy']['strength']) + math.sqrt(user_data['spy']['defense']) + \
+                                   math.sqrt(user_data['spy']['speed']) + math.sqrt(user_data['spy']['dexterity'])
                 user.strength = user_data['spy']['strength']
                 user.defense = user_data['spy']['defense']
                 user.speed = user_data['spy']['speed']
@@ -220,7 +220,8 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             continue
 
         try:
-            faction_data = tornget('faction/?selections=basic,attacks', key=random.choice(faction.keys), session=requests_session)
+            faction_data = tornget('faction/?selections=basic,attacks', key=random.choice(faction.keys),
+                                   session=requests_session)
         except Exception as e:
             logger.exception(e)
             honeybadger.notify(e)

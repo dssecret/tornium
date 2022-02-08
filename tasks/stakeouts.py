@@ -16,7 +16,7 @@
 import datetime
 import random
 
-import honeybadger
+from honeybadger import honeybadger
 import requests
 from models.factionmodel import FactionModel
 
@@ -43,7 +43,7 @@ def faction_stakeouts():
 
     stakeout: FactionStakeoutModel
     for stakeout in FactionStakeoutModel.objects():
-        pass
+        faction_stakeout.delay(stakeout=stakeout, requests_session=requests_session)
 
 
 @celery_app.task
@@ -60,26 +60,26 @@ def user_stakeout(stakeout: UserStakeoutModel, requests_session=None, key=None):
                 guilds = random.sample(list(stakeout.guilds), k=len(list(stakeout.guilds)))
                 guild_discovered = False
 
-                for guild in guilds:
-                    guild: ServerModel = utils.first(ServerModel.objects(sid=int(guild)))
+                for guild_id in guilds:
+                    guild: ServerModel = utils.first(ServerModel.objects(sid=int(guild_id)))
 
                     if guild is not None and len(guild.admins) != 0:
                         guild_discovered = True
                         break
-                
+
                 if not guild_discovered:
                     return
-            
+
             if len(guild.admins == 0):
                 return
-            
+
             admin: UserModel = utils.first(UserModel.objects(tid=random.choice(guild.admins)))
             data = tornget(f'user/{stakeout.tid}?selections=', key=admin.key, session=requests_session)
     except Exception as e:
         logger.exception(e)
         honeybadger.notify(e)
         return
-    
+
     stakeout_data = stakeout.data
     stakeout.last_update = utils.now()
     stakeout.data = data
@@ -215,13 +215,13 @@ def faction_stakeout(stakeout: FactionStakeoutModel, requests_session=None, key=
                                       session=requests_session)
         else:
             guild: ServerModel = utils.first(ServerModel.objects(sid=int(random.choice(list(stakeout.guilds)))))
-            if guild is None and len(list(stakeout.guild)) == 1:
+            if guild is None and len(list(stakeout.guilds)) == 1:
                 return
             elif guild is None and len(list(stakeout.guilds)) > 1:
                 guilds = random.sample(list(stakeout.guilds), k=len(list(stakeout.guilds)))
                 guild_discorvered = False
-                for guild in guilds:
-                    guild: ServerModel = utils.first(ServerModel.objects(sid=int(guild)))
+                for guild_id in guilds:
+                    guild: ServerModel = utils.first(ServerModel.objects(sid=int(guild_id)))
                     if guild is not None and len(guild.admins) != 0:
                         guild_discorvered = True
                         break
@@ -235,7 +235,7 @@ def faction_stakeout(stakeout: FactionStakeoutModel, requests_session=None, key=
 
             try:
                 data = tornget.call_local(f'faction/{stakeout.tid}?selections=basic,territory', key=admin.key,
-                                        session=requests_session)
+                                          session=requests_session)
             except Exception as e:
                 logger.exception(e)
                 honeybadger.notify(e)
@@ -470,8 +470,7 @@ def faction_stakeout(stakeout: FactionStakeoutModel, requests_session=None, key=
                 if memberid not in data['members']:
                     continue
 
-                if member['last_action']['status'] in ('Offline', 'Idle') and data['members'][memberid]['last_action'][
-                    'status'] == 'Online':
+                if member['last_action']['status'] in ('Offline', 'Idle') and data['members'][memberid]['last_action']['status'] == 'Online':
                     if data["members"][memberid]["last_action"]["status"] == "Idle" and \
                             datetime.datetime.now(datetime.timezone.utc).timestamp() - \
                             data["members"][memberid]["last_action"]["timestamp"] < 300:
