@@ -191,15 +191,16 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Fa
         raise MissingKeyError
     
     redis = get_redis()
+    redis_key = f'tornium:torn-ratelimit:{key}'
 
-    if redis.setnx(key, 100):
-        redis.expire(key, 60 - datetime.datetime.utcnow().second)
-    if redis.ttl(key) < 0:
-        redis.expire(key, 1)
+    if redis.setnx(redis_key, 100):
+        redis.expire(redis_key, 60 - datetime.datetime.utcnow().second)
+    if redis.ttl(redis_key) < 0:
+        redis.expire(redis_key, 1)
     
     try:
-        if redis.get(key) and int(redis.get(key)) > 0:
-            redis.decrby(key, 1)
+        if redis.get(redis_key) and int(redis.get(key)) > 0:
+            redis.decrby(redis_key, 1)
         else:
             if autosleep:
                 time.sleep(60 - datetime.datetime.utcnow().second)
@@ -278,7 +279,7 @@ def discordget(endpoint, session=None):
     redis = get_redis()
 
     headers = {
-        'Authorization': f'Bot {redis.get("bottoken")}'
+        'Authorization': f'Bot {redis.get("tornium:settings:bottoken")}'
     }
 
     if session is None:
@@ -328,7 +329,7 @@ def discordpost(endpoint, payload, session=None):
     redis = get_redis()
 
     headers = {
-        'Authorization': f'Bot {redis.get("bottoken")}',
+        'Authorization': f'Bot {redis.get("tornium:settings:bottoken")}',
         'Content-Type': 'application/json'
     }
 
@@ -379,7 +380,7 @@ def discorddelete(endpoint, session=None):
     redis = get_redis()
 
     headers = {
-        'Authorization': f'Bot {redis.get("bottoken")}',
+        'Authorization': f'Bot {redis.get("tornium:settings:bottoken")}',
         'Content-Type': 'application/json'
     }
 
@@ -429,14 +430,16 @@ def torn_stats_get(endpoint, key, session=None, autosleep=False):
     url = f'https://www.tornstats.com/api/v2/{key}/{endpoint}'
 
     redis = get_redis()
-    if redis.get(f'ts-{key}') is None:
-        redis.set(f'ts-{key}', 15)
-        redis.expire(f'ts-{key}', 60 - datetime.datetime.utcnow().second)
-    if redis.ttl(f'ts-{key}') < 0:
-        redis.expire(f'ts-{key}', 1)
+    redis_key = f'tornium:ts-ratelimit:{key}'
 
-    if int(redis.get(f'ts-{key}')) > 0:
-        redis.decrby(f'ts-{key}', 1)
+    if redis.get(redis_key) is None:
+        redis.set(redis_key, 15)
+        redis.expire(redis_key, 60 - datetime.datetime.utcnow().second)
+    if redis.ttl(redis_key) < 0:
+        redis.expire(redis_key, 1)
+
+    if int(redis.get(redis_key)) > 0:
+        redis.decrby(redis_key, 1)
     else:
         if autosleep:
             time.sleep(60 - datetime.datetime.utcnow().second)
@@ -460,14 +463,14 @@ def torn_stats_get(endpoint, key, session=None, autosleep=False):
 def honeybadger_site_checkin():
     redis = get_redis()
 
-    if redis.get('honeysitecheckin') is None or redis.get('honeysitecheckin') == '':
+    if redis.get('tornium:settings:honeysitecheckin') is None or redis.get('tornium:settings:honeysitecheckin') == '':
         return
-    elif redis.get('url') is None or redis.get('url') == '':
+    elif redis.get('tornium:settings:url') is None or redis.get('tornium:settins:url') == '':
         return
 
-    site = requests.get(redis.get('url'))
+    site = requests.get(redis.get('tornium:settings:url'))
 
     if site.status_code != requests.codes.ok:
         return
 
-    requests.get(redis.get("honeysitecheckin"))
+    requests.get(redis.get('tornium:settings:honeysitecheckin'))

@@ -28,6 +28,8 @@ from models.user import User
 def generate_chain_list(*args, **kwargs):
     # curl -H "Authorization: Basic " localhost:8000/api/stat
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
+
     defender_stats = request.args.get('dstats') if request.args.get('dstats') is not None else 0.75
     variance = request.args.get('variance') if request.args.get('variance') is not None else 0.1
 
@@ -39,8 +41,8 @@ def generate_chain_list(*args, **kwargs):
                        'battle stats are required.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     stat_entries = StatModel.objects((Q(globalstat=1) |
@@ -82,8 +84,8 @@ def generate_chain_list(*args, **kwargs):
         'data': jsonified_stat_entires
     }), 200, {
         'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        'X-RateLimit-Remaining': client.get(key),
+        'X-RateLimit-Reset': client.ttl(key)
     }
 
 
@@ -123,6 +125,6 @@ def get_stat_user(tid, *args, **kwargs):
         'data': jsonified_stat_entries
     }), 200, {
         'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        'X-RateLimit-Remaining': client.get(key),
+        'X-RateLimit-Reset': client.ttl(key)
     }

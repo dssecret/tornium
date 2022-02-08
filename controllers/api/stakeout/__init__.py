@@ -32,6 +32,7 @@ import utils
 def create_stakeout(stype, *args, **kwargs):
     data = json.loads(request.get_data().decode('utf-8'))
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
 
     guildid = data.get('guildid')
     tid = data.get('tid')
@@ -47,8 +48,8 @@ def create_stakeout(stype, *args, **kwargs):
                        'required.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     elif tid is None:
         return jsonify({
@@ -58,8 +59,8 @@ def create_stakeout(stype, *args, **kwargs):
                        'required.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     guildid = int(guildid)
@@ -74,8 +75,8 @@ def create_stakeout(stype, *args, **kwargs):
                        'stakeout type.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     elif str(guildid) not in User(utils.first(KeyModel.objects(key=kwargs['key'])).ownertid).servers:
         return jsonify({
@@ -85,8 +86,8 @@ def create_stakeout(stype, *args, **kwargs):
                        'owner of the provided Tornium key was marked as an administrator in.'
         }), 403, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     if json.loads(guild.config)['stakeoutconfig'] != 1:
         return jsonify({
@@ -96,8 +97,8 @@ def create_stakeout(stype, *args, **kwargs):
                        'Contact a server administrator in order to enable this feature.'
         }), 403, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     elif stype == 'user' and utils.first(UserStakeoutModel.objects(tid=tid)) is not None and str(guildid) in \
             utils.first(UserStakeoutModel.objects(tid=tid)).guilds:
@@ -107,8 +108,8 @@ def create_stakeout(stype, *args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided user ID is already being staked'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     elif stype == 'faction' and utils.first(FactionStakeoutModel.objects(tid=tid)) is not None and str(guildid) in \
             utils.first(FactionStakeoutModel.objects(tid=tid)).guilds:
@@ -118,8 +119,8 @@ def create_stakeout(stype, *args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided faction ID is already being staked'
         }), 400, {
                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-               'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-               'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+               'X-RateLimit-Remaining': client.get(key),
+               'X-RateLimit-Reset': client.ttl(key)
            }
     elif stype == 'user' and keys is not None and not set(keys) & {'level', 'status', 'flyingstatus', 'online',
                                                                    'offline'}:
@@ -130,8 +131,8 @@ def create_stakeout(stype, *args, **kwargs):
                        'stakeout key that was invalid for the provided stakeout type..'
         }), 403, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     elif stype == 'faction' and keys is not None and not set(keys) & {'territory', 'members', 'memberstatus',
                                                                       'memberactivity', 'armory', 'assault',
@@ -143,8 +144,8 @@ def create_stakeout(stype, *args, **kwargs):
                        'stakeout key that was invalid for the provided stakeout type..'
         }), 403, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     stakeout = Stakeout(
@@ -217,6 +218,6 @@ def create_stakeout(stype, *args, **kwargs):
         'last_update': stakeout.last_update
     }), 200, {
         'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        'X-RateLimit-Remaining': client.get(key),
+        'X-RateLimit-Reset': client.ttl(key)
     }

@@ -29,6 +29,7 @@ import utils
 def group_modify(*args, **kwargs):
     data = json.loads(request.get_data().decode('utf-8'))
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
     user = User(kwargs['user'].tid)
     group: FactionGroupModel = utils.first(FactionGroupModel.objects(tid=data.get('groupid')))
 
@@ -42,8 +43,8 @@ def group_modify(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The provided faction group ID was not a valid ID.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     elif action is None or action not in ['name', 'remove', 'invite', 'delete', 'share-statdb']:
         return jsonify({
@@ -52,8 +53,8 @@ def group_modify(*args, **kwargs):
             'message': 'Server failed to fulfill the request. There was no correct action provided but was required.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     elif value is None and action in ['name', 'share-statdb']:
         return jsonify({
@@ -62,8 +63,8 @@ def group_modify(*args, **kwargs):
             'message': 'Server failed to fulfill the request. There was no correct value provided but was required.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     elif user.factiontid != group.creator and action not in ['share-statdb']:
         return jsonify({
@@ -73,8 +74,8 @@ def group_modify(*args, **kwargs):
                        'users within the creating faction can modify the faction group.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     if action == 'name':
@@ -88,8 +89,8 @@ def group_modify(*args, **kwargs):
                 'message': 'Server failed to fulfill the request. The group creator can not be removed from the group.'
             }), 400, {
                 'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+                'X-RateLimit-Remaining': client.get(key),
+                'X-RateLimit-Reset': client.ttl(key)
             }
 
         group.members.remove(value)
@@ -111,8 +112,8 @@ def group_modify(*args, **kwargs):
             'message': 'Server request was successful.'
         }), 200, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     elif action == 'share-statdb':
         if value:
@@ -129,6 +130,6 @@ def group_modify(*args, **kwargs):
         'sharestats': group.sharestats
     }), 200, {
         'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        'X-RateLimit-Remaining': client.get(key),
+        'X-RateLimit-Reset': client.ttl(key)
     }

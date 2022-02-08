@@ -36,8 +36,8 @@ class Periodic(commands.Cog):
     async def honeybadger(self):
         redis = get_redis()
 
-        if redis.get('honeybotcheckin') is None or redis.get('honeybotcheckin') == '':
+        if redis.get('tornium:settings:honeybotcheckin') is None or redis.get('tornium:settings:honeybotcheckin') == '':
             return
 
-        request = requests.get(redis.get("honeybotcheckin"))
+        request = requests.get(redis.get('tornium:settings:honeybotcheckin'))
         self.logger.debug(f'Check-in made... HoneyBadger has responded with {request.content}.')

@@ -29,13 +29,13 @@ from tasks import make_celery
 
 
 redis = get_redis()
-honeybadger.honeybadger.configure(api_key=redis.get('honeykey'))
+honeybadger.honeybadger.configure(api_key=redis.get('tornium:settings:honeykey'))
 
 connect(
     db='Tornium',
-    username=redis.get('username'),
-    password=redis.get('password'),
-    host=f'mongodb://{redis.get("host")}',
+    username=redis.get('tornium:settings:username'),
+    password=redis.get('tornium:settings:password'),
+    host=f'mongodb://{redis.get("tornium:settings:host")}',
     connect=False
 )
 
@@ -56,9 +56,9 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 app = flask.Flask(__name__)
-app.secret_key = redis.get('secret')
-app.config['HONEYBADGER_ENVIRONMENT'] = redis.get('honeyenv')
-app.config['HONEYBADGER_API_KEY'] = redis.get('honeykey')
+app.secret_key = redis.get('tornium:settings:secret')
+app.config['HONEYBADGER_ENVIRONMENT'] = redis.get('tornium:settings:honeyenv')
+app.config['HONEYBADGER_API_KEY'] = redis.get('tornium:settings:honeykey')
 app.config['HONEYBADGER_PARAMS_FILTERS'] = 'password, secret, credit-card'
 app.config['REMEMBER_COOKIE_DURATION'] = 604800
 FlaskHoneybadger(app, report_exceptions=True)
@@ -89,7 +89,7 @@ def tct_time(s):
     return utils.torn_timestamp(int(s))
 
 
-if redis.get("dev") == "True" and __name__ == "__main__":
+if redis.get('tornium:settings:dev') == 'True' and __name__ == "__main__":
     app.register_blueprint(base_mod)
     app.register_blueprint(auth_mod)
     app.register_blueprint(faction_mod)
@@ -101,7 +101,7 @@ if redis.get("dev") == "True" and __name__ == "__main__":
 
     app.run('localhost', 8000, debug=True)
 
-if redis.get("dev") == "False":
+if redis.get('tornium:settings:dev') == 'False':
     app.register_blueprint(base_mod)
     app.register_blueprint(auth_mod)
     app.register_blueprint(faction_mod)

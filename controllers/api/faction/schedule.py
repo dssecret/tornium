@@ -29,6 +29,7 @@ from models.user import User
 @requires_scopes(scopes={'admin', 'write:faction', 'faction:admin'})
 def create_schedule(*args, **kwargs):
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
     user = User(kwargs['user'].tid)
 
     if not user.aa:
@@ -39,16 +40,16 @@ def create_schedule(*args, **kwargs):
                        'for an AA level request.'
         }), 403, {
            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-           'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-           'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+           'X-RateLimit-Remaining': client.get(key),
+           'X-RateLimit-Reset': client.ttl(key)
         }
 
     schedule = Schedule(uuid=uuid.uuid4().hex, factiontid=user.factiontid)
 
     return schedule.file, 200, {
        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-       'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-       'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+       'X-RateLimit-Remaining': client.get(key),
+       'X-RateLimit-Reset': client.ttl(key)
     }
 
 
@@ -57,6 +58,7 @@ def create_schedule(*args, **kwargs):
 @requires_scopes(scopes={'admin', 'write:faction', 'faction:admin'})
 def delete_schedule(*args, **kwargs):
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
     data = json.loads(request.get_data().decode('utf-8'))
     user = User(kwargs['user'].tid)
 
@@ -68,8 +70,8 @@ def delete_schedule(*args, **kwargs):
                        'for an AA level request.'
         }), 403, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     Schedule(uuid=data['uuid'], factiontid=user.factiontid).delete()
@@ -80,8 +82,8 @@ def delete_schedule(*args, **kwargs):
         'message': 'Server request was successful.'
     }, 200, {
         'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        'X-RateLimit-Remaining': client.get(key),
+        'X-RateLimit-Reset': client.ttl(key)
     }
 
 
@@ -90,6 +92,7 @@ def delete_schedule(*args, **kwargs):
 @requires_scopes(scopes={'admin', 'write:faction', 'faction:admin'})
 def add_chain_watcher(*args, **kwargs):
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
     data = json.loads(request.get_data().decode('utf-8'))
     user = User(kwargs['user'].tid)
 
@@ -101,8 +104,8 @@ def add_chain_watcher(*args, **kwargs):
                        'for an AA level request.'
         }), 403, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     schedule = Schedule(uuid=data['uuid'], factiontid=user.factiontid)
@@ -111,8 +114,8 @@ def add_chain_watcher(*args, **kwargs):
 
     return schedule.file, 200, {
        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-       'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-       'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+       'X-RateLimit-Remaining': client.get(key),
+       'X-RateLimit-Reset': client.ttl(key)
     }
 
 
@@ -121,6 +124,7 @@ def add_chain_watcher(*args, **kwargs):
 @requires_scopes(scopes={'admin', 'write:faction', 'faction:admin'})
 def remove_chain_watcher(*args, **kwargs):
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
     data = json.loads(request.get_data().decode('utf-8'))
     user = User(kwargs['user'].tid)
 
@@ -132,8 +136,8 @@ def remove_chain_watcher(*args, **kwargs):
                        'for an AA level request.'
         }), 403, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     schedule = Schedule(uuid=data['uuid'], factiontid=user.factiontid)
@@ -141,8 +145,8 @@ def remove_chain_watcher(*args, **kwargs):
 
     return schedule.file, 200, {
         'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        'X-RateLimit-Remaining': client.get(key),
+        'X-RateLimit-Reset': client.ttl(key)
     }
 
 
@@ -151,6 +155,7 @@ def remove_chain_watcher(*args, **kwargs):
 @requires_scopes(scopes={'admin', 'write:faction', 'faction:admin'})
 def add_chain_availability(*args, **kwargs):
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
     data = json.loads(request.get_data().decode('utf-8'))
     user = User(kwargs['user'].tid)
 
@@ -162,8 +167,8 @@ def add_chain_availability(*args, **kwargs):
                        'for an AA level request.'
         }), 403, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     if data.get('from') is None or data.get('to') is None:
@@ -173,8 +178,8 @@ def add_chain_availability(*args, **kwargs):
             'message': 'Sever failed to fulfill the request. The from and to values are required for this endpoint.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     elif data.get('to') <= data.get('from'):
         return jsonify({
@@ -183,8 +188,8 @@ def add_chain_availability(*args, **kwargs):
             'message': 'Sever failed to fulfill the request. The to value must be greater than the from value.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     schedule = Schedule(uuid=data['uuid'], factiontid=user.factiontid)
@@ -197,8 +202,8 @@ def add_chain_availability(*args, **kwargs):
                        'interval or the chain interval must be set.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     for activity in schedule.activity[data['tid']]:
@@ -213,16 +218,16 @@ def add_chain_availability(*args, **kwargs):
                            'interval or the chain interval must be set.'
             }), 400, {
                 'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+                'X-RateLimit-Remaining': client.get(key),
+                'X-RateLimit-Reset': client.ttl(key)
             }
 
     schedule.add_activity(tid=data['tid'], activity=f'{data["from"]}-{data["to"]}')
 
     return schedule.file, 200, {
         'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        'X-RateLimit-Remaining': client.get(key),
+        'X-RateLimit-Reset': client.ttl(key)
     }
 
 
@@ -231,6 +236,7 @@ def add_chain_availability(*args, **kwargs):
 @requires_scopes(scopes={'admin', 'write:faction', 'faction:admin'})
 def schedule_setup(*args, **kwargs):
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
     data = json.loads(request.get_data().decode('utf-8'))
     user = User(kwargs['user'].tid)
 
@@ -242,8 +248,8 @@ def schedule_setup(*args, **kwargs):
                        'for an AA level request.'
         }), 403, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     if data.get('from') is None or data.get('to') is None:
@@ -253,8 +259,8 @@ def schedule_setup(*args, **kwargs):
             'message': 'Sever failed to fulfill the request. The from and to values are required for this endpoint.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     elif data.get('to') <= data.get('from'):
         return jsonify({
@@ -263,8 +269,8 @@ def schedule_setup(*args, **kwargs):
             'message': 'Sever failed to fulfill the request. The to value must be greater than the from value.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     schedule = Schedule(uuid=data['uuid'], factiontid=user.factiontid)
@@ -274,8 +280,8 @@ def schedule_setup(*args, **kwargs):
 
     return schedule.file, 200, {
         'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        'X-RateLimit-Remaining': client.get(key),
+        'X-RateLimit-Reset': client.ttl(key)
     }
 
 
@@ -284,6 +290,7 @@ def schedule_setup(*args, **kwargs):
 @requires_scopes(scopes={'admin', 'execute:faction', 'faction:admin'})
 def execute_scheduler(*args, **kwargs):
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
     user = User(kwargs['user'].tid)
 
     if not user.aa:
@@ -294,8 +301,8 @@ def execute_scheduler(*args, **kwargs):
                        'for an AA level request.'
         }), 403, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     try:
@@ -308,8 +315,8 @@ def execute_scheduler(*args, **kwargs):
                        'due to a cross-faction request.'
         }), 403, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     if schedule.factiontid != user.factiontid:
@@ -320,15 +327,15 @@ def execute_scheduler(*args, **kwargs):
                        'due to a cross-faction request.'
         }), 403, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     schedule.generate()
     return schedule.schedule, 200, {
         'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        'X-RateLimit-Remaining': client.get(key),
+        'X-RateLimit-Reset': client.ttl(key)
     }
 
 
@@ -337,6 +344,7 @@ def execute_scheduler(*args, **kwargs):
 @requires_scopes(scopes={'admin', 'read:faction', 'faction:admin'})
 def get_schedule(uuid, *args, **kwargs):
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
     user = User(kwargs['user'].tid)
 
     if not user.aa:
@@ -347,8 +355,8 @@ def get_schedule(uuid, *args, **kwargs):
                        'for an AA level request.'
         }), 403, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     if uuid is not None:
@@ -362,8 +370,8 @@ def get_schedule(uuid, *args, **kwargs):
                            'due to a cross-faction request.'
             }), 403, {
                 'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+                'X-RateLimit-Remaining': client.get(key),
+                'X-RateLimit-Reset': client.ttl(key)
             }
 
         if schedule.factiontid != user.factiontid:
@@ -374,14 +382,14 @@ def get_schedule(uuid, *args, **kwargs):
                            'due to a cross-faction request.'
             }), 403, {
                 'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+                'X-RateLimit-Remaining': client.get(key),
+                'X-RateLimit-Reset': client.ttl(key)
             }
 
         return send_file(f'{os.getcwd()}/schedule/{uuid}.json'), 200, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     else:
         schedules = []
@@ -390,6 +398,6 @@ def get_schedule(uuid, *args, **kwargs):
 
         return jsonify(schedules), 200, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }

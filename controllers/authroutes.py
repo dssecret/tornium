@@ -65,7 +65,7 @@ def login():
     if next is None or next == 'None':
         return redirect(url_for('baseroutes.index'))
 
-    if not get_redis().get('dev'):
+    if not get_redis().get('tornium:settings:dev'):
         if not is_safe_url(next, {'torn.deek.sh'}):
             abort(400)
     return redirect(next or url_for('baseroutes.index'))

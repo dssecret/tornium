@@ -78,9 +78,9 @@ def bot():
 
     if request.method == 'POST':
         if request.form.get('bottoken') is not None:
-            redis.set('bottoken', request.form.get('bottoken'))
+            redis.set('tornium:settings:bottoken', request.form.get('bottoken'))  # TODO: Replace bottoken in settings file
 
-    return render_template('admin/bot.html', bottoken=redis.get('bottoken'))
+    return render_template('admin/bot.html', bottoken=redis.get('tornium:settings:bottoken'))
 
 
 @mod.route('/admin/database')
