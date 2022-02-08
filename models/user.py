@@ -18,8 +18,8 @@ import math
 from flask_login import UserMixin, current_user
 
 from models.usermodel import UserModel
+import tasks
 import utils
-from utils.tasks import tornget
 
 
 class User(UserMixin):
@@ -31,7 +31,6 @@ class User(UserMixin):
         """
 
         user = utils.first(UserModel.objects(_id=tid))
-        now = utils.now()
         if user is None:
             user = UserModel(
                 tid=tid,
@@ -86,9 +85,9 @@ class User(UserMixin):
                     raise Exception  # TODO: Make exception more descriptive
 
             if key == self.key:
-                user_data = tornget.call_local(f'user/?selections=profile,battlestats,discord', key)
+                user_data = tasks.tornget(f'user/?selections=profile,battlestats,discord', key)
             else:
-                user_data = tornget.call_local(f'user/{self.tid}?selections=profile,discord', key)
+                user_data = tasks.tornget(f'user/{self.tid}?selections=profile,discord', key)
 
             user = utils.first(UserModel.objects(tid=self.tid))
             user.factionid = user_data['faction']['faction_id']
@@ -120,7 +119,7 @@ class User(UserMixin):
         user = utils.first(UserModel.objects(tid=self.tid))
 
         try:
-            tornget.call_local(f'faction/?selections=positions', self.key)
+            tasks.tornget(f'faction/?selections=positions', self.key)
         except:
             self.aa = False
             user.factionaa = False

@@ -28,13 +28,13 @@ from redisdb import get_redis
 import settings  # Do not remove - initializes redis values
 
 redis = get_redis()
-honeybadger.honeybadger.configure(api_key=redis.get('honeykey'))
+honeybadger.honeybadger.configure(api_key=redis.get('tornium:settings:honeykey'))
 
 connect(
     db='Tornium',
-    username=redis.get('username'),
-    password=redis.get('password'),
-    host=f'mongodb://{redis.get("host")}',
+    username=redis.get('tornium:settings:username'),
+    password=redis.get('tornium:settings:password'),
+    host=f'mongodb://{redis.get("tornium:settings:host")}',
     connect=False
 )
 
@@ -46,6 +46,7 @@ from models.server import Server
 from models.servermodel import ServerModel
 from models.user import User
 from models.usermodel import UserModel
+import tasks
 import utils
 
 botlogger = logging.getLogger('bot')
@@ -168,8 +169,8 @@ async def on_message(message):
                 tid = parse_qs(urlparse(content).query)
 
                 try:
-                    user_data = utils.tasks.tornget.call_local(f'user/{tid["user2ID"][0]}?selections=',
-                                                               key=User(random.choice(server.admins)).key)
+                    user_data = tasks.tornget(f'user/{tid["user2ID"][0]}?selections=',
+                                              key=User(random.choice(server.admins)).key)
                 except Exception as e:
                     utils.get_logger().exception(e)
                     return None
@@ -249,4 +250,4 @@ async def help(ctx):
 
 if __name__ == "__main__":
     redis = get_redis()
-    bot.run(redis.get('bottoken'))
+    bot.run(redis.get('tornium:settings:bottoken'))

@@ -26,6 +26,7 @@ import utils
 @ratelimit
 def test_key(*args, **kwargs):
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
 
     return jsonify({
         'code': 1,
@@ -33,8 +34,8 @@ def test_key(*args, **kwargs):
         'message': 'Server request was successful. Authentication was successful.'
     }), 200, {
         'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        'X-RateLimit-Remaining': client.get(key),
+        'X-RateLimit-Reset': client.ttl(key)
     }
 
 
@@ -49,6 +50,7 @@ def create_key(*args, **kwargs):
     expires = data.get('expires')
 
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
 
     if expires is not None and expires <= utils.now():
         return jsonify({
@@ -58,8 +60,8 @@ def create_key(*args, **kwargs):
                        'timestamp on the server.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     if scopes is None:
         scopes = []
@@ -72,8 +74,8 @@ def create_key(*args, **kwargs):
                 'message': 'Server failed to create the key. The provided array of scopes included an invalid scope.'
             }), 400, {
                 'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+                'X-RateLimit-Remaining': client.get(key),
+                'X-RateLimit-Reset': client.ttl(key)
             }
 
     key = base64.b64encode(f'{user.tid}:{secrets.token_urlsafe(32)}'.encode('utf-8')).decode('utf-8')
@@ -91,8 +93,8 @@ def create_key(*args, **kwargs):
         'expires': expires
     }), 200, {
         'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        'X-RateLimit-Remaining': client.get(key),
+        'X-RateLimit-Reset': client.ttl(key)
     }
 
 
@@ -102,6 +104,7 @@ def remove_key(*args, **kwargs):
     data = json.loads(request.get_data().decode('utf-8'))
     key = data.get('key')
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
     
     if key is None:
         return
@@ -120,6 +123,6 @@ def remove_key(*args, **kwargs):
         'expires': expires
     }), 200, {
         'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        'X-RateLimit-Remaining': client.get(key),
+        'X-RateLimit-Reset': client.ttl(key)
     }

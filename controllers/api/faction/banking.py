@@ -20,6 +20,7 @@ from models.faction import Faction
 from models.server import Server
 from models.user import User
 from models.withdrawalmodel import WithdrawalModel
+import tasks
 import utils
 
 
@@ -29,6 +30,7 @@ import utils
 def banking_request(*args, **kwargs):
     data = json.loads(request.get_data().decode('utf-8'))
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
     user = User(kwargs['user'].tid)
     amount_requested = data.get('amount_requested')
 
@@ -40,8 +42,8 @@ def banking_request(*args, **kwargs):
                        'requested was required.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     
     amount_requested = str(amount_requested)
@@ -64,8 +66,8 @@ def banking_request(*args, **kwargs):
                            'faction.'
             }), 400, {
                 'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+                'X-RateLimit-Remaining': client.get(key),
+                'X-RateLimit-Reset': client.ttl(key)
             }
 
     faction = Faction(user.factiontid, key=user.key)
@@ -77,8 +79,8 @@ def banking_request(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The faction does not currently have a Discord server set.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     
     server = Server(faction.guild)
@@ -91,8 +93,8 @@ def banking_request(*args, **kwargs):
                        'of factions.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
     vault_config = faction.vault_config
@@ -106,11 +108,11 @@ def banking_request(*args, **kwargs):
                        'configured by faction AA members.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
 
-    vault_balances = utils.tasks.tornget.call_local(f'faction/?selections=donations', faction.rand_key())
+    vault_balances = tasks.tornget(f'faction/?selections=donations', faction.rand_key())
 
     if str(user.tid) in vault_balances['donations']:
         if amount_requested != 'all' and amount_requested > vault_balances['donations'][str(user.tid)]['money_balance']:
@@ -121,8 +123,8 @@ def banking_request(*args, **kwargs):
                            'the user\'s faction vault balance.'
             }), 400, {
                 'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+                'X-RateLimit-Remaining': client.get(key),
+                'X-RateLimit-Reset': client.ttl(key)
             }
         elif amount_requested == 'all' and vault_balances['donations'][str(user.tid)]['money_balance'] <= 0:
             return jsonify({
@@ -132,8 +134,8 @@ def banking_request(*args, **kwargs):
                            'negative vault balance.'
             }), 400, {
                 'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-                'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-                'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+                'X-RateLimit-Remaining': client.get(key),
+                'X-RateLimit-Reset': client.ttl(key)
             }
 
         request_id = WithdrawalModel.objects().count()
@@ -165,8 +167,7 @@ def banking_request(*args, **kwargs):
                     }
                 ]
             }
-        message = utils.tasks.discordpost.call_local(f'channels/{vault_config["banking"]}/messages',
-                                                     payload=message_payload)
+        message = tasks.discordpost(f'channels/{vault_config["banking"]}/messages', payload=message_payload)
 
         withdrawal = WithdrawalModel(
             wid=request_id,
@@ -188,8 +189,8 @@ def banking_request(*args, **kwargs):
             'withdrawalmessage': message['id']
         }), 200, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }
     else:
         return jsonify({
@@ -198,6 +199,6 @@ def banking_request(*args, **kwargs):
             'message': 'Server failed to fulfill the request. There was no faction stored with that faction ID.'
         }), 400, {
             'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-            'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-            'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
         }

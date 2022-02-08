@@ -19,8 +19,8 @@ from is_safe_url import is_safe_url
 
 from models.user import User
 from redisdb import get_redis
+import tasks
 import utils
-from utils.tasks import tornget
 
 
 mod = Blueprint('authroutes', __name__)
@@ -34,7 +34,7 @@ def login():
     global torn_user
 
     try:
-        key_info = tornget.call_local(endpoint='key/?selections=info', key=request.form['key'])
+        key_info = tasks.tornget(endpoint='key/?selections=info', key=request.form['key'])
     except utils.TornError as e:
         return utils.handle_torn_error(str(e))
     except Exception as e:
@@ -46,7 +46,7 @@ def login():
                                        'Keys with custom permissions are not currently supported either.')
 
     try:
-        torn_user = tornget.call_local(endpoint='user/?selections=', key=request.form['key'])
+        torn_user = tasks.tornget(endpoint='user/?selections=', key=request.form['key'])
     except utils.TornError as e:
         return utils.handle_torn_error(str(e))
     except Exception as e:
@@ -65,7 +65,7 @@ def login():
     if next is None or next == 'None':
         return redirect(url_for('baseroutes.index'))
 
-    if not get_redis().get('dev'):
+    if not get_redis().get('tornium:settings:dev'):
         if not is_safe_url(next, {'torn.deek.sh'}):
             abort(400)
     return redirect(next or url_for('baseroutes.index'))

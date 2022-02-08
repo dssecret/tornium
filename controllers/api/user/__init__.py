@@ -21,6 +21,7 @@ from controllers.api.decorators import *
 @requires_scopes(scopes={'admin', 'read:user'})
 def get_user(*args, **kwargs):
     client = redisdb.get_redis()
+    key = f'tornium:ratelimit:{kwargs["user"].tid}'
 
     return jsonify({
         'tid': kwargs['user'].tid,
@@ -39,6 +40,6 @@ def get_user(*args, **kwargs):
         'pro_expiration': kwargs['user'].pro_expiration
     }), 200, {
         'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
-        'X-RateLimit-Remaining': client.get(kwargs['user'].tid),
-        'X-RateLimit-Reset': client.ttl(kwargs['user'].tid)
+        'X-RateLimit-Remaining': client.get(key),
+        'X-RateLimit-Reset': client.ttl(key)
     }

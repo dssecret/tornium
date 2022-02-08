@@ -19,6 +19,7 @@ from huey.exceptions import TaskException
 
 from models.faction import Faction
 from models.factionmodel import FactionModel
+import tasks
 import utils
 
 
@@ -31,7 +32,7 @@ def chain():
 
         if request.form.get('odchannel') is not None:
             try:
-                channel = utils.tasks.discordget(f'channels/{request.form.get("odchannel")}')
+                channel = tasks.discordget(f'channels/{request.form.get("odchannel")}')
                 channel = channel(blocking=True)
             except TaskException as e:
                 e = str(e)
