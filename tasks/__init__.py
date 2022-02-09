@@ -30,7 +30,7 @@ import utils
 from utils.errors import DiscordError, MissingKeyError, NetworkingError, RatelimitError, TornError
 
 
-celery_app: Celery
+celery_app: Celery = None
 logger: logging.Logger = logging.getLogger('celery')
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='celery.log', encoding='utf-8', mode='a')
@@ -38,7 +38,7 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 
 
-def make_celery(app):
+if celery_app is None:
     try:
         file = open('celery.json')
         file.close()
@@ -106,12 +106,11 @@ def make_celery(app):
     with open('celery.json', 'r') as file:
         data = json.load(file)
 
-    global celery_app
     celery_app = Celery(
-        app.import_name,
+        'tasks',
         backend='redis://localhost:6379/0',
         broker='redis://localhost:6379/0',
-        include=['tasks', 'tasks.faction']
+        include=['tasks', 'tasks.faction', 'tasks.guild', 'tasks.stakeouts', 'tasks.user']
     )
     celery_app.conf.update(
         task_serializer='json',
@@ -171,14 +170,6 @@ def make_celery(app):
         }
 
     celery_app.conf.beat_schedule = schedule
-
-    class ContextTask(celery_app.Task):
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return self.run(*args, **kwargs)
-
-    celery_app.Task = ContextTask
-    return celery_app
 
 
 @celery_app.task
