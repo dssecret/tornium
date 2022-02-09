@@ -29,6 +29,9 @@ def refresh_users():
 
     user: UserModel
     for user in UserModel.objects(key__ne=''):
+        if user.key == '':
+            continue
+
         try:
             user_data = tornget(f'user/?selections=profile,battlestats,discord', user.key, session=reqeusts_session)
         except Exception as e:
@@ -56,6 +59,20 @@ def refresh_users():
 
         try:
             tornget(f'faction/?selections=positions', user.key, session=reqeusts_session)
+        except utils.TornError as e:
+            if e.code != 7:
+                logger.exception(e)
+                honeybadger.notify(e)
+                continue
+            else:
+                if user.factionaa:
+                    user.factionaa = False
+                    user.save()
+                    continue
+                else:
+                    logger.exception(e)
+                    honeybadger.notify(e)
+                    continue
         except Exception as e:
             logger.exception(e)
             honeybadger.notify(e)
