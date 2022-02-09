@@ -25,7 +25,6 @@ from mongoengine import connect
 
 import settings  # Do not remove - initializes redis values
 from redisdb import get_redis
-from tasks import make_celery
 
 
 redis = get_redis()
@@ -63,7 +62,6 @@ app.config['HONEYBADGER_PARAMS_FILTERS'] = 'password, secret, credit-card'
 app.config['REMEMBER_COOKIE_DURATION'] = 604800
 FlaskHoneybadger(app, report_exceptions=True)
 
-celery = make_celery(app)
 cors = CORS(app, resources={r'/api/*': {'origins': '*'}})
 
 login_manager = LoginManager()
