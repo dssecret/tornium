@@ -225,7 +225,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Fa
     logger.info(redis.get(redis_key))
     
     try:
-        if redis.get(redis_key) and int(redis.get(key)) > 0:
+        if redis.get(redis_key) and int(redis.get(redis_key)) > 0:
             redis.decrby(redis_key, 1)
         else:
             if autosleep:
