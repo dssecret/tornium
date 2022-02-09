@@ -34,7 +34,7 @@ def user_stakeouts():
 
     stakeout: UserStakeoutModel
     for stakeout in UserStakeoutModel.objects():
-        user_stakeout.delay(stakeout=stakeout, requests_session=requests_session)
+        user_stakeout.delay(stakeout=stakeout.tid, requests_session=requests_session)
 
 
 @celery_app.task
@@ -43,11 +43,16 @@ def faction_stakeouts():
 
     stakeout: FactionStakeoutModel
     for stakeout in FactionStakeoutModel.objects():
-        faction_stakeout.delay(stakeout=stakeout, requests_session=requests_session)
+        faction_stakeout.delay(stakeout=stakeout.tid, requests_session=requests_session)
 
 
 @celery_app.task
-def user_stakeout(stakeout: UserStakeoutModel, requests_session=None, key=None):
+def user_stakeout(stakeout: int, requests_session=None, key=None):
+    stakeout: UserStakeoutModel = utils.first(UserStakeoutModel.objects(tid=stakeout))
+
+    if stakeout is None:
+        return
+
     try:
         if key is not None:
             data = tornget(f'user/{stakeout.tid}?selections=', key=key, session=requests_session)
@@ -208,7 +213,12 @@ def user_stakeout(stakeout: UserStakeoutModel, requests_session=None, key=None):
 
 
 @celery_app.task
-def faction_stakeout(stakeout: FactionStakeoutModel, requests_session=None, key=None):
+def faction_stakeout(stakeout: int, requests_session=None, key=None):
+    stakeout: FactionStakeoutModel = utils.first(FactionStakeoutModel.objects(tid=stakeout))
+
+    if stakeout is None:
+        return
+
     try:
         if key is not None:
             data = tornget(f'faction/{stakeout.tid}?selections=basic,territory', key=key,
