@@ -45,7 +45,7 @@ connect(
 celery_app: Celery = None
 logger: logging.Logger = logging.getLogger('celery')
 logger.setLevel(logging.DEBUG)
-handler = logging.FileHandler(filename='celery.log', encoding='utf-8', mode='a')
+handler = logging.FileHandler(filename='celeryerrors.log', encoding='utf-8', mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
 
