@@ -230,8 +230,9 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Fa
                 time.sleep(60 - datetime.datetime.utcnow().second)
             else:
                 raise RatelimitError
-    except TypeError:
+    except TypeError as e:
         logger.warning(f'Error raised on API key {key}')
+        raise e
     
     if session is None:
         request = requests.get(url)
