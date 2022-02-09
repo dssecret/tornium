@@ -221,7 +221,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Fa
         redis.expire(redis_key, 1)
     
     try:
-        if redis.get(redis_key) and int(redis.get(redis_key)) > 0:
+        if redis.get(redis_key) is not None and int(redis.get(redis_key)) > 0:
             redis.decrby(redis_key, 1)
         else:
             if autosleep:
@@ -461,7 +461,7 @@ def torn_stats_get(endpoint, key, session=None, autosleep=False):
     if redis.ttl(redis_key) < 0:
         redis.expire(redis_key, 1)
 
-    if int(redis.get(redis_key)) > 0:
+    if redis.get(redis_key) is not None and int(redis.get(redis_key)) > 0:
         redis.decrby(redis_key, 1)
     else:
         if autosleep:
