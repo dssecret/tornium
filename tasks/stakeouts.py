@@ -30,20 +30,16 @@ import utils
 
 @celery_app.task
 def user_stakeouts():
-    requests_session = requests.Session()
-
     stakeout: UserStakeoutModel
     for stakeout in UserStakeoutModel.objects():
-        user_stakeout.delay(stakeout=stakeout.tid, requests_session=requests_session)
+        user_stakeout.delay(stakeout=stakeout.tid)
 
 
 @celery_app.task
 def faction_stakeouts():
-    requests_session = requests.Session()
-
     stakeout: FactionStakeoutModel
     for stakeout in FactionStakeoutModel.objects():
-        faction_stakeout.delay(stakeout=stakeout.tid, requests_session=requests_session)
+        faction_stakeout.delay(stakeout=stakeout.tid)
 
 
 @celery_app.task

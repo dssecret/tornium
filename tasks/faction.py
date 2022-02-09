@@ -147,7 +147,7 @@ def refresh_factions():
 
         if faction.chainconfig['od'] == 1:
             try:
-                faction_od = tornget.delay(
+                faction_od = tornget(
                     'faction/?selections=contributors',
                     stat='drugoverdoses',
                     key=random.choice(faction.keys),
