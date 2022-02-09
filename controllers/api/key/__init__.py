@@ -33,7 +33,7 @@ def test_key(*args, **kwargs):
         'name': 'OK',
         'message': 'Server request was successful. Authentication was successful.'
     }), 200, {
-        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+        'X-RateLimit-Limit': 150,
         'X-RateLimit-Remaining': client.get(key),
         'X-RateLimit-Reset': client.ttl(key)
     }
@@ -59,7 +59,7 @@ def create_key(*args, **kwargs):
             'message': 'Server failed to create the key. The provided timestamp was greater than the current '
                        'timestamp on the server.'
         }), 400, {
-            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+            'X-RateLimit-Limit': 150,
             'X-RateLimit-Remaining': client.get(key),
             'X-RateLimit-Reset': client.ttl(key)
         }
@@ -73,7 +73,7 @@ def create_key(*args, **kwargs):
                 'name': 'InvalidScope',
                 'message': 'Server failed to create the key. The provided array of scopes included an invalid scope.'
             }), 400, {
-                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+                'X-RateLimit-Limit': 150,
                 'X-RateLimit-Remaining': client.get(key),
                 'X-RateLimit-Reset': client.ttl(key)
             }
@@ -92,7 +92,7 @@ def create_key(*args, **kwargs):
         'scopes': scopes,
         'expires': expires
     }), 200, {
-        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+        'X-RateLimit-Limit': 150,
         'X-RateLimit-Remaining': client.get(key),
         'X-RateLimit-Reset': client.ttl(key)
     }
@@ -122,7 +122,7 @@ def remove_key(*args, **kwargs):
         'scopes': json.loads(scopes),
         'expires': expires
     }), 200, {
-        'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+        'X-RateLimit-Limit': 150,
         'X-RateLimit-Remaining': client.get(key),
         'X-RateLimit-Reset': client.ttl(key)
     }

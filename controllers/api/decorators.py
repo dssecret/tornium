@@ -30,7 +30,7 @@ def ratelimit(func):
     def wrapper(*args, **kwargs):
         client = redisdb.get_redis()
         key = f'tornium:ratelimit:{kwargs["user"].tid}'
-        limit = 250 if kwargs['user'].pro else 150
+        limit = 150
 
         if client.setnx(key, limit):
             client.expire(key, 60 - datetime.datetime.utcnow().second)
@@ -48,7 +48,7 @@ def ratelimit(func):
                 'name': 'Too Many Requests',
                 'message': 'Server failed to respond to request. Too many requests were received.'
             }), 429, {
-                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+                'X-RateLimit-Limit': 150,
                 'X-RateLimit-Remaining': client.get(key),
                 'X-RateLimit-Reset': client.ttl(key)
             }
@@ -74,7 +74,7 @@ def requires_scopes(func=None, scopes=None):
                 'message': 'Server failed to fulfill the request. The scope of the Tornium key provided was not '
                            'sufficient for the request.'
             }), 403, {
-                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+                'X-RateLimit-Limit': 150,
                 'X-RateLimit-Remaining': client.get(key),
                 'X-RateLimit-Reset': client.ttl(key)
             }
