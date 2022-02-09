@@ -20,8 +20,11 @@ import time
 
 from celery import Celery
 from celery.schedules import crontab
+import honeybadger
+from mongoengine import connect
 import requests
 
+import settings  # Do not remove - initializes redis values
 from models.factionmodel import FactionModel
 from models.servermodel import ServerModel
 from models.usermodel import UserModel
@@ -29,6 +32,15 @@ from redisdb import get_redis
 import utils
 from utils.errors import DiscordError, MissingKeyError, NetworkingError, RatelimitError, TornError
 
+honeybadger.honeybadger.configure(api_key=get_redis().get('tornium:settings:honeykey'))
+
+connect(
+    db='Tornium',
+    username=get_redis().get('tornium:settings:username'),
+    password=get_redis().get('tornium:settings:password'),
+    host=f'mongodb://{get_redis().get("tornium:settings:host")}',
+    connect=False
+)
 
 celery_app: Celery = None
 logger: logging.Logger = logging.getLogger('celery')
