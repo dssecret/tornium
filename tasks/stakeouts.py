@@ -53,6 +53,9 @@ def user_stakeout(stakeout: int, requests_session=None, key=None):
         if key is not None:
             data = tornget(f'user/{stakeout.tid}?selections=', key=key, session=requests_session)
         else:
+            if len(stakeout.guilds) == 0:
+                return
+
             guild: ServerModel = utils.first(ServerModel.objects(sid=int(random.choice(list(stakeout.guilds)))))
 
             if guild is None and len(list(stakeout.guilds)) > 1:
@@ -220,6 +223,9 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
             data = tornget(f'faction/{stakeout.tid}?selections=basic,territory', key=key,
                            session=requests_session)
         else:
+            if len(stakeout.guilds) == 0:
+                return
+
             guild: ServerModel = utils.first(ServerModel.objects(sid=int(random.choice(list(stakeout.guilds)))))
             if guild is None and len(list(stakeout.guilds)) == 1:
                 return
