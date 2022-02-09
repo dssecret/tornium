@@ -97,6 +97,17 @@ if celery_app is None:
                     'minute': '*',
                     'hour': '*'
                 }
+            },
+            'refresh-users': {
+                'task': 'tasks.user.refresh_users',
+                'enabled': True,
+                'schedule': {
+                    'type': {
+                        'type': 'cron',
+                        'minute': '*/5',
+                        'hour': '*'
+                    }
+                }
             }
         }
 
@@ -166,6 +177,14 @@ if celery_app is None:
             'schedule': crontab(
                 minute=data['faction-stakeouts']['schedule']['minute'],
                 hour=data['faction-stakeouts']['schedule']['hour']
+            )
+        }
+    if data['refresh-users']['enabled']:
+        schedule['refresh-users'] = {
+            'task': data['refresh-users']['task'],
+            'schedule': crontab(
+                minute=data['refresh-users']['schedule']['minute'],
+                hour=data['refresh-users']['schedule']['hour']
             )
         }
 
