@@ -215,14 +215,10 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Fa
     redis = get_redis()
     redis_key = f'tornium:torn-ratelimit:{key}'
 
-    logger.info(redis_key)
-
     if redis.setnx(redis_key, 100):
         redis.expire(redis_key, 60 - datetime.datetime.utcnow().second)
     if redis.ttl(redis_key) < 0:
         redis.expire(redis_key, 1)
-
-    logger.info(redis.get(redis_key))
     
     try:
         if redis.get(redis_key) and int(redis.get(redis_key)) > 0:

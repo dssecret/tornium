@@ -291,7 +291,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                     except Exception as e:
                         logger.exception(e)
                         honeybadger.notify(e)
@@ -312,7 +312,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                     except Exception as e:
                         logger.exception(e)
                         honeybadger.notify(e)
@@ -334,7 +334,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                     except Exception as e:
                         logger.exception(e)
                         honeybadger.notify(e)
@@ -356,7 +356,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                     except Exception as e:
                         logger.exception(e)
                         honeybadger.notify(e)
@@ -378,7 +378,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                     except Exception as e:
                         logger.exception(e)
                         honeybadger.notify(e)
@@ -400,7 +400,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                     except Exception as e:
                         logger.exception(e)
                         honeybadger.notify(e)
@@ -421,7 +421,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                     except Exception as e:
                         logger.exception(e)
                         honeybadger.notify(e)
@@ -442,7 +442,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                     except Exception as e:
                         logger.exception(e)
                         honeybadger.notify(e)
@@ -472,7 +472,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                     except Exception as e:
                         logger.exception(e)
                         honeybadger.notify(e)
@@ -503,7 +503,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                     except Exception as e:
                         logger.exception(e)
                         honeybadger.notify(e)
@@ -533,7 +533,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                     except Exception as e:
                         logger.exception(e)
                         honeybadger.notify(e)
@@ -567,7 +567,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                     except Exception as e:
                         logger.exception(e)
                         honeybadger.notify(e)
@@ -600,7 +600,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         ]
                     }
                     try:
-                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                        discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                     except Exception as e:
                         logger.exception(e)
                         honeybadger.notify(e)
@@ -650,7 +650,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         }
 
                         try:
-                            discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                            discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                         except Exception as e:
                             logger.exception(e)
                             honeybadger.notify(e)
@@ -699,7 +699,7 @@ def faction_stakeout(stakeout: int, requests_session=None, key=None):
                         }
 
                         try:
-                            discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)()
+                            discordpost(f'channels/{guild_stakeout["channel"]}/messages', payload=payload)
                         except Exception as e:
                             logger.exception(e)
                             honeybadger.notify(e)
