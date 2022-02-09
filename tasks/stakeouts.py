@@ -71,7 +71,7 @@ def user_stakeout(stakeout: int, requests_session=None, key=None):
                 if not guild_discovered:
                     return
 
-            if len(guild.admins == 0):
+            if len(guild.admins) == 0:
                 return
 
             admin: UserModel = utils.first(UserModel.objects(tid=random.choice(guild.admins)))
