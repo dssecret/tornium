@@ -18,9 +18,14 @@ Tornium - Faction Banking
 
                 <div class="row">
                     <div class="col-sm-12 col-md-8 col-lg-4 my-2">
-                        <form class="form-floating" id="requestform">
-                            <input class="form-control" id="requestamount" name="requestamount">
-                            <label for="requestamount">Request Amount</label>
+                        <form class="form-floating row g-3" id="requestform">
+                            <div class="col-auto">
+                                <input class="form-control" id="requestamount" name="requestamount">
+                                <label for="requestamount">Request Amount</label>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-primary mb-3">Submit</button>
+                            </div>
                             <div class="form-text">
                                 Please enter the amount of cash you wish to withdraw from the faction vault. Acceptable formats include integer only (e.g. "100000"), Torn-suffixes such as "m" (e.g. "1m", "1k", "1b"), and decimals with Torn-suffixes (e.g. "1.35b"). This request will be forwarded to a faction banker if faction banking has been set up for your faction; otherwsie please contact your faction's leadership for the setup and enabling of faction banking.
                             </div>
