@@ -41,7 +41,7 @@ def banking_request(*args, **kwargs):
             'message': 'Server failed to fulfill the request. There was no amount requested provided but an amount '
                        'requested was required.'
         }), 400, {
-            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+            'X-RateLimit-Limit': 150,
             'X-RateLimit-Remaining': client.get(key),
             'X-RateLimit-Reset': client.ttl(key)
         }
@@ -65,7 +65,7 @@ def banking_request(*args, **kwargs):
                 'message': 'Server failed to fulfill the request. The API key\'s user is required to be in a Torn '
                            'faction.'
             }), 400, {
-                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+                'X-RateLimit-Limit': 150,
                 'X-RateLimit-Remaining': client.get(key),
                 'X-RateLimit-Reset': client.ttl(key)
             }
@@ -78,7 +78,7 @@ def banking_request(*args, **kwargs):
             'name': 'GeneralError',
             'message': 'Server failed to fulfill the request. The faction does not currently have a Discord server set.'
         }), 400, {
-            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+            'X-RateLimit-Limit': 150,
             'X-RateLimit-Remaining': client.get(key),
             'X-RateLimit-Reset': client.ttl(key)
         }
@@ -92,7 +92,7 @@ def banking_request(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The user\'s faction is not in the stored server\'s list '
                        'of factions.'
         }), 400, {
-            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+            'X-RateLimit-Limit': 150,
             'X-RateLimit-Remaining': client.get(key),
             'X-RateLimit-Reset': client.ttl(key)
         }
@@ -107,7 +107,7 @@ def banking_request(*args, **kwargs):
             'message': 'Server failed to fulfill the request. The user\'s faction\'s bot configuration needs to be '
                        'configured by faction AA members.'
         }), 400, {
-            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+            'X-RateLimit-Limit': 150,
             'X-RateLimit-Remaining': client.get(key),
             'X-RateLimit-Reset': client.ttl(key)
         }
@@ -122,7 +122,7 @@ def banking_request(*args, **kwargs):
                 'message': 'Server failed to fulfill the request. The amount requested was greater than the amount in '
                            'the user\'s faction vault balance.'
             }), 400, {
-                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+                'X-RateLimit-Limit': 150,
                 'X-RateLimit-Remaining': client.get(key),
                 'X-RateLimit-Reset': client.ttl(key)
             }
@@ -133,7 +133,7 @@ def banking_request(*args, **kwargs):
                 'message': 'Server failed to fulfill the request. The user has no cash in the faction vault or a '
                            'negative vault balance.'
             }), 400, {
-                'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+                'X-RateLimit-Limit': 150,
                 'X-RateLimit-Remaining': client.get(key),
                 'X-RateLimit-Reset': client.ttl(key)
             }
@@ -188,7 +188,7 @@ def banking_request(*args, **kwargs):
             'timerequested': withdrawal.time_requested,
             'withdrawalmessage': message['id']
         }), 200, {
-            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+            'X-RateLimit-Limit': 150,
             'X-RateLimit-Remaining': client.get(key),
             'X-RateLimit-Reset': client.ttl(key)
         }
@@ -198,7 +198,7 @@ def banking_request(*args, **kwargs):
             'name': 'UnknownFaction',
             'message': 'Server failed to fulfill the request. There was no faction stored with that faction ID.'
         }), 400, {
-            'X-RateLimit-Limit': 250 if kwargs['user'].pro else 150,
+            'X-RateLimit-Limit': 150,
             'X-RateLimit-Remaining': client.get(key),
             'X-RateLimit-Reset': client.ttl(key)
         }

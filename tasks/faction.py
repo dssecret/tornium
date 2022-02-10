@@ -41,7 +41,7 @@ def refresh_factions():
             continue
 
         try:
-            faction_data = tornget.delay(
+            faction_data = tornget(
                 'faction/?selections=',
                 key=random.choice(faction.keys),
                 session=requests_session
