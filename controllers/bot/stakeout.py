@@ -36,7 +36,7 @@ def stakeouts_dashboard(guildid: str):
 
     if server is None:
         return render_template('errors/error.html', title='Error', error='Server not found.'), 400
-    elif server.sid not in current_user.servers:
+    elif str(server.sid) not in current_user.servers:
         return render_template(
             'errors/error.html',
             title='Permission Denied',
@@ -146,7 +146,7 @@ def stakeouts(guildid: str, stype: int):
 
     if server is None:
         return render_template('errors/error.html', title='Error', error='Server not found.'), 400
-    elif server.sid not in current_user.servers:
+    elif str(server.sid) not in current_user.servers:
         return render_template(
             'errors/error.html',
             title='Permission Denied',
@@ -193,7 +193,7 @@ def stakeout_data(guildid: str):
 
     if server is None:
         return render_template('errors/error.html', title='Error', error='Server not found.'), 400
-    elif server.sid not in current_user.servers:
+    elif str(server.sid) not in current_user.servers:
         return render_template(
             'errors/error.html',
             title='Permission Denied',
@@ -240,7 +240,7 @@ def stakeout_update(guildid):
 
     if server is None:
         return render_template('errors/error.html', title='Error', error='Server not found.'), 400
-    elif server.sid not in current_user.servers:
+    elif str(server.sid) not in current_user.servers:
         return render_template(
             'errors/error.html',
             title='Permission Denied',
