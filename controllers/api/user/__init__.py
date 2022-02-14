@@ -35,9 +35,7 @@ def get_user(*args, **kwargs):
         'factiontid': kwargs['user'].factionid,
         'aa': kwargs['user'].factionaa,
         'status': kwargs['user'].status,
-        'last_action': kwargs['user'].last_action,
-        'pro': kwargs['user'].pro,
-        'pro_expiration': kwargs['user'].pro_expiration
+        'last_action': kwargs['user'].last_action
     }), 200, {
         'X-RateLimit-Limit': 150,
         'X-RateLimit-Remaining': client.get(key),
