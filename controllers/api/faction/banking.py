@@ -146,7 +146,7 @@ def banking_request(*args, **kwargs):
                 'embeds': [
                     {
                         'title': f'Vault Request #{request_id}',
-                        'description': f'{user.name} [{user.tid}] is requesting {amount_requested} from the '
+                        'description': f'{user.name} [{user.tid}] is requesting {data.get("amount_requested")} from the '
                                        f'faction vault. '
                                        f'To fulfill this request, enter `?f {request_id}` in this channel.',
                         'timestamp': datetime.datetime.utcnow().isoformat()
@@ -160,8 +160,7 @@ def banking_request(*args, **kwargs):
                     {
                         'title': f'Vault Request #{request_id}',
                         'description': f'{user.name} [{user.tid}] is requesting '
-                                       f'{vault_balances["donations"][str(user.tid)]["money_balance"]} from the '
-                                       f'faction vault. '
+                                       f'{data.get("amount_requested")} from the faction vault. '
                                        f'To fulfill this request, enter `?f {request_id}` in this channel.',
                         'timestamp': datetime.datetime.utcnow().isoformat()
                     }
