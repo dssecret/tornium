@@ -83,7 +83,7 @@ def refresh_factions():
             if not user_ts_data['status']:
                 return
 
-            for user_id, user_data in user_ts_data['faction']['members']:
+            for user_id, user_data in user_ts_data['faction']['members'].items:
                 if 'spy' not in user_data:
                     continue
 
