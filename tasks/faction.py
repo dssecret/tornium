@@ -227,7 +227,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
             honeybadger.notify(e)
             continue
 
-        for attack in faction_data['attakcs'].values():
+        for attack in faction_data['attacks'].values():
             if attack['defender_faction'] == faction_data['ID']:
                 continue
             elif attack['result'] in ['Assist', 'Lost', 'Stalemate', 'Escape']:
