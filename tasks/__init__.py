@@ -474,7 +474,7 @@ def torn_stats_get(endpoint, key, session=None, autosleep=False):
     else:
         request = session.get(url)
     
-    if request.status_code // 100 != 200:
+    if request.status_code // 100 != 2:
         logger.warning(f'The Torn Stats API has responded with HTTP status code {request.status_code} to endpoint "{endpoint}".')
         raise NetworkingError(code=request.status_code)
     
