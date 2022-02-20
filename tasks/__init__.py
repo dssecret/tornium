@@ -322,14 +322,9 @@ def discordget(endpoint, session=None):
         request_json = request.json()
     except Exception as e:
         if request.status_code // 100 != 2:
-            if 'code' in request_json:
-                logger.warning(
-                    f'The Discord API has responded with status code {request.status_code} to endpoint "{endpoint}".'
-                )
-            else:
-                logger.warning(
-                    f'The Discord API has responded with HTTP {request.status_code} to {url}).'
-                )
+            logger.warning(
+                f'The Discord API has responded with status code {request.status_code} to endpoint "{endpoint}".'
+            )
             raise NetworkingError(
                 code=request.status_code
             )
@@ -378,14 +373,9 @@ def discordpost(endpoint, payload, session=None):
         request_json = request.json()
     except Exception as e:
         if request.status_code // 100 != 2:
-            if 'code' in request_json:
-                logger.warning(
-                    f'The Discord API has responded with status code {request.status_code} to endpoint "{endpoint}".'
-                )
-            else:
-                logger.warning(
-                    f'The Discord API has responded with HTTP {request.status_code} to {url}).'
-                )
+            logger.warning(
+                f'The Discord API has responded with status code {request.status_code} to endpoint "{endpoint}".'
+            )
             raise NetworkingError(
                 code=request.status_code
             )
@@ -434,14 +424,9 @@ def discorddelete(endpoint, session=None):
         request_json = request.json()
     except Exception as e:
         if request.status_code // 100 != 2:
-            if 'code' in request_json:
-                logger.warning(
-                    f'The Discord API has responded with status code {request.status_code} to endpoint "{endpoint}".'
-                )
-            else:
-                logger.warning(
-                    f'The Discord API has responded with HTTP {request.status_code} to {url}).'
-                )
+            logger.warning(
+                f'The Discord API has responded with status code {request.status_code} to endpoint "{endpoint}".'
+            )
             raise NetworkingError(
                 code=request.status_code
             )
