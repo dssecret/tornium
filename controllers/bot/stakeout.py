@@ -72,7 +72,7 @@ def stakeouts_dashboard(guildid: str):
                 channel = tasks.discordpost(f'guilds/{guildid}/channels', payload=payload)
 
                 db_stakeout = utils.first(FactionStakeoutModel.objects(tid=request.form.get('factionid')))
-                db_stakeout.guilds[guildid]['channel'] = int(channel['id'])
+                db_stakeout.guilds[str(guildid)]['channel'] = int(channel['id'])
                 db_stakeout.save()
 
                 message_payload = {
@@ -117,7 +117,7 @@ def stakeouts_dashboard(guildid: str):
                 channel = tasks.discordpost(f'guilds/{guildid}/channels', payload=payload)
 
                 db_stakeout = utils.first(UserStakeoutModel.objects(tid=request.form.get('userid')))
-                db_stakeout.guilds[guildid]['channel'] = int(channel['id'])
+                db_stakeout.guilds[str(guildid)]['channel'] = int(channel['id'])
                 db_stakeout.save()
 
                 message_payload = {
@@ -160,18 +160,53 @@ def stakeouts(guildid: str, stype: int):
 
     if stype == 0:  # user
         filtered = len(server.userstakeouts)
+
+        stakeout: int
         for stakeout in server.userstakeouts:
-            stakeout = Stakeout(int(stakeout), key=current_user.key)
+            stakeout: Stakeout = Stakeout(int(stakeout), key=current_user.key)
+
+            if str(guildid) not in stakeout.guilds:
+                honeybadger.honeybadger.notify(
+                    error_class='Exception',
+                    error_message=f'{guildid} not in the guilds of {stakeout.tid}',
+                    context={
+                        'guildid': guildid,
+                        'tid': stakeout.tid
+                    }
+                )
+
+                user_stakeouts = server.userstakeouts
+                user_stakeouts.remove(stakeout.tid)
+                server.userstakeouts = user_stakeouts
+                server.save()
+                continue
+
             stakeouts.append(
-                [stakeout.tid, stakeout.guilds[guildid]['keys'],
+                [stakeout.tid, stakeout.guilds[str(guildid)]['keys'],
                  utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update))]
             )
     elif stype == 1:  # faction
         filtered = len(server.factionstakeouts)
         for stakeout in server.factionstakeouts:
-            stakeout = Stakeout(int(stakeout), user=False, key=current_user.key)
+            stakeout: Stakeout = Stakeout(int(stakeout), user=False, key=current_user.key)
+
+            if str(guildid) not in stakeout.guilds:
+                honeybadger.honeybadger.notify(
+                    error_class='Exception',
+                    error_message=f'{guildid} not in the guilds of {stakeout.tid}',
+                    context={
+                        'guildid': guildid,
+                        'tid': stakeout.tid
+                    }
+                )
+                faction_stakeouts = server.factionstakeouts
+                faction_stakeouts.remove(stakeout.tid)
+                server.factionstakeouts = faction_stakeouts
+                server.save()
+                continue
+
             stakeouts.append(
-                [stakeout.tid, stakeout.guilds[guildid]['keys'],
+                [stakeout.tid, stakeout.guilds[str(guildid)]['keys'],
                  utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update))]
             )
     else:
@@ -216,7 +251,7 @@ def stakeout_data(guildid: str):
         return render_template('bot/factionstakeoutmodal.html',
                                faction=f'{Faction(int(faction), key=current_user.key).name} [{faction}]',
                                lastupdate=utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update)),
-                               keys=stakeout.guilds[guildid]['keys'],
+                               keys=stakeout.guilds[str(guildid)]['keys'],
                                guildid=guildid,
                                tid=faction,
                                armory=(int(faction) not in Server(guildid).factions or
@@ -229,7 +264,7 @@ def stakeout_data(guildid: str):
         return render_template('bot/userstakeoutmodal.html',
                                user=f'{User(int(user), key=current_user.key).name} [{user}]',
                                lastupdate=utils.rel_time(datetime.datetime.fromtimestamp(stakeout.last_update)),
-                               keys=stakeout.guilds[guildid]['keys'],
+                               keys=stakeout.guilds[str(guildid)]['keys'],
                                guildid=guildid,
                                tid=user)
 
@@ -265,26 +300,24 @@ def stakeout_update(guildid):
             server.factionstakeouts.remove(int(faction))
 
             stakeout = utils.first(FactionStakeoutModel.objects(tid=faction))
+            tasks.discorddelete(f'channels/{stakeout.guilds[str(guildid)]["channel"]}')
             stakeout.guilds.pop(str(guildid))
 
             if len(stakeout.guilds) == 0:
                 stakeout.delete()
             else:
                 stakeout.save()
-
-            tasks.discorddelete(f'channels/{stakeout.guilds[guildid]["channel"]}')
         elif user is not None:
             server.userstakeouts.remove(int(user))
 
             stakeout = utils.first(UserStakeoutModel.objects(tid=user))
+            tasks.discorddelete(f'channels/{stakeout.guilds[str(guildid)]["channel"]}')
             stakeout.guilds.pop(str(guildid))
 
             if len(stakeout.guilds) == 0:
                 stakeout.delete()
             else:
                 stakeout.save()
-
-            tasks.discorddelete(f'channels/{stakeout.guilds[guildid]["channel"]}')
 
         server.save()
     elif action == 'addkey':
@@ -304,10 +337,10 @@ def stakeout_update(guildid):
         else:
             stakeout = utils.first(FactionStakeoutModel.objects(tid=faction))
 
-        if value in stakeout.guilds[guildid]['keys']:
+        if value in stakeout.guilds[str(guildid)]['keys']:
             return jsonify({'error': f'Value {value} is already in {guildid}\'s list of keys.'}), 400
 
-        stakeout.guilds[guildid]['keys'].append(value)
+        stakeout.guilds[str(guildid)]['keys'].append(value)
         stakeout.save()
     elif action == 'removekey':
         if faction is not None and value not in ['territory', 'members', 'memberstatus', 'memberactivity', 'armory',
@@ -323,10 +356,10 @@ def stakeout_update(guildid):
         else:
             stakeout = utils.first(FactionStakeoutModel.objects(tid=faction))
 
-        if value not in stakeout.guilds[guildid]['keys']:
+        if value not in stakeout.guilds[str(guildid)]['keys']:
             return jsonify({'error': f'Value {value} is not in {guildid}\'s list of keys.'}), 400
 
-        stakeout.guilds[guildid]['keys'].remove(value)
+        stakeout.guilds[str(guildid)]['keys'].remove(value)
         stakeout.save()
     elif action == 'enable':
         server = utils.first(ServerModel.objects(sid=guildid))
