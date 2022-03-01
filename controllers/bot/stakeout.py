@@ -18,6 +18,7 @@ import json
 
 from flask import request, jsonify, render_template, redirect, flash
 from flask_login import login_required, current_user
+import honeybadger
 
 from models.faction import Faction
 from models.factionstakeoutmodel import FactionStakeoutModel
