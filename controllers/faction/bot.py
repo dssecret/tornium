@@ -51,7 +51,7 @@ def bot():
             try:
                 tasks.discordget(f'guilds/{request.form.get("guildid")}')
             except utils.DiscordError as e:
-                return utils.handle_discord_error(str(e))
+                return utils.handle_discord_error(e)
             except utils.NetworkingError as e:
                 return render_template('errors/error.html', title='Discord Networking Error',
                                        error=f'The Discord API has responded with HTTP error code '
@@ -66,7 +66,7 @@ def bot():
             try:
                 channel = tasks.discordget(f'channels/{request.form.get("withdrawal")}')
             except utils.DiscordError as e:
-                return utils.handle_discord_error(str(e))
+                return utils.handle_discord_error(e)
             except utils.NetworkingError as e:
                 return render_template('errors/error.html', title='Discord Networking Error',
                                        error=f'The Discord API has responded with HTTP error code '
@@ -80,7 +80,7 @@ def bot():
             try:
                 channel = tasks.discordget(f'channels/{request.form.get("banking")}')
             except utils.DiscordError as e:
-                return utils.handle_discord_error(str(e))
+                return utils.handle_discord_error(e)
             except utils.NetworkingError as e:
                 return render_template('errors/error.html', title='Discord Networking Error',
                                        error=f'The Discord API has responded with HTTP error code '
@@ -94,7 +94,7 @@ def bot():
             try:
                 roles = tasks.discordget(f'guilds/{faction.guild}/roles')
             except utils.DiscordError as e:
-                return utils.handle_discord_error(str(e))
+                return utils.handle_discord_error(e)
             except utils.NetworkingError as e:
                 return render_template('errors/error.html', title='Discord Networking Error',
                                        error=f'The Discord API has responded with HTTP error code '
