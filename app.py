@@ -87,6 +87,13 @@ def tct_time(s):
     return utils.torn_timestamp(int(s))
 
 
+@app.after_request
+def request_security(response):
+    response.headers['Content-Security-Policy'] = "default-src 'self'"
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    return response
+
+
 if redis.get('tornium:settings:dev') == 'True' and __name__ == "__main__":
     app.register_blueprint(base_mod)
     app.register_blueprint(auth_mod)
