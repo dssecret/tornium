@@ -18,6 +18,9 @@ import math
 from honeybadger import honeybadger
 import requests
 
+from models.factionmodel import FactionModel
+from models.factiongroupmodel import FactionGroupModel
+from models.statmodel import StatModel
 from models.usermodel import UserModel
 from tasks import celery_app, logger, tornget
 import utils
@@ -84,3 +87,101 @@ def refresh_users():
 
         user.factionaa = True
         user.save()
+
+
+@celery_app.task
+def fetch_attacks_users():  # Based off of https://www.torn.com/forums.php#/p=threads&f=61&t=16209964&b=0&a=0&start=0&to=0
+    requests_session = requests.Session()
+
+    try:
+        last_timestamp = utils.last(StatModel.objects()).timeadded
+    except AttributeError:
+        last_timestamp = 0
+
+    faction_shares = {}
+
+    group: FactionGroupModel
+    for group in FactionGroupModel.objects():
+        for member in group.sharestats:
+            if str(member) in faction_shares:
+                faction_shares[str(member)].extend(group.members)
+            else:
+                faction_shares[str(member)] = group.members
+
+    for factiontid, shares in faction_shares.items():
+        faction_shares[factiontid] = list(set(shares))
+
+    user: UserModel
+    for user in UserModel.objects(key__ne=''):
+        if user.key == '':
+            continue
+
+        faction: FactionModel = utils.first(FactionModel.objects(tid=user.factionid))
+
+        if faction is not None and len(faction.keys) != 0:
+            continue
+        elif faction is not None and faction.config['stats'] == 1:
+            continue
+
+        try:
+            user_data = tornget('user/?selections=basic,attacks', key=user.key, session=requests_session)
+        except Exception as e:
+            logger.exception(e)
+            honeybadger.notify(e)
+            continue
+
+        for attack in user_data['attacks'].values():
+            if attack['defender_faction'] == user.factionid and user.factionid != 0:
+                continue
+            elif attack['result'] in ['Assist', 'Lost', 'Stalemate', 'Escape']:
+                continue
+            elif attack['defender_id'] in [4, 10, 15, 17, 19, 20, 21]:  # Checks if NPC fight (and you defeated NPC)
+                continue
+            elif attack['modifiers']['fair_fight'] == 3:  # 3x FF can be greater than the defender battlescore indicated
+                continue
+            elif attack['timestamp_ended'] < last_timestamp:
+                continue
+
+            try:
+                if user.battlescore_update - utils.now() <= 10800000:  # Three hours
+                    attacker_score = user.battlescore
+                else:
+                    continue
+            except IndexError:
+                continue
+
+            if attacker_score > 100000:
+                continue
+
+            defender_score = (attack['modifiers']['fair_fight'] - 1) * 0.375 * attacker_score
+
+            if defender_score == 0:
+                continue
+
+            if faction is None:
+                globalstat = 1
+
+                if user.factionid == 0:
+                    allowed_factions = []
+                else:
+                    allowed_factions = [user.factionid]
+            else:
+                globalstat = faction.statconfig['global']
+                allowed_factions = [faction.tid]
+
+                if str(faction.tid) in faction_shares:
+                    allowed_factions.extend(faction_shares[str(faction.tid)])
+
+                allowed_factions = list(set(allowed_factions))
+
+            stat_entry = StatModel(
+                statid=utils.last(StatModel.objects()).statid + 1 if StatModel.objects().count() != 0 else 0,
+                tid=attack['defender_id'],
+                battlescore=defender_score,
+                timeadded=utils.now(),
+                addedid=attack['attacker_id'],
+                addedfactiontid=user.factionid,
+                globalstat=globalstat,
+                allowedfactions=allowed_factions
+            )
+            stat_entry.save()

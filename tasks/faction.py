@@ -193,10 +193,9 @@ def refresh_factions():
 @celery_app.task
 def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&f=61&t=16209964&b=0&a=0&start=0&to=0
     requests_session = requests.Session()
-    statid = utils.last(StatModel.objects()).statid  # Current last stat ID
 
     try:
-        last_timestamp = utils.first(StatModel.objects(statid=statid)).timeadded
+        last_timestamp = utils.last(StatModel.objects()).timeadded
     except AttributeError:
         last_timestamp = 0
 
@@ -300,7 +299,7 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
                 allowed_factions = list(set(allowed_factions))
 
             stat_entry = StatModel(
-                statid=statid,
+                statid=utils.last(StatModel.objects()).statid + 1 if StatModel.objects().count() != 0 else 0,
                 tid=attack['defender_id'],
                 battlescore=defender_score,
                 timeadded=utils.now(),
@@ -310,4 +309,3 @@ def fetch_attacks():  # Based off of https://www.torn.com/forums.php#/p=threads&
                 allowedfactions=allowed_factions
             )
             stat_entry.save()
-            statid += 1
