@@ -62,70 +62,12 @@ bot = commands.Bot(command_prefix=botutils.get_prefix, help_command=None, intent
 
 
 @bot.event
-async def on_ready():
-    guild_count = 0
-
-    for guild in bot.guilds:
-        print(f"- {guild.id} (name: {guild.name})")
-        guild_count += 1
-
-    print(f'Bot is in {guild_count} guilds.')
-
-    bot.add_cog(Periodic(bot, botlogger))
-    bot.add_cog(Vault(bot, botlogger))
-
-
-@bot.event
-async def on_guild_join(guild):
-    server = ServerModel(
-        sid=guild.id,
-        name=guild.name,
-        admins=[],
-        prefix='?',
-        config={
-            'stakeouts': 0,
-            'assists': 0
-        },
-        factions=[],
-        stakeoutconfig={
-            'category': 0
-        },
-        userstakeouts=[],
-        factionstakeouts=[],
-        assistschannel=0
-    )
-
-    for member in guild.members:
-        if member.guild_permissions.administrator:
-            user = utils.first(UserModel.objects(discord_id=member.id))
-            if user is None:
-                continue
-
-            user.servers.append(str(guild.id))
-            server.admins.append(user.tid)
-
-            user.servers = list(set(user.servers))
-            server.admins = list(set(server.admins))
-            user.save()
-
-    server.save()
-
-
-@bot.event
-async def on_guild_remove(guild):
-    server = utils.first(ServerModel.objects(sid=guild.id))
-    if server is not None:
-        for admin in server.admins:
-            user = utils.first(UserModel.objects(tid=admin))
-            if user is not None:
-                user.servers.remove(str(guild.id))
-        server.delete()
-
-
-@bot.event
 async def on_message(message):
     if message.author.bot:
         return None
+    elif type(message.channel) == discord.DMChannel:
+        await bot.process_commands(message)
+        return
 
     server = Server(message.guild.id)
 
@@ -198,6 +140,7 @@ async def on_message(message):
 
     if len(server.admins) == 0:
         await bot.process_commands(message)
+        return
 
     for faction in server.factions:
         faction = utils.first(FactionModel.objects(tid=int(faction)))
