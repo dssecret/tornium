@@ -28,6 +28,9 @@ sys.path.append('..')
 
 
 def get_prefix(bot, message):
+    if type(message.channel) == discord.DMChannel:
+        return '?'
+
     from models.server import Server
     return Server(message.guild.id).prefix
 
