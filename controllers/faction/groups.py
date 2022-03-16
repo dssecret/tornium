@@ -25,6 +25,7 @@ import utils
 
 
 @login_required
+@fac_required
 @aa_required
 def groups():
     return render_template('faction/groups.html',
@@ -33,6 +34,7 @@ def groups():
 
 
 @login_required
+@fac_required
 @aa_required
 def create_group():
     faction: FactionModel = utils.first(FactionModel.objects(tid=current_user.factiontid))
@@ -57,6 +59,7 @@ def create_group():
 
 
 @login_required
+@fac_required
 @aa_required
 def group_invite(invite: str):
     dbgroup: FactionGroupModel = utils.first(FactionGroupModel.objects(invite=invite))
@@ -81,6 +84,7 @@ def group_invite(invite: str):
 
 
 @login_required
+@fac_required
 @aa_required
 def group(tid: int):
     dbgroup: FactionGroupModel = utils.first(FactionGroupModel.objects(tid=tid))

@@ -28,7 +28,7 @@ import utils
 
 @celery_app.task
 def refresh_users():
-    reqeusts_session = requests.Session()
+    requests_session = requests.Session()
 
     user: UserModel
     for user in UserModel.objects(key__ne=''):
@@ -36,7 +36,7 @@ def refresh_users():
             continue
 
         try:
-            user_data = tornget(f'user/?selections=profile,battlestats,discord', user.key, session=reqeusts_session)
+            user_data = tornget(f'user/?selections=profile,battlestats,discord', user.key, session=requests_session)
         except Exception as e:
             logger.exception(e)
             honeybadger.notify(e)
