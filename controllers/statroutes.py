@@ -44,12 +44,12 @@ def stats():
     return render_template('stats/db.html', battlescore=current_user.battlescore)
 
 
-@mod.route('/stats/dbdata')
-@login_required
 def stats_data():
     start = int(request.args.get('start'))
     length = int(request.args.get('length'))
     search_value = request.args.get('search[value]')
+    ordering = int(request.args.get('order[0][column]'))
+    ordering_direction = request.args.get('order[0][dir]')
 
     stats = []
 
@@ -57,6 +57,18 @@ def stats_data():
         stat_entries = StatModel.objects(Q(tid__startswith=utils.get_tid(search_value)) & (Q(globalstat=True) | Q(addedid=current_user.tid) | Q(addedfactiontid=current_user.factiontid) | Q(allowedfactions=current_user.factiontid)))
     else:
         stat_entries = StatModel.objects(Q(globalstat=True) | Q(addedid=current_user.tid) | Q(addedfactiontid=current_user.factiontid) | Q(allowedfactions=current_user.factiontid))
+    
+    if ordering_direction == 'asc':
+        ordering_direction = '+'
+    else:
+        ordering_direction = '-'
+
+    if ordering == 0:
+        stat_entries = stat_entries.order_by(f'{ordering_direction}tid')
+    elif ordering == 1:
+        stat_entries = stat_entries.order_by(f'{ordering_direction}battlescore')
+    else:
+        stat_entries = stat_entries.order_by(f'{ordering_direction}timeadded')
 
     count = stat_entries.count()
     stat_entries = stat_entries[start:start+length]
