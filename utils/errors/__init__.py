@@ -82,11 +82,15 @@ _httperrors = {
 
 
 class NetworkingError(Exception):
-    def __init__(self, code: int):
+    def __init__(self, code: int, url):
         super().__init__()
 
         self.code = code
+        self.url = url
         self.message = _httperrors.get(self.code) if self.code in _httperrors else self.code
+
+    def __str__(self):
+        return f'HTTP {self.code} was returned in response to {self.url}'
 
 
 class TornError(Exception):
@@ -149,6 +153,9 @@ class TornError(Exception):
         else:
             raise ValueError(f'Illegal Torn error code {code}')
 
+    def __str__(self):
+        return f'The Torn API has returned error code {self.code}'
+
 
 class DiscordError(Exception):
     def __init__(self, code, message):
@@ -156,6 +163,9 @@ class DiscordError(Exception):
 
         self.code = code
         self.message = message
+
+    def __str__(self):
+        return f'The Discord API has return error code {self.code}'
 
 
 class MissingKeyError(Exception):
