@@ -19,7 +19,7 @@ The hosted version of Tornium does not allow for custom bots, customization of f
 ### Installation - Custom Server
 1. Clone the project - `git clone https://github.com/dssecret/tornium.git`
 2. `sudo apt-get update && sudo apt-get upgrade`
-3. Install required system level packages (python3, pip3, redis-server, mongodb)
+3. Install required system level packages (python3, pip3, redis-server, mongodb). NOTE: Redis requires redis-json to work properly
 4. Create [virtual environment](https://linoxide.com/how-to-create-python-virtual-environment-on-ubuntu-20-04/) and activate virtual environment (Optional)
 5. Install required Python packages - `pip3 install -r requirements.txt`
 6. Set up necessary other files such as systemd, supervisord, et al.

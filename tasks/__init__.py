@@ -16,12 +16,14 @@
 import datetime
 import logging
 import json
+import sys
 import time
 
 from celery import Celery
 from celery.schedules import crontab
 import honeybadger
 from mongoengine import connect
+from redis.commands.json.path import Path
 import requests
 
 import settings  # Do not remove - initializes redis values
@@ -223,14 +225,18 @@ if celery_app is None:
 
 
 @celery_app.task
-def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=True):
+def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=True, cache=30, nocache=False):
     url = f'https://api.torn.com/{endpoint}&key={key}&comment=Tornium{"" if fromts == 0 else f"&from={fromts}"}' \
           f'{"" if tots == 0 else f"&to={tots}"}{stat if stat == "" else f"&stat={stat}"}'
 
     if key is None or key == '':
         raise MissingKeyError
-    
+
     redis = get_redis()
+
+    if redis.exists(f'tornium:torn-cache:{url}') and not nocache:
+        return redis.json().get(f'tornium:torn-cache:{url}')
+
     redis_key = f'tornium:torn-ratelimit:{key}'
 
     if redis.setnx(redis_key, 50):
@@ -253,26 +259,27 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Tr
                 else:
                     raise RatelimitError
     except TypeError as e:
-        logger.warning(f'Error raised on API key {key} with redis return value {redis.get(redis_key)} and redis key {redis_key}')
-    
+        logger.warning(
+            f'Error raised on API key {key} with redis return value {redis.get(redis_key)} and redis key {redis_key}')
+
     if session is None:
         request = requests.get(url)
     else:
         request = session.get(url)
-    
+
     if request.status_code != 200:
         logger.warning(f'The Torn API has responded with status code {request.status_code} to endpoint "{endpoint}".')
         raise NetworkingError(
             code=request.status_code,
             url=url
         )
-    
+
     request = request.json()
 
     if 'error' in request:
         if request['error']['code'] in (13, 10, 2):
             user = utils.first(UserModel.objects(key=key))
-            
+
             if user is not None:
                 factions = FactionModel.objects(keys=key)
 
@@ -290,7 +297,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Tr
                     if server is not None and user.tid in server.admins:
                         server.admins.remove(user.tid)
                     server.save()
-                
+
                 for server in ServerModel.objects(admins=user.tid):
                     server.admins.remove(user.tid)
                     server.save()
@@ -310,13 +317,21 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Tr
             for faction in FactionModel.objects(keys=key):
                 faction.keys.remove(key)
                 faction.save()
-        
+
         logger.info(f'The Torn API has responded with error code {request["error"]["code"]} '
                     f'({request["error"]["error"]}) to {url}).')
         raise TornError(
             code=request["error"]["code"]
         )
-    
+
+    if cache <= 0 or cache >= 60:
+        return request
+    elif sys.getsizeof(request) >= 500000:  # Half a megabyte
+        return request
+
+    redis.json().set(f'tornium:torn-cache:{url}', Path.rootPath(), request)
+    redis.expire(f'tornium:torn-cache:{url}', cache)
+
     return request
 
 

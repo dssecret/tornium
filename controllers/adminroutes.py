@@ -66,6 +66,11 @@ def dashboard():
             stakeouttasks.user_stakeouts.delay()
         elif request.form.get('refreshfactionstakeouts') is not None:
             stakeouttasks.faction_stakeouts.delay()
+        elif request.form.get('purgecache') is not None:
+            redis = get_redis()
+
+            for key in redis.keys('tornium:torn-cache:*'):
+                redis.delete(key)
 
     return render_template('admin/dashboard.html')
 
