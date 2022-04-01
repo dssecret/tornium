@@ -61,7 +61,7 @@ def refresh_users():
         user.save()
 
         try:
-            tornget(f'faction/?selections=positions', user.key, session=reqeusts_session)
+            tornget(f'faction/?selections=positions', user.key, session=requests_session)
         except utils.TornError as e:
             if e.code != 7:
                 logger.exception(e)
@@ -71,10 +71,8 @@ def refresh_users():
                 if user.factionaa:
                     user.factionaa = False
                     user.save()
-                    continue
-                else:
-                    logger.exception(e)
-                    continue
+
+                continue
         except Exception as e:
             logger.exception(e)
             honeybadger.notify(e)
