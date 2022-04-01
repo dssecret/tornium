@@ -29,11 +29,16 @@ $(document).ready(function() {
     $('#stats-table tbody').on('click', 'tr', function() {
         const xhttp = new XMLHttpRequest();
         xhttp.onload = function() {
+            if($('#stats-modal').length) {
+                var modal = bootstrap.Modal.getInstance(document.getElementById('stats-modal'));
+                modal.dispose();
+            }
+            
             document.getElementById('modal').innerHTML = this.responseText;
             var modal = new bootstrap.Modal($('#stats-modal'));
             modal.show();
         }
         xhttp.open('GET', '/stats/userdata?user=' + table.row(this).data()[0]);
         xhttp.send();
-    })
+    });
 });
