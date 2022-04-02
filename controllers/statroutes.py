@@ -50,6 +50,8 @@ def stats_data():
     search_value = request.args.get('search[value]')
     ordering = int(request.args.get('order[0][column]'))
     ordering_direction = request.args.get('order[0][dir]')
+    min_bs = request.args.get('minBS')
+    max_bs = request.args.get('maxBS')
 
     stats = []
 
@@ -57,7 +59,10 @@ def stats_data():
         stat_entries = StatModel.objects(Q(tid__startswith=utils.get_tid(search_value)) & (Q(globalstat=True) | Q(addedid=current_user.tid) | Q(addedfactiontid=current_user.factiontid) | Q(allowedfactions=current_user.factiontid)))
     else:
         stat_entries = StatModel.objects(Q(globalstat=True) | Q(addedid=current_user.tid) | Q(addedfactiontid=current_user.factiontid) | Q(allowedfactions=current_user.factiontid))
-    
+
+    if min_bs != '' and max_bs != '':
+        stat_entries = stat_entries.filter(Q(battlescore__gt=int(min_bs)) & Q(battlescore__lt=int(max_bs)))
+
     if ordering_direction == 'asc':
         ordering_direction = '+'
     else:
