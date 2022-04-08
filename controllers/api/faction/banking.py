@@ -45,6 +45,20 @@ def banking_request(*args, **kwargs):
             'X-RateLimit-Remaining': client.get(key),
             'X-RateLimit-Reset': client.ttl(key)
         }
+
+    if client.get(f'tornium:banking-ratelimit:{user.tid}') is not None:
+        return jsonify({
+            'code': 0,
+            'name': 'GeneralError',
+            'message': 'Server failed to fulfill the request. The user has reached their banking ratelimit.'
+        }), 429, {
+            'X-RateLimit-Limit': 150,
+            'X-RateLimit-Remaining': client.get(key),
+            'X-RateLimit-Reset': client.ttl(key)
+        }
+    else:
+        client.set(f'tornium:banking-ratelimit:{user.tid}', 1)
+        client.expire(f'tornium:banking-ratelimit:{user.tid}', 60)
     
     amount_requested = str(amount_requested)
 
@@ -146,7 +160,7 @@ def banking_request(*args, **kwargs):
                 'embeds': [
                     {
                         'title': f'Vault Request #{request_id}',
-                        'description': f'{user.name} [{user.tid}] is requesting {data.get("amount_requested")} from the '
+                        'description': f'{user.name} [{user.tid}] is requesting {amount_requested} from the '
                                        f'faction vault. '
                                        f'To fulfill this request, enter `?f {request_id}` in this channel.',
                         'timestamp': datetime.datetime.utcnow().isoformat()
@@ -160,7 +174,8 @@ def banking_request(*args, **kwargs):
                     {
                         'title': f'Vault Request #{request_id}',
                         'description': f'{user.name} [{user.tid}] is requesting '
-                                       f'{data.get("amount_requested")} from the faction vault. '
+                                       f'{vault_balances["donations"][str(user.tid)]["money_balance"]} from the '
+                                       f'faction vault. '
                                        f'To fulfill this request, enter `?f {request_id}` in this channel.',
                         'timestamp': datetime.datetime.utcnow().isoformat()
                     }
@@ -170,7 +185,8 @@ def banking_request(*args, **kwargs):
 
         withdrawal = WithdrawalModel(
             wid=request_id,
-            amount=amount_requested if amount_requested != 'all' else vault_balances["donations"][str(user.tid)]["money_balance"],
+            amount=amount_requested if amount_requested != 'all' else vault_balances["donations"][str(user.tid)][
+                "money_balance"],
             requester=user.tid,
             factiontid=user.factiontid,
             time_requested=utils.now(),
