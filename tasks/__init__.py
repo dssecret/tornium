@@ -259,8 +259,7 @@ def tornget(endpoint, key, tots=0, fromts=0, stat='', session=None, autosleep=Tr
                 else:
                     raise RatelimitError
     except TypeError as e:
-        logger.warning(
-            f'Error raised on API key {key} with redis return value {redis.get(redis_key)} and redis key {redis_key}')
+        logger.warning(f'Error raised on API key {key} with redis return value {redis.get(redis_key)} and redis key {redis_key}')
 
     if session is None:
         request = requests.get(url)

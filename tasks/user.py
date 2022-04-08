@@ -86,6 +86,15 @@ def refresh_users():
         user.factionaa = True
         user.save()
 
+        faction: FactionModel = utils.first(FactionModel.objects(tid=user.factionid))
+
+        if faction is None and user.factionid != 0:
+            faction = FactionModel(
+                tid=user.factionid,
+                name=user_data['faction']['faction_name']
+            )
+            faction.save()
+
 
 @celery_app.task
 def fetch_attacks_users():  # Based off of https://www.torn.com/forums.php#/p=threads&f=61&t=16209964&b=0&a=0&start=0&to=0

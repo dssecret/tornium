@@ -19,7 +19,9 @@ import math
 import random
 
 from honeybadger import honeybadger
+from mongoengine.queryset.visitor import Q
 import requests
+
 from models.factiongroupmodel import FactionGroupModel
 
 from models.factionmodel import FactionModel
@@ -37,6 +39,18 @@ def refresh_factions():
 
     faction: FactionModel
     for faction in FactionModel.objects():
+        keys_aa = []
+
+        member_aa: UserModel
+        for member_aa in UserModel.objects(Q(factionid=faction.tid) & Q(factionaa=True) & Q(key__ne='')):
+            if member_aa.key == '':
+                continue
+
+            keys_aa.append(member_aa.key)
+
+        faction.keys = list(set(keys_aa))
+        faction.save()
+
         if len(faction.keys) == 0:
             continue
 
@@ -61,7 +75,6 @@ def refresh_factions():
         faction.leader = faction_data['leader']
         faction.coleader = faction_data['co-leader']
         faction.last_members = utils.now()
-        faction.save()
 
         keys = []
 
