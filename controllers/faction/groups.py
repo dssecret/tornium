@@ -61,7 +61,7 @@ def create_group(*args, **kwargs):
 @login_required
 @fac_required
 @aa_required
-def group_invite(invite: str, *args, **kwags):
+def group_invite(invite: str, *args, **kwargs):
     dbgroup: FactionGroupModel = utils.first(FactionGroupModel.objects(invite=invite))
     faction: FactionModel = utils.first(FactionModel.objects(tid=current_user.factiontid))
 
