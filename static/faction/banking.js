@@ -16,7 +16,7 @@ along with Tornium.  If not, see <https://www.gnu.org/licenses/>. */
 const key = document.currentScript.getAttribute('data-key');
 
 $(document).ready(function() {
-    var table = $('#banking-table').DataTable({
+    $('#banking-table').DataTable({
         "processing": true,
         "serverSide": true,
         "ordering": false,

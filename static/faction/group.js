@@ -75,7 +75,7 @@ $(document).ready(function() {
         }));
     });
 
-    $("#refresh-invite").on("click", function(e) {
+    $("#refresh-invite").on("click", function() {
         const xhttp = new XMLHttpRequest();
 
         xhttp.onload = function() {
@@ -99,7 +99,7 @@ $(document).ready(function() {
         }));
     });
 
-    $("#delete-group").on("click", function(e) {
+    $("#delete-group").on("click", function() {
         const xhttp = new XMLHttpRequest();
 
         xhttp.onload = function() {
@@ -123,7 +123,7 @@ $(document).ready(function() {
         }));
     });
 
-    $("#share-statdb").on("click", function(e) {
+    $("#share-statdb").on("click", function() {
         const xhttp = new XMLHttpRequest();
 
         xhttp.onload = function() {

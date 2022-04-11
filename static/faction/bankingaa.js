@@ -14,7 +14,7 @@ You should have received a copy of the GNU Affero General Public License
 along with Tornium.  If not, see <https://www.gnu.org/licenses/>. */
 
 $(document).ready(function() {
-    var table = $('#banking-table').DataTable({
+    $('#banking-table').DataTable({
         "processing": true,
         "serverSide": true,
         "ordering": false,
