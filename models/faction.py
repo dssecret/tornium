@@ -57,7 +57,6 @@ class Faction:
 
             try:
                 tasks.tornget(f'faction/{tid}?selections=positions', key if key != "" else current_user.key)
-                faction.keys.append(key if key != "" else current_user.key)
             except:
                 pass
 
@@ -69,8 +68,6 @@ class Faction:
         self.capacity = faction.capacity
         self.leader = faction.leader
         self.coleader = faction.coleader
-
-        self.keys = faction.keys
 
         self.last_members = faction.last_members
 
@@ -84,29 +81,6 @@ class Faction:
         self.chain_od = faction.chainod
 
         self.groups = faction.groups
-
-    def rand_key(self):
-        return random.choice(self.keys)
-
-    def update_members(self, force=False, key=None):
-        now = utils.now()
-
-        if not force and (now - self.last_members) < 1800:
-            utils.get_logger().info(f'Update members skipped since last update was at {self.last_members} and update '
-                                    f'was not forced.')
-            return
-
-        if key is None:
-            key = random.choice(self.keys)
-
-        factionmembers = tasks.tornget('faction/?selections=', key)
-
-        for memberid, member in factionmembers['members'].values():
-            user = User(memberid)
-
-            if key is None:
-                key = random.choice(self.keys)
-            user.refresh(key, force)
 
     def get_config(self):
         if self.guild == 0:
