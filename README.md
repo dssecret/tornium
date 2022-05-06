@@ -1,3 +1,5 @@
+## Tornium is no longer open-source due to the extremely long time commitment to maintain the open and closed source versions of the softare. As such, the open-source version is no longer going to be updated however it'll become archived. The closed source version will remain at [torn.deek.sh](https://torn.deek.sh).
+
 # Tornium
 [Tornium](https://torn.deek.sh) is a website and Discord bot for [Torn City](https://torn.com) that supports features such as faction vault withdrawals and server stakeouts. Checkout [Features](#features) for more information.
 
